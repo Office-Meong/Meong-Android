@@ -1,0 +1,7 @@
+addAssignees: author
+
+addReviewers: true
+
+reviewers:
+  - vvan2
+  - sonms
