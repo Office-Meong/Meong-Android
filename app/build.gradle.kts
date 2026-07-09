@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.wheelpicker)
     implementation(libs.aboutlibraries.compose.m3)
     implementation(libs.lottie.compose)
+    implementation(libs.tink.android)
 
     testImplementation(libs.bundles.unitTest)
     androidTestImplementation(libs.bundles.test)
