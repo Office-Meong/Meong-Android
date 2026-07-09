@@ -13,9 +13,9 @@ sealed interface TokenRefreshResult {
         val refreshToken: RefreshToken
     ) : TokenRefreshResult
 
-    /** refresh token 자체가 만료·무효(401/403) — 저장된 토큰을 삭제하고 재로그인해야 한다 */
+    /** refresh token 자체가 만료·무효(401/403) — 저장된 토큰을 삭제하고 재로그인 */
     data object Unauthorized : TokenRefreshResult
 
-    /** 네트워크 등 일시적 오류 — 토큰은 유지하고 이번 요청만 실패시킨다 */
+    /** 네트워크 등 일시적 오류 — 토큰은 유지하고 이번 요청만 실패 */
     data class Failure(val cause: Throwable) : TokenRefreshResult
 }
