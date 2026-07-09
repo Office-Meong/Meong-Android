@@ -1,7 +1,6 @@
 package com.office.meong.core.common.extension
 
-import android.provider.SyncStateContract.Helpers.update
-import com.kiero.core.model.UiState
+import com.office.meong.core.common.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
