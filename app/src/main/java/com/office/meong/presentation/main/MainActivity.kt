@@ -1,4 +1,4 @@
-package com.office.meong
+package com.office.meong.presentation.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
