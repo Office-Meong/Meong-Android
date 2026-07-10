@@ -5,8 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,21 +14,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -50,43 +48,24 @@ fun MainBottomBar(
         visible = isVisible,
         enter = fadeIn() + slideIn { IntOffset(0, it.height) },
         exit = fadeOut() + slideOut { IntOffset(0, it.height) },
-        modifier = modifier
     ) {
-        Box(
-            modifier = Modifier
-                .dropShadow(
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    shadow = Shadow(
-                        radius = 7.dp,
-                        alpha = 0.15f,
-                    )
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .background(
+                    color = MeongTheme.colors.white,
                 )
+                .selectableGroup(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 10.dp, start = 32.dp, end = 32.dp)
-                        .selectableGroup(),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        40.dp,
-                        Alignment.CenterHorizontally
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    tabs.forEach { tab ->
-                        MainNavigationBarItem(
-                            tab = tab,
-                            selected = tab == currentTab,
-                            onClick = { onTabSelected(tab) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+            tabs.forEach { tab ->
+                key(tab.route) {
+                    MainNavigationBarItem(
+                        tab = tab,
+                        selected = tab == currentTab,
+                        onClick = { onTabSelected(tab) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -101,23 +80,28 @@ private fun MainNavigationBarItem(
     modifier: Modifier = Modifier,
 ) {
     val iconRes = if (selected) tab.selectedIcon else tab.unselectedIcon
+    val selectedColor = if (selected) Color.Unspecified else MeongTheme.colors.gray500
 
     Column (
         modifier = modifier
+            .padding(vertical = 13.dp)
             .noRippleClickable(onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(iconRes),
-            contentDescription = tab.contentDescription.toString(),
-            tint = Color.Unspecified,
+            contentDescription = tab.contentDescription,
+            tint = selectedColor,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         Text(
             text = tab.contentDescription,
+            style = MeongTheme.typography.label.label10Sb,
+            color = MeongTheme.colors.gray500,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -126,9 +110,15 @@ private fun MainNavigationBarItem(
 @Composable
 private fun MainBottomBarPreview() {
     MeongTheme {
-        val dummyTabs: ImmutableList<MainTab> = persistentListOf()
+        val dummyTabs: ImmutableList<MainTab> = persistentListOf(
+            MainTab.HOME,
+            MainTab.EXPLORE,
+            MainTab.MY_ROUTE,
+            MainTab.FAVORITE,
+            MainTab.MY_PAGE
+        )
 
-        val currentTab by remember { mutableStateOf(MainTab) }
+        val currentTab by remember { mutableStateOf(MainTab.HOME) }
 
         MainBottomBar(
             isVisible = true,
