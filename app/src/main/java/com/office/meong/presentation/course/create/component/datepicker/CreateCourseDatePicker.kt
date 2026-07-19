@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -48,6 +47,11 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.datetime.LocalDate
 
 private val CalendarWeekLabels = listOf("일", "월", "화", "수", "목", "금", "토")
+private val DateCircleSize = 32.dp
+private val DateContentPadding = 5.dp
+private val TodayIndicatorGap = 1.dp
+private val TodayIndicatorSize = 5.dp
+private val TodayIndicatorBottomGap = 3.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -217,70 +221,139 @@ private fun CreateCourseDatePickerItem(
     }
     val rangeShape = day.selectionState.toRangeShape()
     val primaryShape = if (day.selectionState.isPrimarySelected) CircleShape else RectangleShape
-    val selectedCircleSize = 32.dp
-    val rangePadding = 3.dp
-    val rangeHeight = selectedCircleSize + rangePadding * 2
-    val edgeRangeWidth = (cellWidth + selectedCircleSize) / 2 + rangePadding
+    val metrics = remember(cellWidth) {
+        DatePickerItemMetrics.from(cellWidth)
+    }
 
     Box(
         modifier = modifier
-            .aspectRatio(1f)
+            .height(metrics.cellHeight)
             .noRippleClickable { onDateClick(day.date) },
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.TopCenter,
     ) {
         val rangeModifier = when (day.selectionState) {
             CalendarDaySelectionState.RangeStart -> Modifier
-                .align(Alignment.CenterEnd)
-                .width(edgeRangeWidth)
+                .align(Alignment.TopEnd)
+                .width(metrics.edgeRangeWidth)
             CalendarDaySelectionState.RangeEnd -> Modifier
-                .align(Alignment.CenterStart)
-                .width(edgeRangeWidth)
+                .align(Alignment.TopStart)
+                .width(metrics.edgeRangeWidth)
             else -> Modifier.fillMaxWidth()
         }
 
         Box(
             modifier = rangeModifier
-                .height(rangeHeight)
+                .height(metrics.dateContentSize)
                 .clip(rangeShape)
                 .background(rangeBackground),
         )
 
+        DateNumberWithTodayIndicator(
+            dayText = day.date.day.toString(),
+            isToday = day.isToday,
+            textColor = textColor,
+            todayIndicatorColor = todayIndicatorColor,
+            metrics = metrics,
+            primaryShape = primaryShape,
+            primaryBackground = primaryBackground,
+            modifier = Modifier
+                .width(metrics.dateContentSize)
+                .height(metrics.cellHeight),
+        )
+    }
+}
+
+@Composable
+private fun DateNumberWithTodayIndicator(
+    dayText: String,
+    isToday: Boolean,
+    textColor: Color,
+    todayIndicatorColor: Color,
+    metrics: DatePickerItemMetrics,
+    primaryShape: Shape,
+    primaryBackground: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Box(
             modifier = Modifier
-                .size(selectedCircleSize)
-                .clip(primaryShape)
-                .background(primaryBackground),
+                .size(metrics.dateContentSize),
             contentAlignment = Alignment.Center,
         ) {
-            if (day.isToday) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(
-                        text = day.date.day.toString(),
-                        style = MeongTheme.typography.body.body16M,
-                        color = textColor,
-                        textAlign = TextAlign.Center,
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .size(5.dp)
-                            .clip(CircleShape)
-                            .background(todayIndicatorColor),
-                    )
-                }
-            } else {
+            Box(
+                modifier = Modifier
+                    .size(metrics.selectedCircleSize)
+                    .clip(primaryShape)
+                    .background(primaryBackground),
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
-                    text = day.date.day.toString(),
+                    text = dayText,
                     style = MeongTheme.typography.body.body16M,
                     color = textColor,
                     textAlign = TextAlign.Center,
                 )
             }
+        }
+
+        if (isToday) {
+            Spacer(modifier = Modifier.height(metrics.todayIndicatorGap))
+
+            Box(
+                modifier = Modifier
+                    .size(metrics.todayIndicatorSize)
+                    .clip(CircleShape)
+                    .background(todayIndicatorColor),
+            )
+        }
+    }
+}
+
+private data class DatePickerItemMetrics(
+    val selectedCircleSize: Dp,
+    val dateContentSize: Dp,
+    val todayIndicatorGap: Dp,
+    val todayIndicatorSize: Dp,
+    val cellHeight: Dp,
+    val edgeRangeWidth: Dp,
+) {
+    companion object {
+        fun from(cellWidth: Dp): DatePickerItemMetrics {
+            val selectedCircleSize = minOf(DateCircleSize, cellWidth * 0.7f)
+            val dateContentPadding = minOf(
+                DateContentPadding,
+                maxOf(0.dp, (cellWidth - selectedCircleSize) / 2),
+            )
+            val dateContentSize = selectedCircleSize + dateContentPadding * 2
+            val todayIndicatorSize = minOf(
+                TodayIndicatorSize,
+                selectedCircleSize * (TodayIndicatorSize / DateCircleSize),
+            )
+            val todayIndicatorGap = minOf(
+                TodayIndicatorGap,
+                maxOf(0.dp, dateContentPadding * 0.2f),
+            )
+            val todayIndicatorBottomGap = minOf(
+                TodayIndicatorBottomGap,
+                maxOf(0.dp, dateContentPadding * 0.6f),
+            )
+            val cellHeight = dateContentSize +
+                    todayIndicatorGap +
+                    todayIndicatorSize +
+                    todayIndicatorBottomGap
+            val edgeRangeWidth = (cellWidth + selectedCircleSize) / 2 + dateContentPadding
+
+            return DatePickerItemMetrics(
+                selectedCircleSize = selectedCircleSize,
+                dateContentSize = dateContentSize,
+                todayIndicatorGap = todayIndicatorGap,
+                todayIndicatorSize = todayIndicatorSize,
+                cellHeight = cellHeight,
+                edgeRangeWidth = edgeRangeWidth,
+            )
         }
     }
 }
