@@ -113,7 +113,7 @@ private fun MainBottomBarPreview() {
         val dummyTabs: ImmutableList<MainTab> = persistentListOf(
             MainTab.HOME,
             MainTab.EXPLORE,
-            MainTab.MY_ROUTE,
+            MainTab.MY_COURSE,
             MainTab.FAVORITE,
             MainTab.MY_PAGE
         )

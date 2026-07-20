@@ -6,8 +6,8 @@ import com.office.meong.core.navigation.MainTabRoute
 import com.office.meong.presentation.explore.navigation.Explore
 import com.office.meong.presentation.favorite.navigation.Favorite
 import com.office.meong.presentation.home.navigation.Home
+import com.office.meong.presentation.course.my.navigation.MyCourse
 import com.office.meong.presentation.mypage.navigation.MyPage
-import com.office.meong.presentation.myroute.navigation.MyRoute
 
 enum class MainTab(
     @param:DrawableRes val selectedIcon: Int,
@@ -29,11 +29,11 @@ enum class MainTab(
         route = Explore,
     ),
 
-    MY_ROUTE(
-        selectedIcon = R.drawable.ic_route_filled,
-        unselectedIcon = R.drawable.ic_route,
+    MY_COURSE(
+        selectedIcon = R.drawable.ic_course_filled,
+        unselectedIcon = R.drawable.ic_course,
         contentDescription = "내 코스",
-        route = MyRoute,
+        route = MyCourse,
     ),
 
     FAVORITE(

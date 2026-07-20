@@ -9,13 +9,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.office.meong.core.network.monitor.NetworkMonitor
+import com.office.meong.presentation.course.navigation.CourseGraph
 import com.office.meong.presentation.explore.navigation.navigateToExplore
 import com.office.meong.presentation.favorite.navigation.navigateToFavorite
 import com.office.meong.presentation.home.navigation.Home
 import com.office.meong.presentation.home.navigation.navigateToHome
 import com.office.meong.presentation.main.MainTab
+import com.office.meong.presentation.course.my.navigation.navigateToMyCourse
 import com.office.meong.presentation.mypage.navigation.navigateToMyPage
-import com.office.meong.presentation.myroute.navigation.navigateToMyRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +29,7 @@ class MainAppState(
     coroutineScope: CoroutineScope,
     networkMonitor: NetworkMonitor,
 ) {
-    val startDestination = Home
+    val startDestination = CourseGraph
 
     val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
         .map(Boolean::not)
@@ -91,7 +92,7 @@ class MainAppState(
         when (tab) {
             MainTab.HOME -> navController.navigateToHome(navOptions = navOptions)
             MainTab.EXPLORE -> navController.navigateToExplore(navOptions = refreshNavOptions)
-            MainTab.MY_ROUTE -> navController.navigateToMyRoute(navOptions = navOptions)
+            MainTab.MY_COURSE -> navController.navigateToMyCourse(navOptions = navOptions)
             MainTab.FAVORITE -> navController.navigateToFavorite(navOptions = navOptions)
             MainTab.MY_PAGE -> navController.navigateToMyPage(navOptions = navOptions)
         }

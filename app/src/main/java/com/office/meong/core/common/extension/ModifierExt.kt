@@ -22,11 +22,13 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import kotlin.math.abs
 
 fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = composed {
     this.clickable(
@@ -121,20 +123,38 @@ fun Modifier.disableNestedScroll(): Modifier = composed {
 
 /**
  * 바텀시트 내부에서 위로 당기는(Upward) 드래그, 스크롤 이벤트만 가로채서 소비하는 Modifier
+ *
+ * touch slop을 넘기 전에는 소비하지 않는다. slop 판정 전에 소비해버리면 자식 스크롤(휠 피커 등)이
+ * 제스처를 빼앗긴 것으로 판단하고 드래그 판정을 취소하기 때문. 자식이 먼저 소비한 이벤트도 건드리지 않는다.
  */
 fun Modifier.disableUpWardEvent(): Modifier = this.pointerInput(Unit) {
+    val touchSlop = viewConfiguration.touchSlop
+
     awaitPointerEventScope {
+        var accumulatedDy = 0f
+        var isPastSlop = false
+
         while (true) {
             val event = awaitPointerEvent(PointerEventPass.Main)
 
             event.changes.forEach { change ->
-                if (!change.isConsumed) {
-                    val dy = change.position.y - change.previousPosition.y
+                if (change.changedToDownIgnoreConsumed()) {
+                    accumulatedDy = 0f
+                    isPastSlop = false
+                }
 
-                    // 손가락이 위로 향할 때만 차단
-                    if (dy < 0) {
-                        change.consume()
-                    }
+                if (change.isConsumed || !change.pressed) return@forEach
+
+                val dy = change.position.y - change.previousPosition.y
+
+                if (!isPastSlop) {
+                    accumulatedDy += dy
+                    isPastSlop = abs(accumulatedDy) > touchSlop
+                }
+
+                // 손가락이 위로 향할 때만 차단
+                if (isPastSlop && dy < 0) {
+                    change.consume()
                 }
             }
         }
