@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.office.meong.core.common.util.suspendRunCatching
+import com.office.meong.core.crypto.AadContext
 import com.office.meong.core.crypto.CryptoManager
 import com.office.meong.core.localstorage.qualifier.AuthDataStore
 import com.office.meong.core.localstorage.token.TokenConstant.KEY_ACCESS_TOKEN
@@ -23,7 +24,7 @@ class TokenManagerImpl @Inject constructor(
     override suspend fun saveAccessToken(token: String) {
         suspendRunCatching {
             cachedAccessToken = token
-            val encrypted = cryptoManager.encrypt(token)
+            val encrypted = cryptoManager.encrypt(token, AadContext.ACCESS_TOKEN)
 
             dataStore.edit {
                 it[KEY_ACCESS_TOKEN] = encrypted
@@ -33,7 +34,7 @@ class TokenManagerImpl @Inject constructor(
 
     override suspend fun saveRefreshToken(token: String) {
         suspendRunCatching {
-            val encrypted = cryptoManager.encrypt(token)
+            val encrypted = cryptoManager.encrypt(token, AadContext.REFRESH_TOKEN)
 
             dataStore.edit {
                 it[KEY_REFRESH_TOKEN] = encrypted
@@ -44,8 +45,8 @@ class TokenManagerImpl @Inject constructor(
     override suspend fun saveTokens(accessToken: String, refreshToken: String) {
         suspendRunCatching {
             cachedAccessToken = accessToken
-            val encryptedAccess = cryptoManager.encrypt(accessToken)
-            val encryptedRefresh = cryptoManager.encrypt(refreshToken)
+            val encryptedAccess = cryptoManager.encrypt(accessToken, AadContext.ACCESS_TOKEN)
+            val encryptedRefresh = cryptoManager.encrypt(refreshToken, AadContext.REFRESH_TOKEN)
 
             dataStore.edit {
                 it[KEY_ACCESS_TOKEN] = encryptedAccess
@@ -61,7 +62,7 @@ class TokenManagerImpl @Inject constructor(
 
         return suspendRunCatching {
             val encrypted = dataStore.data.map { it[KEY_ACCESS_TOKEN] }.first()
-            encrypted?.let { cryptoManager.decrypt(it) }?.also {
+            encrypted?.let { cryptoManager.decrypt(it, AadContext.ACCESS_TOKEN) }?.also {
                 cachedAccessToken = it
             }
         }.onFailure { Timber.e(it, "AccessToken 로드 실패") }.getOrNull()
@@ -71,7 +72,7 @@ class TokenManagerImpl @Inject constructor(
         return suspendRunCatching {
             val encrypted = dataStore.data.map { it[KEY_REFRESH_TOKEN] }.first()
             encrypted?.let {
-                cryptoManager.decrypt(it)
+                cryptoManager.decrypt(it, AadContext.REFRESH_TOKEN)
             }
         }.onFailure { Timber.e(it, "RefreshToken 로드 실패") }.getOrNull()
     }
