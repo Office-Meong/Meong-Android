@@ -1,6 +1,5 @@
 package com.office.meong.core.designsystem.component.topbar
 
-import android.R.attr.strokeColor
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,8 +23,8 @@ fun MeongTopbar(
     modifier: Modifier = Modifier,
     title: String? = null,
     isBackVisible: Boolean = true,
-    isActionVisible: Boolean = false,
     onBackClick: () -> Unit = {},
+    actionType: TopbarAction? = null,
     onActionClick: () -> Unit = {},
 ) {
     val topbarStrokeColor = MeongTheme.colors.gray100
@@ -67,15 +66,12 @@ fun MeongTopbar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        if (isActionVisible) {
+        if (actionType != null) {
             Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_more_horiz),
+                imageVector = ImageVector.vectorResource(actionType.iconRes),
                 contentDescription = null,
                 tint = MeongTheme.colors.gray900,
-                modifier = Modifier
-                    .noRippleClickable(
-                        onClick = onActionClick
-                    )
+                modifier = Modifier.noRippleClickable(onClick = onActionClick)
             )
         }
     }
@@ -88,7 +84,7 @@ private fun MeongTopbarPreview() {
         MeongTopbar(
             title = "코스 상세",
             isBackVisible = true,
-            isActionVisible = true
+            actionType = TopbarAction.CLOSE
         )
     }
 }
