@@ -136,7 +136,6 @@ fun MainScreen(
             },
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
                 .navigationBarsPadding()
         ) { innerPadding ->
             MeongNavHost(
