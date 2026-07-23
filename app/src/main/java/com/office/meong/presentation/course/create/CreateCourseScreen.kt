@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.designsystem.component.button.MeongButton
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.course.create.component.CreateCourseUserInfoHolder
 import com.office.meong.presentation.course.create.component.datepicker.CreateCourseDatePicker
 import com.office.meong.presentation.course.create.component.setting.CreateCourseChipSelector
 import com.office.meong.presentation.course.create.component.setting.CreateCourseDropdownSelector
@@ -39,6 +38,7 @@ import com.office.meong.presentation.course.create.component.timepicker.CreateCo
 import com.office.meong.presentation.course.create.component.timepicker.extension.formatCourseTime
 import com.office.meong.presentation.course.create.model.CreateCourseRangeInputType
 import com.office.meong.presentation.course.create.model.WorkTimeInput
+import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -123,8 +123,11 @@ private fun CreateCourseScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        CreateCourseUserInfoHolder(
-            url = ""
+        PetProfileCard(
+            petName = "몽몽이",
+            imageUrl = "",
+            tags = persistentListOf("소형견","활동량 보통", "사회성 보통"),
+            isBordered = true
         )
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -29,7 +29,7 @@ class MeongApplication : Application(), ImageLoaderFactory {
 
     private fun setTimber() {
         if (BuildConfig.DEBUG) {
-            Timber.Forest.plant(Timber.DebugTree())
+            Timber.plant(Timber.DebugTree())
         }
     }
 

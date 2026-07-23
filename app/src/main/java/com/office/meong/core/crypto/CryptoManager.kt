@@ -1,6 +1,6 @@
 package com.office.meong.core.crypto
 
 interface CryptoManager {
-    fun encrypt(plaintext: String): String
-    fun decrypt(ciphertext: String): String
+    fun encrypt(plaintext: String, aadContext: AadContext): String
+    fun decrypt(ciphertext: String, aadContext: AadContext): String
 }

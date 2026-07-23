@@ -1,4 +1,4 @@
-package com.office.meong.presentation.course.create.component
+package com.office.meong.presentation.sharedcomponent
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -25,15 +25,18 @@ import com.office.meong.R
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.component.image.UrlImage
 import com.office.meong.core.designsystem.theme.MeongTheme
-
-val fakeChipData: List<String> = listOf("소형견","활동량 보통", "사회성 보통")
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
-fun CreateCourseUserInfoHolder(
-    url: String,
+fun PetProfileCard(
+    petName: String,
+    imageUrl: String,
+    tags: ImmutableList<String>,
     modifier: Modifier = Modifier,
+    isBordered: Boolean = false,
     backgroundColor: Color = MeongTheme.colors.white,
-    borderColor: Color = MeongTheme.colors.gray100
+    borderColor: Color = MeongTheme.colors.gray100,
 ) {
     Row(
         modifier = modifier
@@ -41,15 +44,15 @@ fun CreateCourseUserInfoHolder(
                 fillWidth()
                 shape(RoundedCornerShape(20.dp))
                 background(color = backgroundColor)
-                border(width = 1.dp, color = borderColor)
+                if (isBordered) border(width = 1.dp, color = borderColor)
                 contentPadding(22.dp)
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(28.dp)
     ) {
-        if (url.isNotEmpty()) {
+        if (imageUrl.isNotEmpty()) {
             UrlImage(
-                url = "",
+                url = imageUrl,
                 modifier = Modifier
                     .size(70.dp)
                     .clip(CircleShape),
@@ -71,7 +74,7 @@ fun CreateCourseUserInfoHolder(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = "몽몽이",
+                text = petName,
                 style = MeongTheme.typography.body.body14M,
                 color = MeongTheme.colors.gray900
             )
@@ -81,7 +84,7 @@ fun CreateCourseUserInfoHolder(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                fakeChipData.forEach { data ->
+                tags.forEach { data ->
                     MeongChip(
                         chipText = data,
                     )
@@ -93,10 +96,12 @@ fun CreateCourseUserInfoHolder(
 
 @Preview
 @Composable
-private fun CreateCourseUserInfoHolderPreview() {
+private fun PetProfileCardPreview() {
     MeongTheme {
-        CreateCourseUserInfoHolder(
-            url = "",
+        PetProfileCard(
+            petName = "몽몽이",
+            imageUrl = "",
+            tags = persistentListOf("소형견","활동량 보통", "사회성 보통"),
             modifier = Modifier
         )
     }

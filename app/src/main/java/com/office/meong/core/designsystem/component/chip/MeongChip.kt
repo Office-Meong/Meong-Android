@@ -1,10 +1,12 @@
 package com.office.meong.core.designsystem.component.chip
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -14,6 +16,12 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.theme.MeongColors
 import com.office.meong.core.designsystem.theme.MeongTheme
 
+/**
+ * @param chipText 칩에 들어갈 텍스트
+ * @param isActivated 활성화 여부 - primary 색상
+ * @param isSelected 선택 여부 - 선택 시 색상 변경
+ * @param chipType 칩의 크기 및 패딩, shape 등
+ * */
 @Composable
 fun MeongChip(
     chipText: String,
@@ -84,10 +92,21 @@ private fun ChipType.toMeongChipStyle(colors: MeongColors): MeongChipStyle = whe
 @Composable
 private fun MeongChipPreview() {
     MeongTheme {
-        MeongChip(
-            chipText = "테스트",
-            chipType = ChipType.SMALL,
-            isSelected = true,
-        )
+        Column (
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            MeongChip(
+                chipText = "테스트",
+                chipType = ChipType.SMALL,
+                isSelected = true,
+            )
+
+            MeongChip(
+                chipText = "테스트",
+                chipType = ChipType.LARGE,
+                isSelected = false,
+                isActivated = true
+            )
+        }
     }
 }

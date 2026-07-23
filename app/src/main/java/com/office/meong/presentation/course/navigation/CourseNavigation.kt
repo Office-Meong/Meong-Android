@@ -18,7 +18,7 @@ fun NavController.navigateToCourseGraph(
     navOptions: NavOptions? = null
 ) = navigate(CourseGraph, navOptions)
 
-fun NavGraphBuilder.courseGraph(
+fun NavGraphBuilder.courseNavGraph(
     paddingValues: PaddingValues,
 ) {
     navigation<CourseGraph>(

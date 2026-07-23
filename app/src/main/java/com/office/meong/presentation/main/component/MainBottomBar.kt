@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
@@ -44,6 +46,8 @@ fun MainBottomBar(
     onTabSelected: (MainTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val strokeColor = MeongTheme.colors.gray100
+
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn() + slideIn { IntOffset(0, it.height) },
@@ -55,6 +59,14 @@ fun MainBottomBar(
                 .background(
                     color = MeongTheme.colors.white,
                 )
+                .drawBehind {
+                    drawLine(
+                        color = strokeColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(size.width, 0f),
+                        strokeWidth = 1f,
+                    )
+                }
                 .selectableGroup(),
             verticalAlignment = Alignment.CenterVertically
         ) {

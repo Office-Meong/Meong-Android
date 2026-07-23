@@ -29,7 +29,7 @@ class MainAppState(
     coroutineScope: CoroutineScope,
     networkMonitor: NetworkMonitor,
 ) {
-    val startDestination = CourseGraph
+    val startDestination = Home
 
     val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
         .map(Boolean::not)
