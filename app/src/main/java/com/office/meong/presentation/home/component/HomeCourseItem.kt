@@ -33,7 +33,7 @@ import com.office.meong.core.common.extension.styleableBackground
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.presentation.home.model.HomePlaceCategory
-import com.office.meong.presentation.home.model.PlaceType
+import com.office.meong.core.model.place.PlaceType
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 

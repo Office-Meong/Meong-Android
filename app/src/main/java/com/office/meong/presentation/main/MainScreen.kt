@@ -21,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.office.meong.core.designsystem.component.dialog.MeongDialog
+import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAction
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.trigger.DialogTrigger
 import com.office.meong.core.model.trigger.GlobalUiEventHolder
@@ -144,7 +146,26 @@ fun MainScreen(
             )
         }
 
-        // Todo: network dialog 세팅하기
+        if (dialogState.dialogState.isVisible) {
+            MeongDialog(
+                title = "인터넷 연결을 확인해주세요!",
+                confirmAction = MeongConfirmAction(
+                    text = "재시도",
+                    onClick = {
+                        if (!isOffline) {
+                            dialogState.dismissDialog()
+                        } else {
+                            onShowToast("네트워크가 아직 연결되지 않았어요")
+                        }
+                    }
+                ),
+                onDismiss = {
+                    if (!isOffline) {
+                        dialogState.dismissDialog()
+                    }
+                }
+            )
+        }
     }
 }
 
