@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -42,6 +44,8 @@ import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
+import com.office.meong.core.designsystem.component.chip.ChipType
+import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.component.dialog.MeongDialog
 import com.office.meong.core.designsystem.component.dialog.action.MeongCancelAction
 import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAction
@@ -64,6 +68,7 @@ import com.office.meong.presentation.course.result.component.ResultCourseTopSect
 import com.office.meong.presentation.course.result.component.RouteIndicator
 import com.office.meong.presentation.course.result.state.rememberScheduleDragDropState
 import com.office.meong.presentation.course.result.model.CurrentDialogType
+import com.office.meong.presentation.course.result.model.PlaceEditChipType
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
 import com.office.meong.presentation.course.result.model.ScheduleUiModel
 
@@ -77,6 +82,7 @@ fun ResultCourseRoute(
     var isEditTitle by remember { mutableStateOf(false) }
     var isEditSchedule by remember { mutableStateOf(false) }
     var isEditAccommodation by remember { mutableStateOf(false) }
+    var editPlaceChipType by remember { mutableStateOf(PlaceEditChipType.SEARCH) }
 
     val scheduleUiModels = remember { mutableStateListOf(
         ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "프렌즈애견펜션", grade = "A"),
@@ -161,6 +167,17 @@ fun ResultCourseRoute(
         EditTitleBottomSheet(
             onEditTitle = {
                 isEditTitle = it
+            }
+        )
+    }
+
+    if (isEditAccommodation) {
+        EditPlaceBottomSheet(
+            selectedChipType = editPlaceChipType,
+            onChipClick = { editPlaceChipType = it },
+            onDismiss = {
+                isEditAccommodation = false
+                editPlaceChipType = PlaceEditChipType.SEARCH
             }
         )
     }
@@ -437,7 +454,96 @@ private fun EditTitleBottomSheet(
     }
 }
 
+/**
+ * 숙소 변경과 장소 추가를 위한 BottomSheet
+ *
+ * 검색 칩 선택 시 검색창이, 관심 장소 칩 선택 시 바텀시트가 화면의 70%까지 늘어나며 리스트가 노출된다.
+ * TODO: 서버 API 구조 확정 후 실제 검색/관심 장소 데이터 연동으로 교체
+ * */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditPlaceBottomSheet(
+    selectedChipType: PlaceEditChipType,
+    onChipClick: (PlaceEditChipType) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    MeongBottomSheet(
+        onDismiss = onDismiss,
+        modifier = modifier
+            .imePadding()
+    ) {
+        MeongTopbar(
+            title = "장소 추가",
+            isBackVisible = false,
+            actionType = TopbarAction.CLOSE,
+            onActionClick = { onDismiss() },
+        )
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PlaceEditChipType.entries.forEach { chipType ->
+                MeongChip(
+                    chipText = chipType.label,
+                    chipType = ChipType.LARGE,
+                    isSelected = chipType == selectedChipType,
+                    modifier = Modifier
+                        .noRippleClickable {
+                            onChipClick(chipType)
+                        }
+                )
+            }
+        }
+
+        when (selectedChipType) {
+            PlaceEditChipType.SEARCH -> {
+                MeongTextField(
+                    state = rememberTextFieldState(),
+                    placeholder = "장소를 검색해주세요",
+                    leadingIcon = R.drawable.ic_search,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            PlaceEditChipType.FAVORITE -> {
+                val favoritePlaces = remember {
+                    listOf(
+                        ScheduleUiModel(id = "favorite-1", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
+                        ScheduleUiModel(id = "favorite-2", placeType = PlaceType.RESTAURANT, placeName = "댕댕이 맛집", grade = "A"),
+                        ScheduleUiModel(id = "favorite-3", placeType = PlaceType.SIGHTSEEING, placeName = "산책하기 좋은 공원", grade = "A"),
+                    )
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.7f),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = favoritePlaces,
+                        key = { it.id }
+                    ) { place ->
+                        ResultCoursePlaceSummaryItem(
+                            placeType = place.placeType.label,
+                            placeName = place.placeName,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Preview
 @Composable
