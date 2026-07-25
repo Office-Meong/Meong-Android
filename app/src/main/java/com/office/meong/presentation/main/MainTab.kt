@@ -3,7 +3,7 @@ package com.office.meong.presentation.main
 import androidx.annotation.DrawableRes
 import com.office.meong.R
 import com.office.meong.core.navigation.MainTabRoute
-import com.office.meong.presentation.explore.navigation.Explore
+import com.office.meong.presentation.explore.navigation.navigation.Explore
 import com.office.meong.presentation.favorite.navigation.Favorite
 import com.office.meong.presentation.home.navigation.Home
 import com.office.meong.presentation.course.my.navigation.MyCourse
