@@ -27,6 +27,7 @@ ksp = "2.3.9"
 coil = "2.7.0"
 lottie = "6.7.1"
 wheelPicker = "0.0.1"
+composeShimmer = "1.5.0"
 
 # DataStore
 datastore = "1.2.1"
@@ -91,6 +92,7 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 wheelpicker = { group = "io.github.sonms", name = "wheelpicker", version.ref = "wheelPicker" }
+compose-shimmer = { group = "com.valentinilk.shimmer", name = "compose-shimmer", version.ref = "composeShimmer" }
 
 # Timber
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
