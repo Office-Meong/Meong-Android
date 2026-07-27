@@ -31,11 +31,11 @@ import com.office.meong.core.model.place.PlaceType
 fun MeongPlaceCard(
     placeName: String,
     location: String,
-    grade: String,
     placeType: PlaceType,
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier,
+    grade: String? = null,
     isBordered: Boolean = false,
     isSelected: Boolean = false
 ) {
@@ -70,10 +70,12 @@ fun MeongPlaceCard(
                     isActivated = false
                 )
 
-                MeongChip(
-                    chipText = "펫-워크 $grade",
-                    isActivated = true
-                )
+                if (grade != null) {
+                    MeongChip(
+                        chipText = "펫-워크 $grade",
+                        isActivated = true
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

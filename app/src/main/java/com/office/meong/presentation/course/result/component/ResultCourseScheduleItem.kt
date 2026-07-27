@@ -30,6 +30,11 @@ import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
+import com.office.meong.presentation.sharedcomponent.skeleton.MeongPlaceCardSkeleton
+import com.office.meong.presentation.sharedcomponent.skeleton.meongShimmerTheme
+import com.valentinilk.shimmer.Shimmer
+import com.valentinilk.shimmer.ShimmerBounds
+import com.valentinilk.shimmer.rememberShimmer
 
 @Composable
 fun ResultCourseScheduleItem(
@@ -38,6 +43,8 @@ fun ResultCourseScheduleItem(
     grade: String,
     isLastItem: Boolean,
     placeType: PlaceType,
+    isLoading: Boolean,
+    shimmer: Shimmer,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -75,14 +82,18 @@ fun ResultCourseScheduleItem(
                 .padding(bottom = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            MeongPlaceCard(
-                placeName = placeName,
-                location = location,
-                grade = grade,
-                isFavorite = false,
-                onFavoriteClick = onFavoriteClick,
-                placeType = placeType,
-            )
+            if (isLoading) {
+                MeongPlaceCardSkeleton(shimmer = shimmer)
+            } else {
+                MeongPlaceCard(
+                    placeName = placeName,
+                    location = location,
+                    grade = grade,
+                    isFavorite = false,
+                    onFavoriteClick = onFavoriteClick,
+                    placeType = placeType,
+                )
+            }
 
             if (!isLastItem) {
                 RouteIndicator(
@@ -136,6 +147,26 @@ private fun ResultCourseScheduleItemPreview() {
             grade = "A",
             isLastItem = false,
             placeType = PlaceType.WORKSPACE,
+            isLoading = false,
+            shimmer = rememberShimmer(shimmerBounds = ShimmerBounds.View, theme = meongShimmerTheme()),
+            onFavoriteClick = {},
+            onRouteClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ResultCourseScheduleItemLoadingPreview() {
+    MeongTheme {
+        ResultCourseScheduleItem(
+            count = 1,
+            placeName = "프렌즈애견펜션",
+            grade = "A",
+            isLastItem = false,
+            placeType = PlaceType.WORKSPACE,
+            isLoading = true,
+            shimmer = rememberShimmer(shimmerBounds = ShimmerBounds.View, theme = meongShimmerTheme()),
             onFavoriteClick = {},
             onRouteClick = {}
         )
