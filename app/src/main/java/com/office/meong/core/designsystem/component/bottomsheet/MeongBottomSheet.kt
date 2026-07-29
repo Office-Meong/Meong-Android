@@ -37,8 +37,6 @@ fun MeongBottomSheet(
         dragHandle = null,
         modifier = modifier
     ) {
-        // 시트 전체(핸들 포함)에서 위 방향 드래그를 소비해 시트가 위로 늘어나는 현상 차단.
-        // 자식(휠 피커 등)이 먼저 소비한 이벤트는 건드리지 않으므로 내부 스크롤은 정상 동작한다.
         Column(
             modifier = Modifier
                 .fillMaxWidth()

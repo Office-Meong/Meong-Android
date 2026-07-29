@@ -3,13 +3,14 @@ package com.office.meong.core.designsystem.component.topbar
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,21 +26,32 @@ fun MeongTopbar(
     isBackVisible: Boolean = true,
     onBackClick: () -> Unit = {},
     actionType: TopbarAction? = null,
-    onActionClick: () -> Unit = {},
+    onActionClick: (TopbarAction) -> Unit = {},
+    isStrokeVisible: Boolean = false,
+    containerColor: Color = MeongTheme.colors.white
 ) {
     val topbarStrokeColor = MeongTheme.colors.gray100
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp, horizontal = 20.dp)
-            .drawBehind {
-                drawLine(
-                    color = topbarStrokeColor,
-                    start = Offset(0f, size.height),
-                    end = Offset(size.width, size.height),
-                    strokeWidth = 1f,
-                )
+            .then(
+                if (isStrokeVisible) {
+                    Modifier.drawBehind {
+                        drawLine(
+                            color = topbarStrokeColor,
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, size.height),
+                            strokeWidth = 1.dp.toPx(),
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+            )
+            .styleable {
+                background(containerColor)
+                contentPadding(vertical = 10.dp, horizontal = 20.dp)
             }
     ) {
         if (isBackVisible) {
@@ -71,7 +83,9 @@ fun MeongTopbar(
                 imageVector = ImageVector.vectorResource(actionType.iconRes),
                 contentDescription = null,
                 tint = MeongTheme.colors.gray900,
-                modifier = Modifier.noRippleClickable(onClick = onActionClick)
+                modifier = Modifier.noRippleClickable(onClick = {
+                    onActionClick(actionType)
+                })
             )
         }
     }

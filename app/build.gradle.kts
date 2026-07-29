@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.bundles.hilt)
     ksp(libs.hilt.compiler)
     implementation(libs.bundles.coil)
+    implementation(libs.compose.shimmer)
 
     implementation(libs.timber)
     implementation(libs.wheelpicker)
