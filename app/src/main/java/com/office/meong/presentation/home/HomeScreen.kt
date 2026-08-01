@@ -12,16 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,7 +30,7 @@ import com.office.meong.presentation.home.component.HomeCourseEmptyContent
 import com.office.meong.presentation.home.component.HomeCourseItem
 import com.office.meong.presentation.home.component.HomeTooltipBalloon
 import com.office.meong.presentation.home.model.HomePlaceCategory
-import com.office.meong.presentation.home.model.PlaceType
+import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
