@@ -8,14 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
@@ -52,40 +51,23 @@ fun FavoriteEmptyView (
 
             Spacer(modifier = Modifier.padding(12.dp))
 
-            FavoriteSearchChip(
-                onSearchClick = onSearchClick
+            MeongPillButton(
+                text = "검색어",
+                onClick = onSearchClick
             )
         }
     }
 }
 
-@Composable
-fun FavoriteSearchChip(
-    onSearchClick : () -> Unit,
-    modifier : Modifier = Modifier
-){
-    Text(
-        text = "장소 탐색하기",
-        modifier = modifier
-            .background(
-                color = MeongTheme.colors.primaryLight,
-                shape = RoundedCornerShape(999.dp)
-            )
-            .noRippleClickable(onClick = onSearchClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    )
-}
 
 @Preview
 @Composable
 private fun FavoriteSearchChipPreview() {
-    Column() {
-        FavoriteSearchChip(
-            onSearchClick = {}
-        )
+    MeongTheme {
+
+    }
 
         FavoriteEmptyView(
             onSearchClick = {}
         )
     }
-}

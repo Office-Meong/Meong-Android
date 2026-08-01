@@ -63,7 +63,7 @@ fun ExploreDetailCongestionInfo(
             Box(
                 modifier = Modifier
                     .padding(top = 8.dp)
-                    .background(Color(0xFF424854), RoundedCornerShape(8.dp))
+                    .background(MeongTheme.colors.gray800, RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Text(

@@ -61,7 +61,7 @@ fun ExploreDetailHeader(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_location_filled),
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_location_filled),
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = Color.Unspecified

@@ -31,8 +31,8 @@ fun ExploreChipArea(
     onTypeSelected: (ExplorePlaceType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val regionItems = remember { ExploreRegion.entries.toImmutableList() }
-    val typeItems = remember { ExplorePlaceType.entries.toImmutableList() }
+    val regionItems = ExploreRegion.entries.toImmutableList()
+    val typeItems = ExplorePlaceType.entries.toImmutableList()
 
     Column(
         modifier = modifier.fillMaxWidth(),
