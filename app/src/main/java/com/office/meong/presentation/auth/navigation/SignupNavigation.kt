@@ -6,7 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.office.meong.core.navigation.Route
-import com.office.meong.presentation.onboarding.SignUpRoute
+import com.office.meong.presentation.auth.SignUpRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
