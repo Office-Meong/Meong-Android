@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,11 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.office.meong.R
+import com.office.meong.core.common.dragdrop.rememberDragDropState
 import com.office.meong.core.common.extension.disableNestedScroll
 import com.office.meong.core.common.extension.disableUpWardEvent
 import com.office.meong.core.common.extension.noRippleClickable
@@ -74,7 +75,6 @@ import com.office.meong.presentation.course.result.model.PlaceEditChipType
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
 import com.office.meong.presentation.course.result.model.ScheduleUiModel
 import com.office.meong.presentation.course.result.model.ScheduleUiModel.Companion.DUMMY_SEARCHABLE_PLACES
-import com.office.meong.presentation.course.result.state.rememberScheduleDragDropState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 import com.office.meong.presentation.sharedcomponent.skeleton.MeongPlaceCardSkeleton
 import com.office.meong.presentation.sharedcomponent.skeleton.meongShimmerTheme
@@ -222,9 +222,10 @@ private fun ResultCourseScreen(
         theme = meongShimmerTheme()
     )
 
-    val dragDropState = rememberScheduleDragDropState(
+    val dragDropState = rememberDragDropState(
         lazyListState = lazyListState,
         items = scheduleUiModels,
+        key = { it.id },
         onMove = { fromId, toId ->
             val fromIndex = scheduleUiModels.indexOfFirst { it.id == fromId }
             val toIndex = scheduleUiModels.indexOfFirst { it.id == toId }
@@ -580,9 +581,7 @@ private fun EditPlaceBottomSheet(
                             shimmer = placeShimmer,
                             emptyTitle = "검색 결과가 없어요",
                             emptyDescription = "다른 검색어를 입력해주세요",
-                            onFavoriteClick = {},
-                            modifier = Modifier
-                                .weight(1f)
+                            onFavoriteClick = {}
                         )
                     }
                 }
@@ -608,9 +607,7 @@ private fun EditPlaceBottomSheet(
                         shimmer = placeShimmer,
                         emptyTitle = "저장된 관심 장소가 없어요",
                         emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
-                        onFavoriteClick = {},
-                        modifier = Modifier
-                            .weight(1f)
+                        onFavoriteClick = {}
                     )
                 }
             }
@@ -631,17 +628,21 @@ private fun PlaceEditResultList(
     modifier: Modifier = Modifier,
     emptyDescription: String? = null,
 ) {
+    val maxListHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.7f).dp }
+
     when {
         isLoading -> {
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.7f),
+                    .height(maxListHeight),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(count = PLACE_SKELETON_ITEM_COUNT) {
-                    MeongPlaceCardSkeleton(shimmer = shimmer)
+                    MeongPlaceCardSkeleton(
+                        shimmer = shimmer
+                    )
                 }
             }
         }
@@ -652,6 +653,7 @@ private fun PlaceEditResultList(
                 description = emptyDescription,
                 modifier = modifier
                     .fillMaxWidth()
+                    .height(maxListHeight)
                     .padding(horizontal = 54.dp)
             )
         }
@@ -660,7 +662,7 @@ private fun PlaceEditResultList(
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.7f),
+                    .height(maxListHeight),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -675,6 +677,7 @@ private fun PlaceEditResultList(
                         isFavorite = true,
                         onFavoriteClick = { onFavoriteClick(place.id) },
                         placeType = place.placeType,
+                        isBordered = true
                     )
                 }
             }
@@ -689,9 +692,7 @@ private fun PlaceEditEmptyView(
     description: String? = null,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .fillMaxHeight(0.7f),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
