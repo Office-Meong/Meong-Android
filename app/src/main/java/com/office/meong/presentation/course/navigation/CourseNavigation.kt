@@ -9,6 +9,8 @@ import androidx.navigation.navigation
 import com.office.meong.presentation.course.create.CreateCourseRoute
 import com.office.meong.presentation.course.create.navigation.CreateCourse
 import com.office.meong.presentation.course.my.navigation.MyCourse
+import com.office.meong.presentation.course.result.ResultCourseRoute
+import com.office.meong.presentation.course.result.navigation.ResultCourse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -22,10 +24,17 @@ fun NavGraphBuilder.courseNavGraph(
     paddingValues: PaddingValues,
 ) {
     navigation<CourseGraph>(
-        startDestination = CreateCourse
+        startDestination = ResultCourse
     ) {
         composable<CreateCourse> {
             CreateCourseRoute()
+        }
+
+        composable<ResultCourse> {
+            ResultCourseRoute(
+                paddingValues = paddingValues,
+                navigateUp = {}
+            )
         }
     }
 }

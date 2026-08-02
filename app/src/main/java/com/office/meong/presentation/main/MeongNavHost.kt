@@ -8,6 +8,9 @@ import androidx.navigation.compose.NavHost
 import com.office.meong.presentation.auth.navigation.loginNavGraph
 import com.office.meong.presentation.auth.navigation.signupNavGraph
 import com.office.meong.presentation.course.navigation.courseNavGraph
+import com.office.meong.presentation.explore.navigation.navigation.exploreDetailNavGraph
+import com.office.meong.presentation.explore.navigation.navigation.exploreNavGraph
+import com.office.meong.presentation.favorite.navigation.favoriteNavGraph
 import com.office.meong.presentation.home.navigation.homeNavGraph
 import com.office.meong.presentation.main.state.MainAppState
 
@@ -48,5 +51,17 @@ fun MeongNavHost(
             paddingValues = paddingValues
         )
 
+        exploreNavGraph(
+            paddingValues = paddingValues
+        )
+
+        exploreDetailNavGraph(
+            paddingValues = paddingValues,
+            onBackClick = {}
+        )
+
+        favoriteNavGraph(
+            paddingValues = paddingValues
+        )
     }
 }

@@ -1,0 +1,64 @@
+package com.office.meong.core.designsystem.component.tag
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.designsystem.theme.MeongTheme
+
+@Composable
+fun MeongTag(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (isSelected) MeongTheme.colors.gray600 else MeongTheme.colors.gray50
+    val textColor = if (isSelected) MeongTheme.colors.white else MeongTheme.colors.gray700
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(color = backgroundColor)
+            .noRippleClickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            style = MeongTheme.typography.label.label14Sb
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewMeongTag(){
+    MeongTheme {
+        Column(
+        ) {
+            MeongTag(
+                text = "전체",
+                isSelected = true,
+                onClick = {}
+            )
+            MeongTag(
+                text = "강릉",
+                isSelected = false,
+                onClick = {}
+            )
+        }
+    }
+}
