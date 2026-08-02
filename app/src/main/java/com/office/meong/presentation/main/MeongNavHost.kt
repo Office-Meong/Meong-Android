@@ -5,6 +5,8 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
+import com.office.meong.presentation.auth.navigation.loginNavGraph
+import com.office.meong.presentation.auth.navigation.signupNavGraph
 import com.office.meong.presentation.course.navigation.courseNavGraph
 import com.office.meong.presentation.explore.navigation.navigation.exploreDetailNavGraph
 import com.office.meong.presentation.explore.navigation.navigation.exploreNavGraph
@@ -38,6 +40,14 @@ fun MeongNavHost(
         )
 
         courseNavGraph(
+            paddingValues = paddingValues
+        )
+
+        signupNavGraph(
+            paddingValues = paddingValues
+        )
+
+        loginNavGraph(
             paddingValues = paddingValues
         )
 
