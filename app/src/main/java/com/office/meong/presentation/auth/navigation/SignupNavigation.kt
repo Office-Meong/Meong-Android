@@ -1,25 +1,25 @@
-package com.office.meong.presentation.favorite.navigation
+package com.office.meong.presentation.auth.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import com.office.meong.core.navigation.MainTabRoute
+import com.office.meong.core.navigation.Route
+import com.office.meong.presentation.auth.SignUpRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object Favorite: MainTabRoute
+data object Signup: Route
 
-fun NavController.navigateToFavorite(navOptions: NavOptions? = null) =
-    navigate(Favorite, navOptions)
+fun NavController.navigateToSignup(navOptions: NavOptions? = null) =
+    navigate(Signup, navOptions)
 
-
-fun NavGraphBuilder.favoriteNavGraph(
+fun NavGraphBuilder.signupNavGraph(
     paddingValues: PaddingValues
 ) {
-    composable<Favorite> {
-        FavoriteRoute(
+    composable<Signup> {
+        SignUpRoute(
             paddingValues = paddingValues
         )
     }
