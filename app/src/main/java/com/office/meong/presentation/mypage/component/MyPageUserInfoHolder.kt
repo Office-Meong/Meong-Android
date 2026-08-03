@@ -124,6 +124,8 @@ private fun MyPageUserInfoItem(
                     color = MeongTheme.colors.gray900
                 )
 
+                Spacer(modifier = Modifier.height(2.dp))
+
                 if (infoType == MyPageInfoType.USER) {
                     Text(
                         text = infoContent,
@@ -150,7 +152,7 @@ private fun MyPageUserInfoItem(
                                     color = MeongTheme.colors.gray200,
                                     modifier = Modifier
                                         .fillMaxHeight()
-                                        .padding(vertical = 5.dp)
+                                        .padding(vertical = 3.dp)
                                 )
                             }
                         }
