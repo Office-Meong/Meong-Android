@@ -13,6 +13,7 @@ import com.office.meong.presentation.explore.navigation.navigation.exploreNavGra
 import com.office.meong.presentation.favorite.navigation.favoriteNavGraph
 import com.office.meong.presentation.home.navigation.homeNavGraph
 import com.office.meong.presentation.main.state.MainAppState
+import com.office.meong.presentation.mypage.navigation.myPageNavGraph
 
 @Composable
 fun MeongNavHost(
@@ -62,6 +63,12 @@ fun MeongNavHost(
 
         favoriteNavGraph(
             paddingValues = paddingValues
+        )
+
+        myPageNavGraph(
+            paddingValues = paddingValues,
+            navController = appState.navController,
+            navigateUp = appState::navigateUp
         )
     }
 }

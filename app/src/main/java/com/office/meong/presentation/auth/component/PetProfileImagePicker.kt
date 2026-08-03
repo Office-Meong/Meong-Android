@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.office.meong.R
@@ -36,28 +37,23 @@ fun PetProfileImagePicker(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.clickable { onClick() }) {
+    Box(
+        modifier = modifier
+            .clickable(onClick = onClick)
+    ) {
         if (imageUrl.isNullOrBlank()) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(MeongTheme.colors.gray100),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_pet_filled),
-                    contentDescription = null,
-                    tint = MeongTheme.colors.gray300,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
+            Icon(
+                imageVector = ImageVector.vectorResource(id = R.drawable.ic_empty_pet_holder),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(120.dp)
+            )
         } else {
             AsyncImage(
                 model = imageUrl,
                 contentDescription = "반려견 프로필 이미지",
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(120.dp)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
@@ -66,17 +62,16 @@ fun PetProfileImagePicker(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .size(28.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.White)
-                .border(1.dp, MeongTheme.colors.gray200, CircleShape),
+                .background(MeongTheme.colors.gray100),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(id = R.drawable.ic_camera),
+                imageVector = ImageVector.vectorResource(id = R.drawable.ic_camera_filled),
                 contentDescription = "사진 변경",
                 tint = Color.Unspecified,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
     }
@@ -114,5 +109,16 @@ fun <T : Enum<T>> PetProfileChipGroup(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PetProfileImagePickerPreview() {
+    MeongTheme {
+        PetProfileImagePicker(
+            imageUrl = null,
+            onClick = {}
+        )
     }
 }
