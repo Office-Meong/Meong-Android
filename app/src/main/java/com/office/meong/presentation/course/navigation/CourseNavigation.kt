@@ -8,6 +8,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.office.meong.presentation.course.create.CreateCourseRoute
 import com.office.meong.presentation.course.create.navigation.CreateCourse
+import com.office.meong.presentation.course.detail.DetailCourseRoute
+import com.office.meong.presentation.course.detail.navigation.DetailCourse
+import com.office.meong.presentation.course.detail.navigation.navigateToDetailCourse
+import com.office.meong.presentation.course.my.MyCourseRoute
 import com.office.meong.presentation.course.my.navigation.MyCourse
 import com.office.meong.presentation.course.result.ResultCourseRoute
 import com.office.meong.presentation.course.result.navigation.ResultCourse
@@ -21,13 +25,28 @@ fun NavController.navigateToCourseGraph(
 ) = navigate(CourseGraph, navOptions)
 
 fun NavGraphBuilder.courseNavGraph(
+    navController: NavController,
     paddingValues: PaddingValues,
 ) {
     navigation<CourseGraph>(
-        startDestination = ResultCourse
+        startDestination = ResultCourse,
     ) {
         composable<CreateCourse> {
             CreateCourseRoute()
+        }
+
+        composable<MyCourse> {
+            MyCourseRoute(
+                paddingValues = paddingValues,
+                navigateToDetailCourse = navController::navigateToDetailCourse,
+            )
+        }
+
+        composable<DetailCourse> {
+            DetailCourseRoute(
+                paddingValues = paddingValues,
+                navigateUp = navController::navigateUp
+            )
         }
 
         composable<ResultCourse> {

@@ -12,6 +12,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,7 @@ fun MeongTopbar(
     onBackClick: () -> Unit = {},
     actionType: TopbarAction? = null,
     onActionClick: (TopbarAction) -> Unit = {},
+    onActionPositioned: (LayoutCoordinates) -> Unit = {},
     isStrokeVisible: Boolean = false,
     containerColor: Color = MeongTheme.colors.white
 ) {
@@ -51,7 +54,7 @@ fun MeongTopbar(
             )
             .styleable {
                 background(containerColor)
-                contentPadding(vertical = 10.dp, horizontal = 20.dp)
+                contentPadding(vertical = 12.dp, horizontal = 20.dp)
             }
     ) {
         if (isBackVisible) {
@@ -83,9 +86,11 @@ fun MeongTopbar(
                 imageVector = ImageVector.vectorResource(actionType.iconRes),
                 contentDescription = null,
                 tint = MeongTheme.colors.gray900,
-                modifier = Modifier.noRippleClickable(onClick = {
-                    onActionClick(actionType)
-                })
+                modifier = Modifier
+                    .onGloballyPositioned(onActionPositioned)
+                    .noRippleClickable(onClick = {
+                        onActionClick(actionType)
+                    })
             )
         }
     }
@@ -98,7 +103,7 @@ private fun MeongTopbarPreview() {
         MeongTopbar(
             title = "코스 상세",
             isBackVisible = true,
-            actionType = TopbarAction.CLOSE
+            actionType = TopbarAction.MORE
         )
     }
 }

@@ -40,6 +40,7 @@ fun MeongNavHost(
         )
 
         courseNavGraph(
+            navController = appState.navController,
             paddingValues = paddingValues
         )
 
