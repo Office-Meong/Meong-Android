@@ -1,4 +1,4 @@
-package com.office.meong.presentation.course.result.state
+package com.office.meong.core.common.dragdrop
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
@@ -12,37 +12,45 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
-import com.office.meong.presentation.course.result.model.ScheduleUiModel
 import kotlinx.coroutines.channels.Channel
 
 @Composable
-fun rememberScheduleDragDropState(
+fun <T : Any> rememberDragDropState(
     lazyListState: LazyListState,
-    items: SnapshotStateList<ScheduleUiModel>,
-    onMove: (fromId: String, toId: String) -> Unit,
-): ScheduleDragDropState {
+    items: SnapshotStateList<T>,
+    key: (T) -> Any,
+    onMove: (fromKey: Any, toKey: Any) -> Unit,
+): DragDropState<T> {
+    val currentKey by rememberUpdatedState(key)
     val currentOnMove = rememberUpdatedState(onMove)
     return remember(lazyListState, items) {
-        ScheduleDragDropState(
+        DragDropState(
             lazyListState = lazyListState,
             items = items,
-            onMove = { fromId, toId -> currentOnMove.value(fromId, toId) }
+            key = { currentKey(it) },
+            onMove = { fromKey, toKey -> currentOnMove.value(fromKey, toKey) }
         )
     }
 }
 
+/**
+ * [LazyListState]에 있는 아이템을 드래그로 재정렬할 수 있게 해주는 범용 상태 홀더.
+ *
+ * 아이템 타입이나 도메인에 종속되지 않으며, [key]로 각 아이템을 식별한다.
+ * */
 @Stable
-class ScheduleDragDropState internal constructor(
+class DragDropState<T : Any> internal constructor(
     private val lazyListState: LazyListState,
-    private val items: SnapshotStateList<ScheduleUiModel>,
-    private val onMove: (fromId: String, toId: String) -> Unit,
+    private val items: SnapshotStateList<T>,
+    private val key: (T) -> Any,
+    private val onMove: (fromKey: Any, toKey: Any) -> Unit,
 ) {
-    var draggingItemKey by mutableStateOf<String?>(null)
+    var draggingItemKey by mutableStateOf<Any?>(null)
         private set
 
     private var draggingItemInitialOffset by mutableIntStateOf(0)
     private var draggingItemDraggedDelta by mutableFloatStateOf(0f)
-    private var lastMovedToKey: String? = null
+    private var lastMovedToKey: Any? = null
     private var lastMovedDraggingItemOffset: Int? = null
 
     private val scrollChannel = Channel<Float>(capacity = Channel.CONFLATED)
@@ -62,7 +70,7 @@ class ScheduleDragDropState internal constructor(
         }
     }
 
-    fun onDragStart(key: String) {
+    fun onDragStart(key: Any) {
         lazyListState.layoutInfo.visibleItemsInfo
             .firstOrNull { it.key == key }
             ?.also {
@@ -85,10 +93,10 @@ class ScheduleDragDropState internal constructor(
 
         val targetMatch = lazyListState.layoutInfo.visibleItemsInfo
             .asSequence()
-            .mapNotNull { item -> (item.key as? String)?.let { item to it } }
-            .firstOrNull { (item, targetId) ->
-                targetId != draggingKey &&
-                    items.any { it.id == targetId } &&
+            .mapNotNull { item -> item.key?.let { item to it } }
+            .firstOrNull { (item, targetKey) ->
+                targetKey != draggingKey &&
+                    items.any { key(it) == targetKey } &&
                     middleOffset.toInt() in item.offset..(item.offset + item.size)
             }
 

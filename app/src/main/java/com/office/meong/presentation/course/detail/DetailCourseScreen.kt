@@ -1,6 +1,5 @@
-package com.office.meong.presentation.course.result
+package com.office.meong.presentation.course.detail
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
@@ -35,47 +34,53 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
 import com.office.meong.core.common.extension.disableNestedScroll
-import com.office.meong.core.common.extension.disableUpWardEvent
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
-import com.office.meong.core.designsystem.component.dialog.MeongDialog
-import com.office.meong.core.designsystem.component.dialog.action.MeongCancelAction
-import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAction
 import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.component.topbar.TopbarAction
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.PlaceType
-import com.office.meong.presentation.course.result.action.AccommodationEditActions
-import com.office.meong.presentation.course.result.action.ResultCourseEditActions
-import com.office.meong.presentation.course.result.action.ScheduleEditActions
-import com.office.meong.presentation.course.result.action.TitleEditActions
-import com.office.meong.presentation.course.result.component.ResultCourseAccommodationSection
-import com.office.meong.presentation.course.result.component.ResultCourseEditScheduleItem
-import com.office.meong.presentation.course.result.component.ResultCourseInfoHolder
-import com.office.meong.presentation.course.result.component.ResultCoursePlaceSummaryItem
-import com.office.meong.presentation.course.result.component.ResultCourseScheduleItem
-import com.office.meong.presentation.course.result.component.ResultCourseScheduleSection
-import com.office.meong.presentation.course.result.component.ResultCourseTopSection
-import com.office.meong.presentation.course.result.component.RouteIndicator
-import com.office.meong.presentation.course.result.model.CurrentDialogType
-import com.office.meong.presentation.course.result.model.PlaceEditChipType
-import com.office.meong.presentation.course.result.model.RouteIndicatorType
-import com.office.meong.presentation.course.result.model.ScheduleUiModel
-import com.office.meong.presentation.course.result.model.ScheduleUiModel.Companion.DUMMY_SEARCHABLE_PLACES
+import com.office.meong.presentation.course.detail.action.AccommodationEditActions
+import com.office.meong.presentation.course.detail.action.DetailCourseEditActions
+import com.office.meong.presentation.course.detail.action.ScheduleEditActions
+import com.office.meong.presentation.course.detail.action.TitleEditActions
+import com.office.meong.presentation.course.detail.component.DetailCourseAccommodationSection
+import com.office.meong.presentation.course.detail.component.DetailCourseEditScheduleItem
+import com.office.meong.presentation.course.detail.component.DetailCourseInfoHolder
+import com.office.meong.presentation.course.detail.component.DetailCoursePlaceSummaryItem
+import com.office.meong.presentation.course.detail.component.DetailCourseRouteIndicator
+import com.office.meong.presentation.course.detail.component.DetailCourseScheduleItem
+import com.office.meong.presentation.course.detail.component.DetailCourseScheduleSection
+import com.office.meong.presentation.course.detail.component.DetailCourseTopAction
+import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
+import com.office.meong.presentation.course.detail.model.PlaceEditChipType
+import com.office.meong.presentation.course.detail.model.ScheduleUiModel
+import com.office.meong.presentation.course.detail.state.DetailCourseUiState
+import com.office.meong.presentation.course.detail.state.rememberDetailCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
+import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import com.office.meong.presentation.sharedcomponent.skeleton.MeongPlaceCardSkeleton
 import com.office.meong.presentation.sharedcomponent.skeleton.meongShimmerTheme
 import com.valentinilk.shimmer.Shimmer
@@ -89,138 +94,91 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResultCourseRoute(
+fun DetailCourseRoute(
     paddingValues: PaddingValues,
-    navigateUp: () -> Unit
+    navigateUp: () -> Unit = {}
 ) {
-    var currentDialogType by remember { mutableStateOf<CurrentDialogType?>(null) }
-    var isEditTitle by remember { mutableStateOf(false) }
-    var isEditSchedule by remember { mutableStateOf(false) }
-    var isEditAccommodation by remember { mutableStateOf(false) }
-    var editPlaceChipType by remember { mutableStateOf(PlaceEditChipType.SEARCH) }
-    var isScheduleLoading by remember { mutableStateOf(true) }
+    val uiState = rememberDetailCourseUiState()
 
-    LaunchedEffect(Unit) {
-        delay(10.seconds)
-        isScheduleLoading = false
+    val scheduleUiModels = remember {
+        mutableStateListOf(
+            ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 카페", grade = "A"),
+            ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 식당", grade = "A"),
+            ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
+            ScheduleUiModel(id = "4", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 오피스", grade = "A"),
+            ScheduleUiModel(id = "5", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 기사식당", grade = "A"),
+        )
     }
 
-    val scheduleUiModels = remember { mutableStateListOf(
-        ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "프렌즈애견펜션", grade = "A"),
-        ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "프렌즈애견펜션", grade = "A"),
-        ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
-        ScheduleUiModel(id = "4", placeType = PlaceType.SIGHTSEEING, placeName = "프렌즈애견펜션", grade = "A"),
-    ) }
-
-    val editActions = remember {
-        object : ResultCourseEditActions {
+    val editActions = remember(uiState) {
+        object : DetailCourseEditActions {
             override val title = object : TitleEditActions {
                 override fun onClickEdit() {
-                    isEditTitle = true
+                    uiState.showEditTitle()
                 }
 
                 override fun onClickComplete() {
-                    isEditTitle = false
+                    uiState.hideEditTitle()
                 }
             }
             override val accommodation = object : AccommodationEditActions {
                 override fun onClickEdit() {
-                    isEditAccommodation = true
+                    uiState.showEditAccommodation()
                 }
 
                 override fun onClickComplete() {
-                    isEditAccommodation = false
+                    uiState.hideEditAccommodation()
                 }
             }
             override val schedule = object : ScheduleEditActions {
                 override fun onClickEdit() {
-                    isEditSchedule = true
+                    uiState.showEditSchedule()
                 }
 
                 override fun onClickComplete() {
-                    isEditSchedule = false
+                    uiState.hideEditSchedule()
                 }
             }
         }
     }
 
-    BackHandler {
-        currentDialogType = CurrentDialogType.BACK_PRESS_EXIT
-    }
-
-    ResultCourseScreen(
+    DetailCourseScreen(
         paddingValues = paddingValues,
-        scheduleUiModels = scheduleUiModels,
-        isEditSchedule = isEditSchedule,
-        isScheduleLoading = isScheduleLoading,
+        uiState = uiState,
         editActions = editActions,
-        onBackClick = {
-            currentDialogType = CurrentDialogType.BACK_PRESS_EXIT
-        },
-        removeCurrentRoute = {
-            currentDialogType = CurrentDialogType.COURSE_DELETE
-        }
+        scheduleUiModels = scheduleUiModels,
+        onBackClick = navigateUp
     )
 
-    if (currentDialogType != null) {
-        MeongDialog(
-            title = currentDialogType?.title,
-            subDescription = "저장하지 않은 코스는 사라져요",
-            confirmAction = MeongConfirmAction(
-                text = "확인",
-                onClick = {
-                    currentDialogType = null
-                    navigateUp()
-                }
-            ),
-            cancelAction = MeongCancelAction(
-                text = "취소",
-                onClick = {
-                    currentDialogType = null
-                }
-            ),
-            onDismiss = {
-                currentDialogType = null
-            }
+    if (uiState.isEditTitleVisible) {
+        DetailCourseEditTitleBottomSheet(
+            onDismiss = editActions.title::onClickComplete
         )
     }
 
-    if (isEditTitle) {
-        EditTitleBottomSheet(
-            onEditTitle = {
-                isEditTitle = it
-            }
-        )
-    }
-
-    if (isEditAccommodation) {
-        EditPlaceBottomSheet(
-            selectedChipType = editPlaceChipType,
-            onChipClick = { editPlaceChipType = it },
-            onDismiss = {
-                isEditAccommodation = false
-                editPlaceChipType = PlaceEditChipType.SEARCH
-            }
+    if (uiState.isEditAccommodationVisible) {
+        DetailCourseEditPlaceBottomSheet(
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = editActions.accommodation::onClickComplete
         )
     }
 }
 
 @Composable
-private fun ResultCourseScreen(
+private fun DetailCourseScreen(
     paddingValues: PaddingValues,
+    uiState: DetailCourseUiState,
+    editActions: DetailCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
-    isEditSchedule: Boolean,
-    isScheduleLoading: Boolean,
-    editActions: ResultCourseEditActions,
-    onBackClick: () -> Unit,
-    removeCurrentRoute: () -> Unit
+    onBackClick: () -> Unit
 ) {
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
-    val scheduleShimmer = rememberShimmer(
-        shimmerBounds = ShimmerBounds.View,
-        theme = meongShimmerTheme()
-    )
+
+    // 팝업이 닫혀있는 동안엔 리컴포지션을 유발하지 않도록, 일반 배열에 최신 좌표만 계속 갱신해둔다.
+    val latestMoreButtonCoordinates = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    var moreButtonCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
     val dragDropState = rememberDragDropState(
         lazyListState = lazyListState,
@@ -242,196 +200,215 @@ private fun ResultCourseScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = MeongTheme.colors.gray50
-            )
-            .statusBarColor(
-                backgroundColor = MeongTheme.colors.white
-            )
-            .padding(paddingValues)
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        MeongTopbar(
-            isBackVisible = true,
-            actionType = TopbarAction.CLOSE,
-            onBackClick = onBackClick,
-            onActionClick = {
-                if (it == TopbarAction.CLOSE) {
-                    removeCurrentRoute()
-                }
-            },
-        )
-
-        ResultCourseTopSection(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-        )
-
-        LazyColumn(
-            state = lazyListState,
-            modifier = Modifier.weight(1f)
+                .fillMaxSize()
+                .background(MeongTheme.colors.gray50)
+                .statusBarColor(backgroundColor = MeongTheme.colors.white)
+                .padding(paddingValues)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
+            MeongTopbar(
+                title = "코스 상세",
+                actionType = TopbarAction.MORE,
+                onBackClick = onBackClick,
+                isStrokeVisible = true,
+                containerColor = MeongTheme.colors.gray50,
+                onActionClick = {
+                    if (it == TopbarAction.MORE) {
+                        uiState.toggleTopAction()
+                        if (uiState.isTopActionVisible) {
+                            moreButtonCoordinates = latestMoreButtonCoordinates[0]
+                        }
+                    }
+                },
+                onActionPositioned = { latestMoreButtonCoordinates[0] = it }
+            )
 
-                ResultCourseInfoHolder(
-                    onEditTitleClick = editActions.title::onClickEdit,
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                )
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                item {
+                    Spacer(Modifier.height(20.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+                    DetailCourseInfoHolder(
+                        location = "강릉",
+                        tripDay = "2박 3일 (2026.8.10 - 2026.8.12)",
+                        onEditTitleClick = editActions.title::onClickEdit,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
 
-            item {
-                ResultCourseAccommodationSection(
-                    onEditAccommodationClick = editActions.accommodation::onClickEdit,
-                    onFavoriteClick = {},
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                )
+                    Spacer(Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp, horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
                     Text(
-                        text = "일정",
+                        text = "함께할 반려견",
                         style = MeongTheme.typography.label.label14Sb,
                         color = MeongTheme.colors.gray900,
+                        modifier = Modifier.padding(horizontal = 20.dp)
                     )
 
-                    Text(
-                        text = if (isEditSchedule) "편집 완료" else "일정 편집",
-                        style = MeongTheme.typography.label.label14Sb,
-                        color = MeongTheme.colors.gray900,
-                        modifier = Modifier
-                            .minimumInteractiveComponentSize()
-                            .noRippleClickable(
-                                onClick = if (isEditSchedule) editActions.schedule::onClickComplete else editActions.schedule::onClickEdit
-                            )
+                    Spacer(Modifier.height(10.dp))
+
+                    PetProfileCard(
+                        petName = "몽몽이",
+                        imageUrl = "",
+                        tags = persistentListOf("소형견", "활동량 보통", "사회성 보통", "최근 수술, 치료중"),
+                        modifier = Modifier.padding(horizontal = 20.dp)
                     )
-                }
-            }
 
-            item {
-                ResultCourseScheduleSection(
-                    dayNumber = "2",
-                    tripDay = "8.11",
-                    onPreviousClick = {},
-                    onNextClick = {},
-                    onRouteClick = {},
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                )
-            }
+                    Spacer(Modifier.height(24.dp))
 
-            itemsIndexed(
-                items = scheduleUiModels,
-                key = { _, item -> item.id }
-            ) { index, item ->
-                if (isEditSchedule) {
-                    val isDragging = dragDropState.draggingItemKey == item.id
-
-                    ResultCourseEditScheduleItem(
-                        placeType = item.placeType,
-                        placeName = item.placeName,
-                        onDragStart = {
-                            dragDropState.onDragStart(item.id)
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        },
-                        onDrag = { dragDropState.onDrag(it) },
-                        onDragEnd = { dragDropState.onDragEnd() },
-                        modifier = Modifier
-                            .padding(horizontal = 20.dp)
-                            .let { if (isDragging) it else it.animateItem() }
-                            .zIndex(if (isDragging) 1f else 0f)
-                            .graphicsLayer {
-                                translationY =
-                                    if (isDragging) dragDropState.draggingItemOffset else 0f
-                            }
-                    )
-                } else {
-                    ResultCourseScheduleItem(
-                        count = index + 1,
-                        placeName = item.placeName,
-                        grade = item.grade,
-                        location = item.location,
-                        placeType = item.placeType,
-                        isLastItem = index == scheduleUiModels.lastIndex,
-                        isLoading = isScheduleLoading,
-                        shimmer = scheduleShimmer,
+                    DetailCourseAccommodationSection(
+                        onChangeAccommodationClick = editActions.accommodation::onClickEdit,
                         onFavoriteClick = {},
-                        onRouteClick = {},
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Row(
                         modifier = Modifier
-                            .padding(horizontal = 20.dp)
-                            .animateItem()
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "일정",
+                            style = MeongTheme.typography.label.label14Sb,
+                            color = MeongTheme.colors.gray900
+                        )
+
+                        Text(
+                            text = if (uiState.isEditSchedule) "편집 완료" else "일정 편집",
+                            style = MeongTheme.typography.label.label14Sb,
+                            color = MeongTheme.colors.gray900,
+                            modifier = Modifier
+                                .minimumInteractiveComponentSize()
+                                .noRippleClickable(
+                                    onClick = if (uiState.isEditSchedule) editActions.schedule::onClickComplete else editActions.schedule::onClickEdit
+                                )
+                        )
+                    }
+
+                    DetailCourseScheduleSection(
+                        dayNumber = "2",
+                        tripDay = "8.11",
+                        onPreviousClick = {},
+                        onNextClick = {},
+                        onRouteClick = {},
+                        modifier = Modifier.padding(horizontal = 20.dp)
                     )
                 }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(10.dp))
+                itemsIndexed(
+                    items = scheduleUiModels,
+                    key = { _, item -> item.id }
+                ) { index, item ->
+                    if (uiState.isEditSchedule) {
+                        val isDragging = dragDropState.draggingItemKey == item.id
 
-                RouteIndicator(
-                    routeLength = "1.2",
-                    onRouteClick = {},
-                    routeIndicatorType = RouteIndicatorType.END,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                )
+                        DetailCourseEditScheduleItem(
+                            placeType = item.placeType,
+                            placeName = item.placeName,
+                            onDragStart = {
+                                dragDropState.onDragStart(item.id)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                            onDrag = { dragDropState.onDrag(it) },
+                            onDragEnd = { dragDropState.onDragEnd() },
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                                .let { if (isDragging) it else it.animateItem() }
+                                .zIndex(if (isDragging) 1f else 0f)
+                                .graphicsLayer {
+                                    translationY =
+                                        if (isDragging) dragDropState.draggingItemOffset else 0f
+                                }
+                        )
+                    } else {
+                        DetailCourseScheduleItem(
+                            count = index + 1,
+                            placeName = item.placeName,
+                            placeType = item.placeType,
+                            isLastItem = index == scheduleUiModels.lastIndex,
+                            onFavoriteClick = {},
+                            onRouteClick = {},
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                                .animateItem()
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                item {
+                    Spacer(Modifier.height(10.dp))
 
-                ResultCoursePlaceSummaryItem(
-                    placeType = "숙소",
-                    placeName = "프렌즈애견펜션",
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                )
+                    DetailCourseRouteIndicator(
+                        routeLength = "1.2",
+                        onRouteClick = {},
+                        routeIndicatorType = DetailCourseRouteIndicatorType.END,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
 
-                Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(Modifier.height(10.dp))
+
+                    DetailCoursePlaceSummaryItem(
+                        placeType = "숙소",
+                        placeName = "프렌즈애견펜션",
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+
+                    Spacer(Modifier.height(40.dp))
+                }
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = MeongTheme.colors.white
+        val coordinates = moreButtonCoordinates
+        if (uiState.isTopActionVisible && coordinates != null) {
+            val positionProvider = remember(coordinates) {
+                object : PopupPositionProvider {
+                    override fun calculatePosition(
+                        anchorBounds: IntRect,
+                        windowSize: IntSize,
+                        layoutDirection: LayoutDirection,
+                        popupContentSize: IntSize
+                    ): IntOffset {
+                        val buttonBounds = coordinates.boundsInWindow()
+                        val x = buttonBounds.right - popupContentSize.width
+                        val y = buttonBounds.bottom
+                        return IntOffset(x.toInt(), y.toInt())
+                    }
+                }
+            }
+
+            Popup(
+                popupPositionProvider = positionProvider,
+                onDismissRequest = { uiState.hideTopAction() },
+                properties = PopupProperties(focusable = true)
+            ) {
+                DetailCourseTopAction(
+                    onClick = {
+                        uiState.hideTopAction()
+                    }
                 )
-                .padding(20.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            MeongButton(
-                text = "코스 저장하기",
-                isEnabled = true,
-                onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditTitleBottomSheet(
-    onEditTitle: (Boolean) -> Unit,
+private fun DetailCourseEditTitleBottomSheet(
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     MeongBottomSheet(
-        onDismiss = {
-            onEditTitle(false)
-        },
+        onDismiss = onDismiss,
         modifier = modifier
             .imePadding()
     ) {
@@ -439,7 +416,7 @@ private fun EditTitleBottomSheet(
             title = "코스 이름 수정",
             isBackVisible = false,
             actionType = TopbarAction.CLOSE,
-            onActionClick = { onEditTitle(false) },
+            onActionClick = { onDismiss() },
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -472,9 +449,7 @@ private fun EditTitleBottomSheet(
         MeongButton(
             text = "저장하기",
             isEnabled = true,
-            onClick = {
-                onEditTitle(false)
-            },
+            onClick = onDismiss,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
@@ -484,17 +459,12 @@ private fun EditTitleBottomSheet(
     }
 }
 
-private const val PLACE_SKELETON_ITEM_COUNT = 3
-
 /**
- * 숙소 변경과 장소 추가를 위한 BottomSheet
- *
- * 검색 칩 선택 시 검색창이, 관심 장소 칩 선택 시 바텀시트가 화면의 70%까지 늘어나며 리스트가 노출된다.
  * TODO: 서버 API 구조 확정 후 실제 검색/관심 장소 데이터 연동으로 교체
  * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditPlaceBottomSheet(
+private fun DetailCourseEditPlaceBottomSheet(
     selectedChipType: PlaceEditChipType,
     onChipClick: (PlaceEditChipType) -> Unit,
     onDismiss: () -> Unit,
@@ -559,7 +529,7 @@ private fun EditPlaceBottomSheet(
 
                         isSearchLoading = true
                         delay(3.seconds)
-                        searchResults = DUMMY_SEARCHABLE_PLACES.filter { it.placeName.contains(query) }.toPersistentList()
+                        searchResults = ScheduleUiModel.DUMMY_SEARCHABLE_PLACES.filter { it.placeName.contains(query) }.toPersistentList()
                         isSearchLoading = false
                     }
 
@@ -575,7 +545,7 @@ private fun EditPlaceBottomSheet(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     if (query.isNotBlank()) {
-                        PlaceEditResultList(
+                        DetailCoursePlaceEditResultList(
                             isLoading = isSearchLoading,
                             places = searchResults,
                             shimmer = placeShimmer,
@@ -601,7 +571,7 @@ private fun EditPlaceBottomSheet(
                         isFavoriteLoading = false
                     }
 
-                    PlaceEditResultList(
+                    DetailCoursePlaceEditResultList(
                         isLoading = isFavoriteLoading,
                         places = favoritePlaces,
                         shimmer = placeShimmer,
@@ -619,7 +589,7 @@ private fun EditPlaceBottomSheet(
  * 검색/관심 장소 결과를 로딩(shimmer) - 빈 화면 - 목록 중 하나로 그려주는 공용 리스트
  * */
 @Composable
-private fun PlaceEditResultList(
+private fun DetailCoursePlaceEditResultList(
     isLoading: Boolean,
     places: ImmutableList<ScheduleUiModel>,
     shimmer: Shimmer,
@@ -639,16 +609,14 @@ private fun PlaceEditResultList(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(count = PLACE_SKELETON_ITEM_COUNT) {
-                    MeongPlaceCardSkeleton(
-                        shimmer = shimmer
-                    )
+                items(count = 3) {
+                    MeongPlaceCardSkeleton(shimmer = shimmer)
                 }
             }
         }
 
         places.isEmpty() -> {
-            PlaceEditEmptyView(
+            DetailCoursePlaceEditEmptyView(
                 title = emptyTitle,
                 description = emptyDescription,
                 modifier = modifier
@@ -677,7 +645,7 @@ private fun PlaceEditResultList(
                         isFavorite = true,
                         onFavoriteClick = { onFavoriteClick(place.id) },
                         placeType = place.placeType,
-                        isBordered = true
+                        isBordered = true,
                     )
                 }
             }
@@ -686,7 +654,7 @@ private fun PlaceEditResultList(
 }
 
 @Composable
-private fun PlaceEditEmptyView(
+private fun DetailCoursePlaceEditEmptyView(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
@@ -716,22 +684,13 @@ private fun PlaceEditEmptyView(
 
 @Preview
 @Composable
-private fun ResultCourseScreenPreview() {
+private fun DetailCourseScreenPreview() {
     MeongTheme {
-        ResultCourseScreen(
+        DetailCourseScreen(
             paddingValues = PaddingValues(),
-            scheduleUiModels = remember {
-                mutableStateListOf(
-                    ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "프렌즈애견펜션", grade = "A"),
-                    ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "프렌즈애견펜션", grade = "A"),
-                    ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
-                )
-            },
-            onBackClick = {},
-            isEditSchedule = false,
-            isScheduleLoading = false,
+            uiState = rememberDetailCourseUiState(),
             editActions = remember {
-                object : ResultCourseEditActions {
+                object : DetailCourseEditActions {
                     override val title = object : TitleEditActions {
                         override fun onClickEdit() {}
                         override fun onClickComplete() {}
@@ -746,7 +705,14 @@ private fun ResultCourseScreenPreview() {
                     }
                 }
             },
-            removeCurrentRoute = {}
+            scheduleUiModels = remember {
+                mutableStateListOf(
+                    ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 카페", grade = "A"),
+                    ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 식당", grade = "A"),
+                    ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
+                )
+            },
+            onBackClick = {}
         )
     }
 }
