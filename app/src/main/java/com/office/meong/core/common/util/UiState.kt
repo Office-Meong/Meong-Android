@@ -1,6 +1,7 @@
 package com.office.meong.core.common.util
 
 import androidx.compose.runtime.Stable
+import com.office.meong.core.common.model.LoadErrorHandleAction
 
 @Stable
 sealed interface UiState<out T> {
@@ -13,7 +14,6 @@ sealed interface UiState<out T> {
     ) : UiState<T>
 
     data class Failure(
-        val userMessage: String,
-        val throwable: Throwable? = null
+        val handleAction: LoadErrorHandleAction,
     ) : UiState<Nothing>
 }

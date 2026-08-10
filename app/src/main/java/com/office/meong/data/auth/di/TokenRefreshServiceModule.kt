@@ -1,4 +1,4 @@
-package com.office.meong.data.di
+package com.office.meong.data.auth.di
 
 import dagger.Module
 import dagger.hilt.InstallIn

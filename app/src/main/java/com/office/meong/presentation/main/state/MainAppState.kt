@@ -16,6 +16,7 @@ import com.office.meong.presentation.favorite.navigation.navigateToFavorite
 import com.office.meong.presentation.home.navigation.navigateToHome
 import com.office.meong.presentation.main.MainTab
 import com.office.meong.presentation.mypage.navigation.navigateToMyPage
+import com.office.meong.presentation.splash.navigation.Splash
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +29,7 @@ class MainAppState(
     coroutineScope: CoroutineScope,
     networkMonitor: NetworkMonitor,
 ) {
-    val startDestination = CourseGraph
-
+    val startDestination = Splash
     val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
         .map(Boolean::not)
         .stateIn(
