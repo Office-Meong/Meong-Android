@@ -1,5 +1,6 @@
 package com.office.meong.presentation.mypage.petedit.model
 
+import com.office.meong.data.pet.model.PetInputModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -35,3 +36,16 @@ enum class PetHealth(override val label: String) : PetProfileAttribute {
         val items: ImmutableList<PetHealth> = entries.toPersistentList()
     }
 }
+
+fun PetEditUiState.toPetInputModel() = PetInputModel(
+    name = petName,
+    breed = breed,
+    weightKg = weightKg.toDoubleOrNull() ?: 0.0,
+    birthDate = birthDate,
+    isNeutered = isNeutered,
+    imageUrl = imageUrl.orEmpty(),
+    sizeCategory = selectedSize?.name.orEmpty(),
+    activityLevel = selectedActivity?.name.orEmpty(),
+    sociability = selectedSociability?.name.orEmpty(),
+    healthStatus = selectedHealth?.name.orEmpty(),
+)

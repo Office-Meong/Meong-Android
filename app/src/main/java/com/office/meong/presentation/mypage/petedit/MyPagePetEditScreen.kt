@@ -12,17 +12,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
@@ -34,7 +39,8 @@ import com.office.meong.presentation.mypage.petedit.action.PetEditActions
 import com.office.meong.presentation.mypage.petedit.component.PetEditBottomButton
 import com.office.meong.presentation.mypage.petedit.component.PetEditChipGroup
 import com.office.meong.presentation.mypage.petedit.component.PetEditImagePicker
-import com.office.meong.presentation.mypage.petedit.component.PetEditNameField
+import com.office.meong.presentation.mypage.petedit.component.PetEditNeuteredToggle
+import com.office.meong.presentation.mypage.petedit.component.PetEditTextField
 import com.office.meong.presentation.mypage.petedit.model.PetActivity
 import com.office.meong.presentation.mypage.petedit.model.PetEditUiState
 import com.office.meong.presentation.mypage.petedit.model.PetHealth
@@ -47,11 +53,18 @@ fun MyPagePetEditRoute(
     onCloseClick: () -> Unit = {}
 ) {
     val nameTextFieldState = rememberTextFieldState(initialText = "몽몽이")
+    val breedTextFieldState = rememberTextFieldState()
+    val weightTextFieldState = rememberTextFieldState()
+    val birthDateTextFieldState = rememberTextFieldState()
+    var isNeuteredState by remember { mutableStateOf(false) }
 
     val actions = remember {
         object : PetEditActions {
             override fun onImageClick() {
                 // TODO: 이미지 선택 처리
+            }
+            override fun onNeuteredToggle(isNeutered: Boolean) {
+                isNeuteredState = isNeutered
             }
             override fun onSizeSelect(size: PetSize) {
                 // TODO: 크기 선택 처리
@@ -75,12 +88,19 @@ fun MyPagePetEditRoute(
         paddingValues = paddingValues,
         uiState = PetEditUiState(
             petName = nameTextFieldState.text.toString(),
+            breed = breedTextFieldState.text.toString(),
+            weightKg = weightTextFieldState.text.toString(),
+            birthDate = birthDateTextFieldState.text.toString(),
+            isNeutered = isNeuteredState,
             selectedSize = PetSize.SMALL,
             selectedActivity = PetActivity.NORMAL,
             selectedSociability = PetSociability.NORMAL,
             selectedHealth = PetHealth.HEALTHY
         ),
         nameTextFieldState = nameTextFieldState,
+        breedTextFieldState = breedTextFieldState,
+        weightTextFieldState = weightTextFieldState,
+        birthDateTextFieldState = birthDateTextFieldState,
         onCloseClick = onCloseClick,
         actions = actions
     )
@@ -91,6 +111,9 @@ private fun MyPagePetEditScreen(
     paddingValues: PaddingValues,
     uiState: PetEditUiState,
     nameTextFieldState: TextFieldState,
+    breedTextFieldState: TextFieldState,
+    weightTextFieldState: TextFieldState,
+    birthDateTextFieldState: TextFieldState,
     onCloseClick: () -> Unit,
     actions: PetEditActions
 ) {
@@ -142,8 +165,47 @@ private fun MyPagePetEditScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            PetEditNameField(
+            PetEditTextField(
+                label = "반려견 이름",
+                description = "15자 이내로 입력해주세요",
+                placeholder = "반려견 이름을 입력해주세요",
                 state = nameTextFieldState
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            PetEditTextField(
+                label = "품종",
+                description = "예: 말티즈",
+                placeholder = "반려견 품종을 입력해주세요",
+                state = breedTextFieldState
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            PetEditTextField(
+                label = "몸무게 (kg)",
+                description = "예: 3.5",
+                placeholder = "반려견 몸무게를 입력해주세요",
+                state = weightTextFieldState,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            PetEditTextField(
+                label = "생년월일",
+                description = "예: 2021-03-15",
+                placeholder = "YYYY-MM-DD",
+                state = birthDateTextFieldState,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            PetEditNeuteredToggle(
+                isNeutered = uiState.isNeutered,
+                onCheckedChange = actions::onNeuteredToggle
             )
 
             Spacer(modifier = Modifier.height(20.dp))

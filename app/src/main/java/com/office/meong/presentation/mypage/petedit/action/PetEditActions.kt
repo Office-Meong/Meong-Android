@@ -9,6 +9,7 @@ import com.office.meong.presentation.mypage.petedit.model.PetSociability
 @Stable
 interface PetEditActions {
     fun onImageClick()
+    fun onNeuteredToggle(isNeutered: Boolean)
     fun onSizeSelect(size: PetSize)
     fun onActivitySelect(activity: PetActivity)
     fun onSociabilitySelect(sociability: PetSociability)
