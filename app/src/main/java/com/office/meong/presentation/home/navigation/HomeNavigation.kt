@@ -15,6 +15,7 @@ data object Home: MainTabRoute
 fun NavController.navigateToHome(navOptions: NavOptions? = null) =
     navigate(Home, navOptions)
 
+
 fun NavGraphBuilder.homeNavGraph(
     paddingValues: PaddingValues
 ) {

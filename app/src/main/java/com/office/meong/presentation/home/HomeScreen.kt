@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -22,39 +23,65 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
+import com.office.meong.core.common.extension.collectSideEffect
+import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.image.StableImage
+import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
+import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
+import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.trigger.SnackbarState
+import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.home.component.HomeCourseEmptyContent
 import com.office.meong.presentation.home.component.HomeCourseItem
 import com.office.meong.presentation.home.component.HomeTooltipBalloon
+import com.office.meong.presentation.home.model.HomeCourseSummaryUiModel
 import com.office.meong.presentation.home.model.HomePlaceCategory
-import com.office.meong.core.model.place.PlaceType
+import com.office.meong.presentation.home.model.HomeUserInfoUiModel
 import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun HomeRoute(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    viewModel.sideEffect.collectSideEffect {
+        when (it) {
+            is HomeSideEffect.ShowSnackBar -> {
+                globalUiEventHolder.showSnackbar(
+                    SnackbarState(
+                        message = it.message
+                    )
+                )
+            }
+        }
+    }
+
     HomeScreen(
         paddingValues = paddingValues,
-        myCourseList = persistentListOf(
-            "테스트1",
-            "테스트2",
-            "테스트3",
-            "테스트4",
-            "테스트5",
-        )
+        userInfo = state.userInfo,
+        homeCourseSummaries = state.homeCourseSummaries,
+        onRetryCourses = viewModel::retryLoad,
     )
 }
 
 @Composable
 private fun HomeScreen(
     paddingValues: PaddingValues,
-    myCourseList: ImmutableList<String>,
+    userInfo: UiState<HomeUserInfoUiModel>,
+    homeCourseSummaries: UiState<ImmutableList<HomeCourseSummaryUiModel>>,
+    onRetryCourses: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -81,13 +108,13 @@ private fun HomeScreen(
             HomeTooltipBalloon(
                 text = "와 함께할\n" +
                         "워케이션을 준비해볼까요?",
-                emphasizeText = "몽몽이",
+                emphasizeText = userInfo.successData?.nickname,
             )
 
             StableImage(
                 drawableResId = R.drawable.img_character,
                 modifier = Modifier
-                    .size(width = 92.dp, height = 120.dp),
+                    .size(width = 120.dp, height = 120.dp),
                 contentScale = ContentScale.Crop
             )
         }
@@ -104,7 +131,7 @@ private fun HomeScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         PetProfileCard(
-            petName = "몽몽이",
+            petName = "",
             imageUrl = "",
             tags = persistentListOf("소형견","활동량 보통", "사회성 보통"),
             isBordered = false,
@@ -126,60 +153,93 @@ private fun HomeScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        if (myCourseList.isEmpty()) {
-            HomeCourseEmptyContent(
-                onClickPillButton = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(
-                    count = 5,
-                ) {
-                    HomeCourseItem(
-                        location = "강릉",
-                        tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
-                        title = "몽몽이랑 여름 힐링 워케이션",
-                        grade = "B",
-                        places = persistentListOf(
-                            HomePlaceCategory(
-                                type = PlaceType.WORKSPACE,
-                                count = 2
-                            ),
-                            HomePlaceCategory(
-                                type = PlaceType.RESTAURANT,
-                                count = 5
-                            ),
-                            HomePlaceCategory(
-                                type = PlaceType.SIGHTSEEING,
-                                count = 4
-                            ),
-                            HomePlaceCategory(
-                                type = PlaceType.OTHER,
-                                count = 1
+        when (homeCourseSummaries) {
+            is UiState.Loading -> {
+                MeongLoadingIndicator(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            }
+
+            is UiState.Failure -> {
+                MeongLoadErrorView(
+                    action = LoadErrorViewAction.Retry(
+                        onRetryClick = onRetryCourses
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            }
+
+            is UiState.Empty -> {
+                HomeCourseEmptyContent(
+                    onClickPillButton = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+            }
+
+            is UiState.Success -> {
+                if (homeCourseSummaries.data.isEmpty()) {
+                    HomeCourseEmptyContent(
+                        onClickPillButton = {},
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(
+                            count = 5,
+                        ) {
+                            HomeCourseItem(
+                                location = "강릉",
+                                tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
+                                title = "몽몽이랑 여름 힐링 워케이션",
+                                grade = "B",
+                                places = persistentListOf(
+                                    HomePlaceCategory(
+                                        type = PlaceType.WORKSPACE,
+                                        count = 2
+                                    ),
+                                    HomePlaceCategory(
+                                        type = PlaceType.RESTAURANT,
+                                        count = 5
+                                    ),
+                                    HomePlaceCategory(
+                                        type = PlaceType.SIGHTSEEING,
+                                        count = 4
+                                    ),
+                                    HomePlaceCategory(
+                                        type = PlaceType.OTHER,
+                                        count = 1
+                                    )
+                                ),
+                                onClickCourseItem = {}
                             )
-                        ),
-                        onClickCourseItem = {}
-                    )
-                }
+                        }
 
-                item {
-                    MeongPillButton(
-                        text = "새 코스 만들기",
-                        isPrimary = false,
-                        prefixIcon = R.drawable.ic_plus,
-                        onClick = {}
-                    )
+                        item {
+                            MeongPillButton(
+                                text = "새 코스 만들기",
+                                isPrimary = false,
+                                prefixIcon = R.drawable.ic_plus,
+                                onClick = {}
+                            )
 
-                    Spacer(modifier = Modifier.height(15.dp))
+                            Spacer(modifier = Modifier.height(15.dp))
+                        }
+                    }
                 }
             }
         }
@@ -192,9 +252,16 @@ private fun HomeScreenPreview() {
     MeongTheme {
         HomeScreen(
             paddingValues = PaddingValues(),
-            myCourseList = persistentListOf(
-                "테스트1",
-
+            homeCourseSummaries = UiState.Success(persistentListOf()),
+            onRetryCourses = {},
+            userInfo = UiState.Success(
+                HomeUserInfoUiModel(
+                    nickname = "몽몽이",
+                    profileImageUrl = "",
+                    email = "",
+                    createdAt = "",
+                    id = 0L
+                )
             )
         )
     }
