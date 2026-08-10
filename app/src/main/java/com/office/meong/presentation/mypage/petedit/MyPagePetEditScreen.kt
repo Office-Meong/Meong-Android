@@ -1,7 +1,6 @@
 package com.office.meong.presentation.mypage.petedit
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -33,8 +32,6 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.common.util.selectableEntries
-import com.office.meong.core.designsystem.component.topbar.MeongTopbar
-import com.office.meong.core.designsystem.component.topbar.TopbarAction
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.data.pet.model.PetActivityLevel
 import com.office.meong.data.pet.model.PetHealthStatus

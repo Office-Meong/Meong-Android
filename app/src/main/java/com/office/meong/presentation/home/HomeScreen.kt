@@ -1,5 +1,7 @@
 package com.office.meong.presentation.home
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +52,7 @@ import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeRoute(
     paddingValues: PaddingValues,
@@ -79,6 +82,7 @@ fun HomeRoute(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun HomeScreen(
     paddingValues: PaddingValues,
@@ -266,6 +270,7 @@ private fun HomeScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
 private fun HomeScreenPreview() {

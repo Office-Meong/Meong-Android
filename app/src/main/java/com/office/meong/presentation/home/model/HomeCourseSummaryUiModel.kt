@@ -1,5 +1,7 @@
 package com.office.meong.presentation.home.model
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.region.Region
@@ -23,6 +25,7 @@ data class HomeCourseSummaryUiModel(
     val totalPlaceCount: Int,
 ) {
     val tripPeriod: String
+        @RequiresApi(Build.VERSION_CODES.O)
         get() = formatTripPeriod(startDate, endDate)
 }
 
@@ -43,9 +46,11 @@ fun CourseSummary.toUiModel() = HomeCourseSummaryUiModel(
     totalPlaceCount = totalPlaceCount
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 private val TRIP_DATE_DISPLAY_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.M.d")
 
 // startDate/endDate("yyyy-MM-dd")를 "N박 M일 (yyyy.M.d - yyyy.M.d)" 형태로 변환
+@RequiresApi(Build.VERSION_CODES.O)
 fun formatTripPeriod(startDate: String, endDate: String): String {
     val start = LocalDate.parse(startDate)
     val end = LocalDate.parse(endDate)
