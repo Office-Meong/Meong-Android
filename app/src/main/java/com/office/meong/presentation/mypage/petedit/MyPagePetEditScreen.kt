@@ -32,20 +32,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.common.util.selectableEntries
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.component.topbar.TopbarAction
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.data.pet.model.PetActivityLevel
+import com.office.meong.data.pet.model.PetHealthStatus
+import com.office.meong.data.pet.model.PetSizeCategory
+import com.office.meong.data.pet.model.PetSociability
 import com.office.meong.presentation.mypage.petedit.action.PetEditActions
 import com.office.meong.presentation.mypage.petedit.component.PetEditBottomButton
 import com.office.meong.presentation.mypage.petedit.component.PetEditChipGroup
 import com.office.meong.presentation.mypage.petedit.component.PetEditImagePicker
 import com.office.meong.presentation.mypage.petedit.component.PetEditNeuteredToggle
 import com.office.meong.presentation.mypage.petedit.component.PetEditTextField
-import com.office.meong.presentation.mypage.petedit.model.PetActivity
 import com.office.meong.presentation.mypage.petedit.model.PetEditUiState
-import com.office.meong.presentation.mypage.petedit.model.PetHealth
-import com.office.meong.presentation.mypage.petedit.model.PetSize
-import com.office.meong.presentation.mypage.petedit.model.PetSociability
+import kotlinx.collections.immutable.toPersistentList
 
 @Composable
 fun MyPagePetEditRoute(
@@ -66,16 +68,16 @@ fun MyPagePetEditRoute(
             override fun onNeuteredToggle(isNeutered: Boolean) {
                 isNeuteredState = isNeutered
             }
-            override fun onSizeSelect(size: PetSize) {
+            override fun onSizeSelect(size: PetSizeCategory) {
                 // TODO: 크기 선택 처리
             }
-            override fun onActivitySelect(activity: PetActivity) {
+            override fun onActivitySelect(activity: PetActivityLevel) {
                 // TODO: 활동량 선택 처리
             }
             override fun onSociabilitySelect(sociability: PetSociability) {
                 // TODO: 사회성 선택 처리
             }
-            override fun onHealthSelect(health: PetHealth) {
+            override fun onHealthSelect(health: PetHealthStatus) {
                 // TODO: 건강 상태 선택 처리
             }
             override fun onSaveClick() {
@@ -92,10 +94,10 @@ fun MyPagePetEditRoute(
             weightKg = weightTextFieldState.text.toString(),
             birthDate = birthDateTextFieldState.text.toString(),
             isNeutered = isNeuteredState,
-            selectedSize = PetSize.SMALL,
-            selectedActivity = PetActivity.NORMAL,
+            selectedSize = PetSizeCategory.SMALL,
+            selectedActivity = PetActivityLevel.MEDIUM,
             selectedSociability = PetSociability.NORMAL,
-            selectedHealth = PetHealth.HEALTHY
+            selectedHealth = PetHealthStatus.HEALTHY
         ),
         nameTextFieldState = nameTextFieldState,
         breedTextFieldState = breedTextFieldState,
@@ -212,7 +214,7 @@ private fun MyPagePetEditScreen(
 
             PetEditChipGroup(
                 title = "반려견 크기",
-                items = PetSize.items,
+                items = selectableEntries(PetSizeCategory.UNKNOWN).toPersistentList(),
                 selectedItem = uiState.selectedSize,
                 onItemSelected = actions::onSizeSelect
             )
@@ -220,7 +222,7 @@ private fun MyPagePetEditScreen(
 
             PetEditChipGroup(
                 title = "활동량",
-                items = PetActivity.items,
+                items = selectableEntries(PetActivityLevel.UNKNOWN).toPersistentList(),
                 selectedItem = uiState.selectedActivity,
                 onItemSelected = actions::onActivitySelect
             )
@@ -228,7 +230,7 @@ private fun MyPagePetEditScreen(
 
             PetEditChipGroup(
                 title = "사회성",
-                items = PetSociability.items,
+                items = selectableEntries(PetSociability.UNKNOWN).toPersistentList(),
                 selectedItem = uiState.selectedSociability,
                 onItemSelected = actions::onSociabilitySelect
             )
@@ -236,7 +238,7 @@ private fun MyPagePetEditScreen(
 
             PetEditChipGroup(
                 title = "건강 상태",
-                items = PetHealth.items,
+                items = selectableEntries(PetHealthStatus.UNKNOWN).toPersistentList(),
                 selectedItem = uiState.selectedHealth,
                 onItemSelected = actions::onHealthSelect
             )

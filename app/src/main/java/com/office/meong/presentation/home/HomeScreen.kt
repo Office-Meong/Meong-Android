@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,22 +29,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.util.UiState
-import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.image.StableImage
 import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
 import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
 import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
+import com.office.meong.data.pet.model.PetActivityLevel
+import com.office.meong.data.pet.model.PetHealthStatus
+import com.office.meong.data.pet.model.PetSizeCategory
+import com.office.meong.data.pet.model.PetSociability
 import com.office.meong.presentation.home.component.HomeCourseEmptyContent
 import com.office.meong.presentation.home.component.HomeCourseItem
 import com.office.meong.presentation.home.component.HomeTooltipBalloon
 import com.office.meong.presentation.home.model.HomeCourseSummaryUiModel
-import com.office.meong.presentation.home.model.HomePlaceCategory
-import com.office.meong.presentation.home.model.HomeUserInfoUiModel
+import com.office.meong.presentation.home.model.HomePetInfoUiModel
 import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -70,18 +72,20 @@ fun HomeRoute(
 
     HomeScreen(
         paddingValues = paddingValues,
-        userInfo = state.userInfo,
+        petInfo = state.petInfo,
         homeCourseSummaries = state.homeCourseSummaries,
         onRetryCourses = viewModel::retryLoad,
+        onRetryPetInfo = viewModel::retryPetInfo,
     )
 }
 
 @Composable
 private fun HomeScreen(
     paddingValues: PaddingValues,
-    userInfo: UiState<HomeUserInfoUiModel>,
+    petInfo: UiState<HomePetInfoUiModel>,
     homeCourseSummaries: UiState<ImmutableList<HomeCourseSummaryUiModel>>,
     onRetryCourses: () -> Unit,
+    onRetryPetInfo: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -98,47 +102,79 @@ private fun HomeScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            HomeTooltipBalloon(
-                text = "와 함께할\n" +
-                        "워케이션을 준비해볼까요?",
-                emphasizeText = userInfo.successData?.nickname,
-            )
+        when (petInfo) {
+            is UiState.Loading -> {
+                MeongLoadingIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(196.dp)
+                )
+            }
 
-            StableImage(
-                drawableResId = R.drawable.img_character,
-                modifier = Modifier
-                    .size(width = 120.dp, height = 120.dp),
-                contentScale = ContentScale.Crop
-            )
+            is UiState.Failure -> {
+                MeongLoadErrorView(
+                    action = LoadErrorViewAction.Retry(
+                        onRetryClick = onRetryPetInfo
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(196.dp)
+                )
+            }
+
+            is UiState.Empty -> Unit
+
+            is UiState.Success -> {
+                val pet = petInfo.data
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    HomeTooltipBalloon(
+                        text = "와 함께할\n" +
+                                "워케이션을 준비해볼까요?",
+                        emphasizeText = pet.name,
+                    )
+
+                    StableImage(
+                        drawableResId = R.drawable.img_character,
+                        modifier = Modifier
+                            .size(120.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Text(
+                    text = "반려견 정보",
+                    style = MeongTheme.typography.label.label14Sb,
+                    color = MeongTheme.colors.gray700,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                PetProfileCard(
+                    petName = pet.name,
+                    imageUrl = pet.imageUrl,
+                    tags = persistentListOf(
+                        pet.sizeCategory.label,
+                        "활동량 ${pet.activityLevel.label}",
+                        "사회성 ${pet.sociability.label}",
+                        pet.healthStatus.label
+                    ),
+                    isBordered = false,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+            }
         }
-
-        Text(
-            text = "반려견 정보",
-            style = MeongTheme.typography.label.label14Sb,
-            color = MeongTheme.colors.gray700,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        PetProfileCard(
-            petName = "",
-            imageUrl = "",
-            tags = persistentListOf("소형견","활동량 보통", "사회성 보통"),
-            isBordered = false,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -200,31 +236,15 @@ private fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         items(
-                            count = 5,
-                        ) {
+                            items = homeCourseSummaries.data,
+                            key = { item -> item.id }
+                        ) { item ->
                             HomeCourseItem(
-                                location = "강릉",
-                                tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
-                                title = "몽몽이랑 여름 힐링 워케이션",
-                                grade = "B",
-                                places = persistentListOf(
-                                    HomePlaceCategory(
-                                        type = PlaceType.WORKSPACE,
-                                        count = 2
-                                    ),
-                                    HomePlaceCategory(
-                                        type = PlaceType.RESTAURANT,
-                                        count = 5
-                                    ),
-                                    HomePlaceCategory(
-                                        type = PlaceType.SIGHTSEEING,
-                                        count = 4
-                                    ),
-                                    HomePlaceCategory(
-                                        type = PlaceType.OTHER,
-                                        count = 1
-                                    )
-                                ),
+                                region = item.region.label,
+                                tripPeriod = item.tripPeriod,
+                                title = item.name,
+                                grade = item.averageGrade,
+                                places = item.places,
                                 onClickCourseItem = {}
                             )
                         }
@@ -254,13 +274,20 @@ private fun HomeScreenPreview() {
             paddingValues = PaddingValues(),
             homeCourseSummaries = UiState.Success(persistentListOf()),
             onRetryCourses = {},
-            userInfo = UiState.Success(
-                HomeUserInfoUiModel(
-                    nickname = "몽몽이",
-                    profileImageUrl = "",
-                    email = "",
-                    createdAt = "",
-                    id = 0L
+            onRetryPetInfo = {},
+            petInfo = UiState.Success(
+                HomePetInfoUiModel(
+                    id = 1,
+                    name = "몽몽이",
+                    breed = "푸들",
+                    weightKg = 10.0,
+                    birthDate = "2020-01-01",
+                    isNeutered = true,
+                    imageUrl = "",
+                    sizeCategory = PetSizeCategory.SMALL,
+                    activityLevel = PetActivityLevel.MEDIUM,
+                    sociability = PetSociability.NORMAL,
+                    healthStatus = PetHealthStatus.HEALTHY
                 )
             )
         )

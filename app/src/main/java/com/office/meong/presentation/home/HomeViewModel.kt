@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.data.course.repository.CourseRepository
-import com.office.meong.data.user.repository.UserRepository
+import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.presentation.home.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.toImmutableList
@@ -21,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
-    private val userRepository: UserRepository,
+    private val petRepository: PetRepository,
 ): ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
@@ -30,7 +30,7 @@ class HomeViewModel @Inject constructor(
     val sideEffect = _sideEffect.receiveAsFlow()
 
     init {
-        fetchUserInfo()
+        fetchPetInfo()
         fetchHomeCourses()
     }
 
@@ -38,22 +38,28 @@ class HomeViewModel @Inject constructor(
         fetchHomeCourses()
     }
 
-    private fun fetchUserInfo() {
-        viewModelScope.launch {
-            _state.update { it.copy(userInfo = UiState.Loading) }
+    fun retryPetInfo() {
+        fetchPetInfo()
+    }
 
-            userRepository.getUserInfo()
-                .onSuccess { userInfo ->
+    private fun fetchPetInfo() {
+        viewModelScope.launch {
+            _state.update { it.copy(petInfo = UiState.Loading) }
+
+            petRepository.getDogs()
+                .onSuccess { petInfo ->
                     _state.update { currentState ->
                         currentState.copy(
-                            userInfo = UiState.Success(userInfo.toUiModel())
+                            petInfo = petInfo.firstOrNull()?.toUiModel()
+                                ?.let { UiState.Success(it) }
+                                ?: UiState.Empty
                         )
                     }
                 }
                 .onFailure {
                     _state.update { currentState ->
                         currentState.copy(
-                            userInfo = UiState.Failure(LoadErrorHandleAction.Retry)
+                            petInfo = UiState.Failure(LoadErrorHandleAction.Retry)
                         )
                     }
                 }

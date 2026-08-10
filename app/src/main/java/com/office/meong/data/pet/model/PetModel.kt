@@ -11,10 +11,10 @@ data class PetModel(
     val birthDate: String,
     val isNeutered: Boolean,
     val imageUrl: String,
-    val sizeCategory: String,
-    val activityLevel: String,
-    val sociability: String,
-    val healthStatus: String,
+    val sizeCategory: PetSizeCategory,
+    val activityLevel: PetActivityLevel,
+    val sociability: PetSociability,
+    val healthStatus: PetHealthStatus,
 ) {
     fun toDto() = DogRequest(
         name = name,
@@ -23,10 +23,10 @@ data class PetModel(
         birthDate = birthDate,
         isNeutered = isNeutered,
         imageUrl = imageUrl,
-        sizeCategory = sizeCategory,
-        activityLevel = activityLevel,
-        sociability = sociability,
-        healthStatus = healthStatus,
+        sizeCategory = sizeCategory.name,
+        activityLevel = activityLevel.name,
+        sociability = sociability.name,
+        healthStatus = healthStatus.name,
     )
 }
 
@@ -38,8 +38,8 @@ fun DogResponse.toModel() = PetModel(
     birthDate = birthDate,
     isNeutered = isNeutered,
     imageUrl = imageUrl,
-    sizeCategory = sizeCategory,
-    activityLevel = activityLevel,
-    sociability = sociability,
-    healthStatus = healthStatus,
+    sizeCategory = PetSizeCategory.from(sizeCategory),
+    activityLevel = PetActivityLevel.from(activityLevel),
+    sociability = PetSociability.from(sociability),
+    healthStatus = PetHealthStatus.from(healthStatus),
 )

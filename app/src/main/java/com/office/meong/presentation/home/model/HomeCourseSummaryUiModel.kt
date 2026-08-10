@@ -6,6 +6,9 @@ import com.office.meong.core.model.region.Region
 import com.office.meong.data.course.model.CourseSummary
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Immutable
 data class HomeCourseSummaryUiModel(
@@ -18,7 +21,10 @@ data class HomeCourseSummaryUiModel(
     val averageGrade: String,
     val places: ImmutableList<HomePlaceCategory>,
     val totalPlaceCount: Int,
-)
+) {
+    val tripPeriod: String
+        get() = formatTripPeriod(startDate, endDate)
+}
 
 fun CourseSummary.toUiModel() = HomeCourseSummaryUiModel(
     id = id,
@@ -36,3 +42,15 @@ fun CourseSummary.toUiModel() = HomeCourseSummaryUiModel(
     ),
     totalPlaceCount = totalPlaceCount
 )
+
+private val TRIP_DATE_DISPLAY_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.M.d")
+
+// startDate/endDate("yyyy-MM-dd")를 "N박 M일 (yyyy.M.d - yyyy.M.d)" 형태로 변환
+fun formatTripPeriod(startDate: String, endDate: String): String {
+    val start = LocalDate.parse(startDate)
+    val end = LocalDate.parse(endDate)
+    val days = ChronoUnit.DAYS.between(start, end).toInt() + 1
+    val nights = days - 1
+
+    return "${nights}박 ${days}일 (${start.format(TRIP_DATE_DISPLAY_FORMATTER)} - ${end.format(TRIP_DATE_DISPLAY_FORMATTER)})"
+}

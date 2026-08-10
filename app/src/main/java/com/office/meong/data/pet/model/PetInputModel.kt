@@ -9,10 +9,10 @@ data class PetInputModel(
     val birthDate: String,
     val isNeutered: Boolean,
     val imageUrl: String,
-    val sizeCategory: String,
-    val activityLevel: String,
-    val sociability: String,
-    val healthStatus: String,
+    val sizeCategory: PetSizeCategory,
+    val activityLevel: PetActivityLevel,
+    val sociability: PetSociability,
+    val healthStatus: PetHealthStatus,
 )
 
 fun PetInputModel.toDto() = DogRequest(
@@ -22,8 +22,8 @@ fun PetInputModel.toDto() = DogRequest(
     birthDate = birthDate,
     isNeutered = isNeutered,
     imageUrl = imageUrl,
-    sizeCategory = sizeCategory,
-    activityLevel = activityLevel,
-    sociability = sociability,
-    healthStatus = healthStatus,
+    sizeCategory = sizeCategory.name,
+    activityLevel = activityLevel.name,
+    sociability = sociability.name,
+    healthStatus = healthStatus.name,
 )
