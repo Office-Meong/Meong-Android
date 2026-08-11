@@ -14,6 +14,7 @@ import com.office.meong.presentation.favorite.navigation.favoriteNavGraph
 import com.office.meong.presentation.home.navigation.homeNavGraph
 import com.office.meong.presentation.main.state.MainAppState
 import com.office.meong.presentation.mypage.navigation.myPageNavGraph
+import com.office.meong.presentation.splash.navigation.splashNavGraph
 
 @Composable
 fun MeongNavHost(
@@ -36,6 +37,8 @@ fun MeongNavHost(
             ExitTransition.None
         },
     ) {
+        splashNavGraph()
+
         homeNavGraph(
             paddingValues = paddingValues
         )

@@ -39,7 +39,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun HomeCourseItem(
-    location: String,
+    region: String,
     tripPeriod: String,
     title: String,
     grade: String,
@@ -59,7 +59,7 @@ fun HomeCourseItem(
             )
     ) {
         HomeCourseTopSection(
-            location = location,
+            region = region,
             tripPeriod = tripPeriod,
             title = title,
             grade = grade
@@ -103,7 +103,7 @@ fun HomeCourseItem(
 
 @Composable
 private fun HomeCourseTopSection(
-    location: String,
+    region: String,
     tripPeriod: String,
     title: String,
     grade: String,
@@ -120,7 +120,7 @@ private fun HomeCourseTopSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = location,
+                text = region,
                 style = MeongTheme.typography.body.body14M,
                 color = MeongTheme.colors.gray600
             )
@@ -302,7 +302,7 @@ private fun HomeCourseBottomSection(
 private fun HomeCourseItemPreview() {
     MeongTheme {
         HomeCourseItem(
-            location = "강릉",
+            region = "강릉",
             tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
             title = "몽몽이랑 여름 힐링 워케이션",
             grade = "B",

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,19 +14,23 @@ import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
-fun PetEditNameField(
+fun PetEditTextField(
+    label: String,
+    description: String,
+    placeholder: String,
     state: TextFieldState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "반려견 이름",
+            text = label,
             style = MeongTheme.typography.label.label14Sb,
             color = MeongTheme.colors.gray900
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "15자 이내로 입력해주세요",
+            text = description,
             style = MeongTheme.typography.label.label12Sb,
             color = MeongTheme.colors.gray500
         )
@@ -33,7 +38,8 @@ fun PetEditNameField(
 
         MeongTextField(
             state = state,
-            placeholder = "반려견 이름을 입력해주세요",
+            placeholder = placeholder,
+            keyboardOptions = keyboardOptions,
             modifier = Modifier.fillMaxWidth()
         )
     }

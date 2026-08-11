@@ -17,17 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.office.meong.core.common.util.selectableEntries
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.auth.model.PetActivity
-import com.office.meong.presentation.auth.model.PetHealth
-import com.office.meong.presentation.auth.model.PetSize
-import com.office.meong.presentation.auth.model.PetSociability
-import com.office.meong.presentation.auth.model.SignUpUiState
+import com.office.meong.data.pet.model.PetActivityLevel
+import com.office.meong.data.pet.model.PetHealthStatus
+import com.office.meong.data.pet.model.PetSizeCategory
+import com.office.meong.data.pet.model.PetSociability
 import com.office.meong.presentation.auth.component.PetProfileChipGroup
 import com.office.meong.presentation.auth.component.PetProfileImagePicker
 import com.office.meong.presentation.auth.component.SignUpBottomButton
 import com.office.meong.presentation.auth.component.SignUpTextField
+import com.office.meong.presentation.auth.model.SignUpUiState
 
 @Composable
 fun SignUpRoute(
@@ -56,10 +57,10 @@ private fun SignUpScreen(
     nameTextFieldState: TextFieldState,
     onBackClick: () -> Unit,
     onImageClick: () -> Unit,
-    onSizeSelect: (PetSize) -> Unit,
-    onActivitySelect: (PetActivity) -> Unit,
+    onSizeSelect: (PetSizeCategory) -> Unit,
+    onActivitySelect: (PetActivityLevel) -> Unit,
     onSociabilitySelect: (PetSociability) -> Unit,
-    onHealthSelect: (PetHealth) -> Unit,
+    onHealthSelect: (PetHealthStatus) -> Unit,
     onSaveClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -104,7 +105,7 @@ private fun SignUpScreen(
 
             PetProfileChipGroup(
                 title = "반려견 크기",
-                items = PetSize.entries.toTypedArray(),
+                items = selectableEntries(PetSizeCategory.UNKNOWN).toTypedArray(),
                 selectedItem = uiState.selectedSize,
                 itemLabel = { it.label },
                 onItemSelected = onSizeSelect
@@ -113,7 +114,7 @@ private fun SignUpScreen(
 
             PetProfileChipGroup(
                 title = "활동량",
-                items = PetActivity.entries.toTypedArray(),
+                items = selectableEntries(PetActivityLevel.UNKNOWN).toTypedArray(),
                 selectedItem = uiState.selectedActivity,
                 itemLabel = { it.label },
                 onItemSelected = onActivitySelect
@@ -122,7 +123,7 @@ private fun SignUpScreen(
 
             PetProfileChipGroup(
                 title = "사회성",
-                items = PetSociability.entries.toTypedArray(),
+                items = selectableEntries(PetSociability.UNKNOWN).toTypedArray(),
                 selectedItem = uiState.selectedSociability,
                 itemLabel = { it.label },
                 onItemSelected = onSociabilitySelect
@@ -131,7 +132,7 @@ private fun SignUpScreen(
 
             PetProfileChipGroup(
                 title = "건강 상태",
-                items = PetHealth.entries.toTypedArray(),
+                items = selectableEntries(PetHealthStatus.UNKNOWN).toTypedArray(),
                 selectedItem = uiState.selectedHealth,
                 itemLabel = { it.label },
                 onItemSelected = onHealthSelect

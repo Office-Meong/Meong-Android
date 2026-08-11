@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.mypage.petedit.model.PetProfileAttribute
+import com.office.meong.data.pet.model.PetProfileAttribute
 import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalLayoutApi::class)

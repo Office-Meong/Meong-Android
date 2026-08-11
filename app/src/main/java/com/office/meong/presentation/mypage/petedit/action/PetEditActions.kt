@@ -1,17 +1,18 @@
 package com.office.meong.presentation.mypage.petedit.action
 
 import androidx.compose.runtime.Stable
-import com.office.meong.presentation.mypage.petedit.model.PetActivity
-import com.office.meong.presentation.mypage.petedit.model.PetHealth
-import com.office.meong.presentation.mypage.petedit.model.PetSize
-import com.office.meong.presentation.mypage.petedit.model.PetSociability
+import com.office.meong.data.pet.model.PetActivityLevel
+import com.office.meong.data.pet.model.PetHealthStatus
+import com.office.meong.data.pet.model.PetSizeCategory
+import com.office.meong.data.pet.model.PetSociability
 
 @Stable
 interface PetEditActions {
     fun onImageClick()
-    fun onSizeSelect(size: PetSize)
-    fun onActivitySelect(activity: PetActivity)
+    fun onNeuteredToggle(isNeutered: Boolean)
+    fun onSizeSelect(size: PetSizeCategory)
+    fun onActivitySelect(activity: PetActivityLevel)
     fun onSociabilitySelect(sociability: PetSociability)
-    fun onHealthSelect(health: PetHealth)
+    fun onHealthSelect(health: PetHealthStatus)
     fun onSaveClick()
 }
