@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.office.meong.presentation.course.create.CreateCourseRoute
 import com.office.meong.presentation.course.create.navigation.CreateCourse
+import com.office.meong.presentation.course.create.navigation.navigateToCreateCourse
 import com.office.meong.presentation.course.detail.DetailCourseRoute
 import com.office.meong.presentation.course.detail.navigation.DetailCourse
 import com.office.meong.presentation.course.detail.navigation.navigateToDetailCourse
@@ -39,6 +40,7 @@ fun NavGraphBuilder.courseNavGraph(
             MyCourseRoute(
                 paddingValues = paddingValues,
                 navigateToDetailCourse = navController::navigateToDetailCourse,
+                navigateToCreateCourse = { navController.navigateToCreateCourse() },
             )
         }
 

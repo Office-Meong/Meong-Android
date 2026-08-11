@@ -1,7 +1,5 @@
 package com.office.meong.presentation.home
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +41,7 @@ import com.office.meong.data.pet.model.PetActivityLevel
 import com.office.meong.data.pet.model.PetHealthStatus
 import com.office.meong.data.pet.model.PetSizeCategory
 import com.office.meong.data.pet.model.PetSociability
-import com.office.meong.presentation.home.component.HomeCourseEmptyContent
+import com.office.meong.presentation.sharedcomponent.CourseEmptyContent
 import com.office.meong.presentation.home.component.HomeCourseItem
 import com.office.meong.presentation.home.component.HomeTooltipBalloon
 import com.office.meong.presentation.home.model.HomeCourseSummaryUiModel
@@ -52,7 +50,6 @@ import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeRoute(
     paddingValues: PaddingValues,
@@ -82,7 +79,6 @@ fun HomeRoute(
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun HomeScreen(
     paddingValues: PaddingValues,
@@ -214,7 +210,7 @@ private fun HomeScreen(
             }
 
             is UiState.Empty -> {
-                HomeCourseEmptyContent(
+                CourseEmptyContent(
                     onClickPillButton = {},
                     modifier = Modifier
                         .fillMaxWidth()
@@ -224,7 +220,7 @@ private fun HomeScreen(
 
             is UiState.Success -> {
                 if (homeCourseSummaries.data.isEmpty()) {
-                    HomeCourseEmptyContent(
+                    CourseEmptyContent(
                         onClickPillButton = {},
                         modifier = Modifier
                             .fillMaxWidth()
@@ -270,7 +266,6 @@ private fun HomeScreen(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
 private fun HomeScreenPreview() {

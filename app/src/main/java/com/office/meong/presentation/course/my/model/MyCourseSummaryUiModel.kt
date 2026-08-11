@@ -1,4 +1,4 @@
-package com.office.meong.presentation.home.model
+package com.office.meong.presentation.course.my.model
 
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.common.util.formatTripPeriod
@@ -9,7 +9,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 @Immutable
-data class HomeCourseSummaryUiModel(
+data class MyCourseSummaryUiModel(
     val id: Long,
     val name: String,
     val region: Region,
@@ -17,14 +17,14 @@ data class HomeCourseSummaryUiModel(
     val endDate: String,
     val totalDays: Int,
     val averageGrade: String,
-    val places: ImmutableList<HomePlaceCategory>,
+    val places: ImmutableList<MyCoursePlaceCategory>,
     val totalPlaceCount: Int,
 ) {
     val tripPeriod: String
         get() = formatTripPeriod(startDate, endDate)
 }
 
-fun CourseSummary.toUiModel() = HomeCourseSummaryUiModel(
+fun CourseSummary.toUiModel() = MyCourseSummaryUiModel(
     id = id,
     name = name,
     region = region,
@@ -33,10 +33,10 @@ fun CourseSummary.toUiModel() = HomeCourseSummaryUiModel(
     totalDays = totalDays,
     averageGrade = averageGrade,
     places = persistentListOf(
-        HomePlaceCategory(PlaceType.WORKSPACE, workPlaceCount),
-        HomePlaceCategory(PlaceType.RESTAURANT, foodCount),
-        HomePlaceCategory(PlaceType.SIGHTSEEING, tourWalkCount),
-        HomePlaceCategory(PlaceType.OTHER, otherCount),
+        MyCoursePlaceCategory(PlaceType.WORKSPACE, workPlaceCount),
+        MyCoursePlaceCategory(PlaceType.RESTAURANT, foodCount),
+        MyCoursePlaceCategory(PlaceType.SIGHTSEEING, tourWalkCount),
+        MyCoursePlaceCategory(PlaceType.OTHER, otherCount),
     ),
     totalPlaceCount = totalPlaceCount
 )

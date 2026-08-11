@@ -11,6 +11,9 @@ import kotlinx.datetime.LocalDate
  */
 fun LocalDate.firstDayOfMonth(): LocalDate = LocalDate(year, month, 1)
 
+fun LocalDate.formatCourseDate(): String =
+    "$year.${monthNumber.toString().padStart(2, '0')}.${dayOfMonth.toString().padStart(2, '0')}"
+
 val LocalDate.sundayBasedDayOfWeekIndex: Int
     get() = when (dayOfWeek) {
         DayOfWeek.SUNDAY -> 0

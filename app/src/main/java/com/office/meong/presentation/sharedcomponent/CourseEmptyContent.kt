@@ -1,4 +1,4 @@
-package com.office.meong.presentation.home.component
+package com.office.meong.presentation.sharedcomponent
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +18,7 @@ import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
-fun HomeCourseEmptyContent(
+fun CourseEmptyContent(
     onClickPillButton: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -60,9 +60,9 @@ fun HomeCourseEmptyContent(
 
 @Preview
 @Composable
-private fun HomeCourseEmptyContentPreview() {
+private fun CourseEmptyContentPreview() {
     MeongTheme {
-        HomeCourseEmptyContent(
+        CourseEmptyContent(
             onClickPillButton = {}
         )
     }
