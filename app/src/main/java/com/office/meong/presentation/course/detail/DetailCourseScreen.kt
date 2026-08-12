@@ -48,20 +48,32 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
+import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.extension.disableNestedScroll
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.common.extension.statusBarColor
+import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.formatDayDate
+import com.office.meong.core.common.util.formatTripPeriod
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
+import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
 import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.component.topbar.TopbarAction
+import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
+import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.trigger.SnackbarState
+import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
+import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.presentation.course.detail.action.AccommodationEditActions
 import com.office.meong.presentation.course.detail.action.DetailCourseEditActions
 import com.office.meong.presentation.course.detail.action.ScheduleEditActions
@@ -77,6 +89,7 @@ import com.office.meong.presentation.course.detail.component.DetailCourseTopActi
 import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
 import com.office.meong.presentation.course.detail.model.PlaceEditChipType
 import com.office.meong.presentation.course.detail.model.ScheduleUiModel
+import com.office.meong.presentation.course.detail.model.toUiModel
 import com.office.meong.presentation.course.detail.state.DetailCourseUiState
 import com.office.meong.presentation.course.detail.state.rememberDetailCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -96,18 +109,70 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun DetailCourseRoute(
     paddingValues: PaddingValues,
-    navigateUp: () -> Unit = {}
+    navigateUp: () -> Unit = {},
+    viewModel: DetailCourseViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    viewModel.sideEffect.collectSideEffect {
+        when (it) {
+            is DetailCourseSideEffect.ShowToast -> {
+                globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
+            }
+        }
+    }
+
+    when (val course = state.course) {
+        is UiState.Loading -> {
+            MeongLoadingIndicator(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        }
+
+        is UiState.Failure -> {
+            MeongLoadErrorView(
+                action = LoadErrorViewAction.Retry(onRetryClick = viewModel::retryCourseDetail),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        }
+
+        is UiState.Empty -> Unit
+
+        is UiState.Success -> {
+            DetailCourseContent(
+                paddingValues = paddingValues,
+                course = course.data,
+                selectedDayNumber = state.selectedDayNumber,
+                onPreviousDayClick = viewModel::selectPreviousDay,
+                onNextDayClick = viewModel::selectNextDay,
+                onBackClick = navigateUp
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailCourseContent(
+    paddingValues: PaddingValues,
+    course: CourseDetail,
+    selectedDayNumber: Int,
+    onPreviousDayClick: () -> Unit,
+    onNextDayClick: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
 
-    val scheduleUiModels = remember {
-        mutableStateListOf(
-            ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 카페", grade = "A"),
-            ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 식당", grade = "A"),
-            ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
-            ScheduleUiModel(id = "4", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 오피스", grade = "A"),
-            ScheduleUiModel(id = "5", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 기사식당", grade = "A"),
-        )
+    val dayItems = remember(course, selectedDayNumber) {
+        course.dayItems[selectedDayNumber.toString()].orEmpty()
+    }
+
+    val scheduleUiModels = remember(dayItems) {
+        mutableStateListOf(*dayItems.map { it.toUiModel() }.toTypedArray())
     }
 
     val editActions = remember(uiState) {
@@ -147,7 +212,14 @@ fun DetailCourseRoute(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
-        onBackClick = navigateUp
+        title = course.name,
+        location = course.region.label,
+        tripPeriod = formatTripPeriod(course.startDate, course.endDate),
+        dayNumber = selectedDayNumber,
+        dayDate = formatDayDate(course.startDate, selectedDayNumber),
+        onPreviousDayClick = onPreviousDayClick,
+        onNextDayClick = onNextDayClick,
+        onBackClick = onBackClick
     )
 
     if (uiState.isEditTitleVisible) {
@@ -171,6 +243,13 @@ private fun DetailCourseScreen(
     uiState: DetailCourseUiState,
     editActions: DetailCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
+    title: String,
+    location: String,
+    tripPeriod: String,
+    dayNumber: Int,
+    dayDate: String,
+    onPreviousDayClick: () -> Unit,
+    onNextDayClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val lazyListState = rememberLazyListState()
@@ -236,8 +315,9 @@ private fun DetailCourseScreen(
                     Spacer(Modifier.height(20.dp))
 
                     DetailCourseInfoHolder(
-                        location = "강릉",
-                        tripDay = "2박 3일 (2026.8.10 - 2026.8.12)",
+                        title = title,
+                        location = location,
+                        tripDay = tripPeriod,
                         onEditTitleClick = editActions.title::onClickEdit,
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
@@ -296,10 +376,10 @@ private fun DetailCourseScreen(
                     }
 
                     DetailCourseScheduleSection(
-                        dayNumber = "2",
-                        tripDay = "8.11",
-                        onPreviousClick = {},
-                        onNextClick = {},
+                        dayNumber = dayNumber.toString(),
+                        tripDay = dayDate,
+                        onPreviousClick = onPreviousDayClick,
+                        onNextClick = onNextDayClick,
                         onRouteClick = {},
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
@@ -712,6 +792,13 @@ private fun DetailCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
                 )
             },
+            title = "강릉 2박 3일 워케이션",
+            location = "강릉",
+            tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
+            dayNumber = 2,
+            dayDate = "8.11",
+            onPreviousDayClick = {},
+            onNextDayClick = {},
             onBackClick = {}
         )
     }

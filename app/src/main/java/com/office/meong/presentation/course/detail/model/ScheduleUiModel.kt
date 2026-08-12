@@ -2,6 +2,7 @@ package com.office.meong.presentation.course.detail.model
 
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.data.course.model.CourseItem
 import kotlinx.collections.immutable.persistentListOf
 
 @Immutable
@@ -20,3 +21,11 @@ data class ScheduleUiModel(
         )
     }
 }
+
+fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
+    id = id.toString(),
+    placeType = PlaceType.entries.firstOrNull { it.name == placeType } ?: PlaceType.OTHER,
+    placeName = placeName,
+    grade = "",
+    location = address,
+)

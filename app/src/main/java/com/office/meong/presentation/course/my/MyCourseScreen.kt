@@ -36,7 +36,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 fun MyCourseRoute(
     paddingValues: PaddingValues,
-    navigateToDetailCourse: () -> Unit = {},
+    navigateToDetailCourse: (Long) -> Unit = {},
     navigateToCreateCourse: () -> Unit = {},
     viewModel: MyCourseViewModel = hiltViewModel()
 ) {
@@ -65,7 +65,7 @@ private fun MyCourseScreen(
     paddingValues: PaddingValues,
     myCoursesSummaries: UiState<ImmutableList<MyCourseSummaryUiModel>>,
     onRetry: () -> Unit,
-    navigateToDetailCourse: () -> Unit = {},
+    navigateToDetailCourse: (Long) -> Unit = {},
     navigateToCreateCourse: () -> Unit = {},
 ) {
     Column(
@@ -146,7 +146,9 @@ private fun MyCourseScreen(
                                 title = course.name,
                                 grade = course.averageGrade,
                                 places = course.places,
-                                onClickCourseItem = navigateToDetailCourse
+                                onClickCourseItem = {
+                                    navigateToDetailCourse(course.id)
+                                }
                             )
                         }
 

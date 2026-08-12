@@ -26,6 +26,7 @@ import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
 fun DetailCourseInfoHolder(
+    title: String,
     location: String,
     tripDay: String,
     onEditTitleClick: () -> Unit,
@@ -38,7 +39,7 @@ fun DetailCourseInfoHolder(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "강릉 2박 3일 워케이션",
+                text = title,
                 style = MeongTheme.typography.title.title20Sb,
                 color = MeongTheme.colors.gray900
             )
@@ -91,6 +92,7 @@ fun DetailCourseInfoHolder(
 private fun DetailCourseInfoHolderPreview() {
     MeongTheme {
         DetailCourseInfoHolder(
+            title = "강릉 2박 3일 워케이션",
             location = "강릉",
             tripDay = "2박 3일 (2026.8.10 - 2026.8.12)",
             onEditTitleClick = {}
