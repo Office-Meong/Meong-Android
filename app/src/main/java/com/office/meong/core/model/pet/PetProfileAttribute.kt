@@ -1,4 +1,4 @@
-package com.office.meong.data.pet.model
+package com.office.meong.core.model.pet
 
 interface PetProfileAttribute {
     val label: String
