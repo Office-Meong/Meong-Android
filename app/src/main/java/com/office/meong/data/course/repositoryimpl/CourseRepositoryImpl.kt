@@ -63,4 +63,16 @@ class CourseRepositoryImpl @Inject constructor(
     override suspend fun updateCourseName(courseId: Long, name: String): Result<CourseDetail> = suspendRunCatching {
         courseDataSource.patchCourseName(courseId, name).toModel().also { coursesCache.invalidate() }
     }
+
+    override suspend fun reorderCourseItems(
+        courseId: Long,
+        dayNumber: Int,
+        itemIds: List<Long>
+    ): Result<CourseDetail> = suspendRunCatching {
+        courseDataSource.patchCourseItemsReorder(
+            courseId = courseId,
+            dayNumber = dayNumber,
+            itemIds = itemIds
+        ).toModel().also { coursesCache.invalidate() }
+    }
 }

@@ -3,6 +3,7 @@ package com.office.meong.data.course.remote.datasource
 import com.office.meong.core.network.model.ApiException
 import com.office.meong.core.network.model.getOrThrow
 import com.office.meong.data.course.remote.api.CourseService
+import com.office.meong.data.course.remote.dto.request.CourseItemReorderRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemUpdateRequest
 import com.office.meong.data.course.remote.dto.request.CourseNameRequest
 import com.office.meong.data.course.remote.dto.request.CourseRequest
@@ -45,5 +46,15 @@ class CourseDataSource @Inject constructor(
         courseService.patchCourseName(
             courseId = courseId,
             courseNameRequest = CourseNameRequest(name = name)
+        ).getOrThrow()
+
+    suspend fun patchCourseItemsReorder(
+        courseId: Long,
+        dayNumber: Int,
+        itemIds: List<Long>
+    ): CourseResponse =
+        courseService.patchCourseItemsReorder(
+            courseId = courseId,
+            courseItemReorderRequest = CourseItemReorderRequest(dayNumber = dayNumber, itemIds = itemIds)
         ).getOrThrow()
 }

@@ -1,6 +1,7 @@
 package com.office.meong.data.course.remote.api
 
 import com.office.meong.core.network.model.BaseResponse
+import com.office.meong.data.course.remote.dto.request.CourseItemReorderRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemUpdateRequest
 import com.office.meong.data.course.remote.dto.request.CourseNameRequest
 import com.office.meong.data.course.remote.dto.request.CourseRequest
@@ -52,5 +53,11 @@ interface CourseService {
     suspend fun patchCourseName(
         @Path("courseId") courseId: Long,
         @Body courseNameRequest: CourseNameRequest
+    ): BaseResponse<CourseResponse>
+
+    @PATCH("courses/{courseId}/items/reorder")
+    suspend fun patchCourseItemsReorder(
+        @Path("courseId") courseId: Long,
+        @Body courseItemReorderRequest: CourseItemReorderRequest
     ): BaseResponse<CourseResponse>
 }
