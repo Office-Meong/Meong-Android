@@ -89,7 +89,7 @@ fun DetailCourseRouteIndicator(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun DetailCourseRouteIndicatorPreview() {
     MeongTheme {

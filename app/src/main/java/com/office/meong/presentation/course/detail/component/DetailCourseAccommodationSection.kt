@@ -50,6 +50,7 @@ fun DetailCourseAccommodationSection(
 
         Spacer(Modifier.height(4.dp))
 
+        // TODO: 숙소 API 추가되면 실제 숙소 정보로 교체
         MeongPlaceCard(
             placeName = "프렌즈애견펜션",
             location = "강원 강릉시 하남길 117-4",

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.data.course.repository.CourseRepository
+import com.office.meong.data.pet.model.toInfo
 import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.presentation.home.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,7 +51,7 @@ class HomeViewModel @Inject constructor(
                 .onSuccess { petInfo ->
                     _state.update { currentState ->
                         currentState.copy(
-                            petInfo = petInfo.firstOrNull()?.toUiModel()
+                            petInfo = petInfo.firstOrNull()?.toInfo()
                                 ?.let { UiState.Success(it) }
                                 ?: UiState.Empty
                         )

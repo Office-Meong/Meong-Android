@@ -1,9 +1,9 @@
 package com.office.meong.presentation.mypage.petedit.model
 
-import com.office.meong.data.pet.model.PetActivityLevel
-import com.office.meong.data.pet.model.PetHealthStatus
-import com.office.meong.data.pet.model.PetSizeCategory
-import com.office.meong.data.pet.model.PetSociability
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 
 data class PetEditUiState(
     val imageUrl: String? = null,

@@ -36,6 +36,9 @@ fun DetailCourseScheduleItem(
     count: Int,
     placeName: String,
     placeType: PlaceType,
+    location: String,
+    grade: String?,
+    routeLength: String,
     isLastItem: Boolean,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
@@ -80,15 +83,15 @@ fun DetailCourseScheduleItem(
         ) {
             MeongPlaceCard(
                 placeName = placeName,
-                location = "강원 강릉시 하남길 117-4",
-                grade = "A",
+                location = location,
+                grade = grade,
                 isFavorite = false,
                 onFavoriteClick = onFavoriteClick,
                 placeType = placeType
             )
 
             if (!isLastItem) {
-                DetailCourseRouteIndicator("1.2", onRouteClick, routeIndicatorType = DetailCourseRouteIndicatorType.BETWEEN)
+                DetailCourseRouteIndicator(routeLength, onRouteClick, routeIndicatorType = DetailCourseRouteIndicatorType.BETWEEN)
             }
         }
     }
@@ -102,6 +105,9 @@ private fun DetailCourseScheduleItemPreview() {
             count = 1,
             placeName = "멍멍이 카페",
             placeType = PlaceType.WORKSPACE,
+            location = "강원 강릉시 하남길 117-4",
+            grade = "A",
+            routeLength = "1.2",
             isLastItem = false,
             onFavoriteClick = {},
             onRouteClick = {}

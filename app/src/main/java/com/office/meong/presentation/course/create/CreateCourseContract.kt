@@ -3,14 +3,14 @@ package com.office.meong.presentation.course.create
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.model.course.WorkFocusLevel
+import com.office.meong.core.model.pet.PetInfo
 import com.office.meong.core.model.region.Region
-import com.office.meong.data.pet.model.PetModel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
 @Immutable
 data class CreateCourseState(
-    val petInfo: UiState<PetModel> = UiState.Loading,
+    val petInfo: UiState<PetInfo> = UiState.Loading,
     val selectedRegion: Region? = null,
     val selectedAccommodationType: String? = null,
     val selectedStartDate: LocalDate? = null,

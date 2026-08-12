@@ -37,15 +37,15 @@ import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
-import com.office.meong.data.pet.model.PetActivityLevel
-import com.office.meong.data.pet.model.PetHealthStatus
-import com.office.meong.data.pet.model.PetSizeCategory
-import com.office.meong.data.pet.model.PetSociability
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetInfo
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.presentation.sharedcomponent.CourseEmptyContent
 import com.office.meong.presentation.home.component.HomeCourseItem
 import com.office.meong.presentation.home.component.HomeTooltipBalloon
 import com.office.meong.presentation.home.model.HomeCourseSummaryUiModel
-import com.office.meong.presentation.home.model.HomePetInfoUiModel
 import com.office.meong.presentation.sharedcomponent.PetProfileCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -82,7 +82,7 @@ fun HomeRoute(
 @Composable
 private fun HomeScreen(
     paddingValues: PaddingValues,
-    petInfo: UiState<HomePetInfoUiModel>,
+    petInfo: UiState<PetInfo>,
     homeCourseSummaries: UiState<ImmutableList<HomeCourseSummaryUiModel>>,
     onRetryCourses: () -> Unit,
     onRetryPetInfo: () -> Unit,
@@ -276,7 +276,7 @@ private fun HomeScreenPreview() {
             onRetryCourses = {},
             onRetryPetInfo = {},
             petInfo = UiState.Success(
-                HomePetInfoUiModel(
+                PetInfo(
                     id = 1,
                     name = "몽몽이",
                     breed = "푸들",

@@ -8,6 +8,9 @@ import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.successData
 import com.office.meong.data.course.repository.CourseRepository
+import com.office.meong.data.pet.model.toInfo
+import com.office.meong.data.pet.repository.PetRepository
+import com.office.meong.presentation.course.detail.model.toUiModel
 import com.office.meong.presentation.course.detail.navigation.DetailCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -23,6 +26,7 @@ import javax.inject.Inject
 class DetailCourseViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val courseRepository: CourseRepository,
+    private val petRepository: PetRepository,
 ) : ViewModel() {
     private val courseId = savedStateHandle.toRoute<DetailCourse>().courseId
 
@@ -34,10 +38,15 @@ class DetailCourseViewModel @Inject constructor(
 
     init {
         fetchCourseDetail()
+        fetchPetInfo()
     }
 
     fun retryCourseDetail() {
         fetchCourseDetail()
+    }
+
+    fun retryPetInfo() {
+        fetchPetInfo()
     }
 
     fun selectPreviousDay() {
@@ -49,17 +58,50 @@ class DetailCourseViewModel @Inject constructor(
         _state.update { it.copy(selectedDayNumber = (it.selectedDayNumber + 1).coerceAtMost(totalDays)) }
     }
 
+    fun reorderCourseItems(dayNumber: Int, itemIds: List<Long>) {
+        viewModelScope.launch {
+            courseRepository.reorderCourseItems(courseId, dayNumber, itemIds)
+                .onSuccess { course ->
+                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                }
+                .onFailure {
+                    _sideEffect.send(DetailCourseSideEffect.ShowToast("일정 순서 변경에 실패했어요"))
+                }
+        }
+    }
+
     private fun fetchCourseDetail() {
         viewModelScope.launch {
             _state.update { it.copy(course = UiState.Loading) }
 
             courseRepository.getDetailCourse(courseId)
                 .onSuccess { course ->
-                    _state.update { it.copy(course = UiState.Success(course), selectedDayNumber = 1) }
+                    _state.update { it.copy(course = UiState.Success(course.toUiModel()), selectedDayNumber = 1) }
                 }
                 .onFailure {
                     _state.update { it.copy(course = UiState.Failure(LoadErrorHandleAction.Retry)) }
                     _sideEffect.send(DetailCourseSideEffect.ShowToast("코스 정보를 불러오지 못했어요"))
+                }
+        }
+    }
+
+    private fun fetchPetInfo() {
+        viewModelScope.launch {
+            _state.update { it.copy(petInfo = UiState.Loading) }
+
+            petRepository.getDogs()
+                .onSuccess { pets ->
+                    _state.update { currentState ->
+                        currentState.copy(
+                            petInfo = pets.firstOrNull()?.toInfo()
+                                ?.let { UiState.Success(it) }
+                                ?: UiState.Empty
+                        )
+                    }
+                }
+                .onFailure {
+                    _state.update { it.copy(petInfo = UiState.Failure(LoadErrorHandleAction.Retry)) }
+                    _sideEffect.send(DetailCourseSideEffect.ShowToast("반려견 정보를 불러오지 못했어요"))
                 }
         }
     }

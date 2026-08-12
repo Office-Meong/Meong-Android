@@ -30,6 +30,7 @@ import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndica
 fun DetailCourseScheduleSection(
     dayNumber: String,
     tripDay: String,
+    routeLength: String,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onRouteClick: () -> Unit,
@@ -96,6 +97,7 @@ fun DetailCourseScheduleSection(
 
         Spacer(Modifier.height(16.dp))
 
+        // TODO: 숙소 API 추가되면 실제 숙소 정보로 교체
         DetailCoursePlaceSummaryItem(
             placeType = "숙소",
             placeName = "프렌즈애견펜션"
@@ -104,7 +106,7 @@ fun DetailCourseScheduleSection(
         Spacer(Modifier.height(10.dp))
 
         DetailCourseRouteIndicator(
-            routeLength = "1.2",
+            routeLength = routeLength,
             onRouteClick = onRouteClick,
             routeIndicatorType = DetailCourseRouteIndicatorType.START
         )
@@ -120,6 +122,7 @@ private fun DetailCourseScheduleSectionPreview() {
         DetailCourseScheduleSection(
             dayNumber = "2",
             tripDay = "8.11",
+            routeLength = "1.2",
             onPreviousClick = {},
             onNextClick = {},
             onRouteClick = {}

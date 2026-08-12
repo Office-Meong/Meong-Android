@@ -39,7 +39,7 @@ fun <T : Any> rememberDragDropState(
  * 아이템 타입이나 도메인에 종속되지 않으며, [key]로 각 아이템을 식별한다.
  * */
 @Stable
-class DragDropState<T : Any> internal constructor(
+class DragDropState<T : Any>(
     private val lazyListState: LazyListState,
     private val items: SnapshotStateList<T>,
     private val key: (T) -> Any,

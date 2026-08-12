@@ -67,6 +67,6 @@ class DetailCourseUiState private constructor() {
     }
 
     companion object {
-        internal fun create(): DetailCourseUiState = DetailCourseUiState()
+        fun create(): DetailCourseUiState = DetailCourseUiState()
     }
 }

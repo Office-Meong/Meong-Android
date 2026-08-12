@@ -10,6 +10,7 @@ import com.office.meong.core.model.course.WorkFocusLevel
 import com.office.meong.core.model.region.Region
 import com.office.meong.data.course.model.CourseCreateInput
 import com.office.meong.data.course.repository.CourseRepository
+import com.office.meong.data.pet.model.toInfo
 import com.office.meong.data.pet.repository.PetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -88,7 +89,7 @@ class CreateCourseViewModel @Inject constructor(
                 .onSuccess { pets ->
                     _state.update { currentState ->
                         currentState.copy(
-                            petInfo = pets.firstOrNull()
+                            petInfo = pets.firstOrNull()?.toInfo()
                                 ?.let { UiState.Success(it) }
                                 ?: UiState.Empty
                         )

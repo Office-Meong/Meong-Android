@@ -11,7 +11,10 @@ data class ScheduleUiModel(
     val placeType: PlaceType,
     val placeName: String,
     val grade: String,
-    val location: String = ""
+    val location: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val distanceFromPrevKm: Double = 0.0
 ) {
     companion object {
         val DUMMY_SEARCHABLE_PLACES = persistentListOf(
@@ -28,4 +31,7 @@ fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
     placeName = placeName,
     grade = "",
     location = address,
+    latitude = latitude,
+    longitude = longitude,
+    distanceFromPrevKm = distanceFromPrevKm,
 )

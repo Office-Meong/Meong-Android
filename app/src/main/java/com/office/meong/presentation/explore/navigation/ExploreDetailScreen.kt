@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.office.meong.core.common.extension.openKakaoMap
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailCongestionInfo
@@ -29,12 +31,13 @@ fun ExploreDetailRoute(
     paddingValues: PaddingValues
 ) {
     val uiState = ExploreDetailUiState.Dummy
+    val context = LocalContext.current
 
     ExploreDetailScreen(
         paddingValues = paddingValues,
         uiState = uiState,
         onBackClick = onBackClick,
-        onKakaoMapClick = { /* TODO: 카카오맵 연동 */ },
+        onKakaoMapClick = { context.openKakaoMap(uiState.title) },
         onFavoriteClick = { /* TODO: 좋아요 API 호출 */ }
     )
 }

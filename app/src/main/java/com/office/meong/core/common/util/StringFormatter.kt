@@ -35,3 +35,6 @@ fun formatDayDate(startDate: String, dayNumber: Int): String =
     LocalDate.parse(startDate).plus(dayNumber - 1, DateTimeUnit.DAY).toTripDisplayShortFormat()
 
 private fun LocalDate.toTripDisplayShortFormat(): String = "$monthNumber.$dayOfMonth"
+
+// 거리(km)를 소수점 1자리 문자열로 변환
+fun formatDistanceKm(distanceKm: Double): String = "%.1f".format(distanceKm)
