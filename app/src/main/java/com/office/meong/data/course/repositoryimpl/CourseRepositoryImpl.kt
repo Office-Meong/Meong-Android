@@ -9,6 +9,7 @@ import com.office.meong.data.course.model.CourseSummary
 import com.office.meong.data.course.model.toDto
 import com.office.meong.data.course.model.toModel
 import com.office.meong.data.course.remote.datasource.CourseDataSource
+import com.office.meong.data.course.remote.dto.request.CourseItemCreateRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemUpdateRequest
 import com.office.meong.data.course.repository.CourseRepository
 import javax.inject.Inject
@@ -33,6 +34,28 @@ class CourseRepositoryImpl @Inject constructor(
     override suspend fun deleteCourse(courseId: Long): Result<Unit> = suspendRunCatching {
         courseDataSource.deleteCourse(courseId)
         coursesCache.invalidate()
+    }
+
+    override suspend fun addCourseItem(
+        courseId: Long,
+        dayNumber: Int,
+        placeId: Long,
+        visitOrder: Int?,
+        startTime: String?,
+        endTime: String?,
+        slotLabel: String?
+    ): Result<CourseDetail> = suspendRunCatching {
+        courseDataSource.postCourseItem(
+            courseId = courseId,
+            courseItemCreateRequest = CourseItemCreateRequest(
+                dayNumber = dayNumber,
+                placeId = placeId,
+                visitOrder = visitOrder,
+                startTime = startTime,
+                endTime = endTime,
+                slotLabel = slotLabel
+            )
+        ).toModel().also { coursesCache.invalidate() }
     }
 
     override suspend fun updateCourseItem(

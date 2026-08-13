@@ -3,6 +3,7 @@ package com.office.meong.data.course.remote.datasource
 import com.office.meong.core.network.model.ApiException
 import com.office.meong.core.network.model.getOrThrow
 import com.office.meong.data.course.remote.api.CourseService
+import com.office.meong.data.course.remote.dto.request.CourseItemCreateRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemReorderRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemUpdateRequest
 import com.office.meong.data.course.remote.dto.request.CourseNameRequest
@@ -28,6 +29,12 @@ class CourseDataSource @Inject constructor(
         val response = courseService.deleteCourse(courseId)
         if (!response.success) throw ApiException(response.message)
     }
+
+    suspend fun postCourseItem(
+        courseId: Long,
+        courseItemCreateRequest: CourseItemCreateRequest
+    ): CourseResponse =
+        courseService.postCourseItem(courseId, courseItemCreateRequest).getOrThrow()
 
     suspend fun putCourseItem(
         courseId: Long,

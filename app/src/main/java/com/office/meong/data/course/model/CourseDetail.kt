@@ -18,6 +18,8 @@ data class CourseItem(
     val startTime: String,
     val endTime: String,
     val distanceFromPrevKm: Double,
+    val thumbnailUrl: String?,
+    val lodgingType: String?,
 )
 
 fun CourseItemResponse.toModel(): CourseItem = CourseItem(
@@ -34,6 +36,8 @@ fun CourseItemResponse.toModel(): CourseItem = CourseItem(
     startTime = startTime,
     endTime = endTime,
     distanceFromPrevKm = distanceFromPrevKm,
+    thumbnailUrl = thumbnailUrl,
+    lodgingType = lodgingType,
 )
 
 data class CourseDetail(

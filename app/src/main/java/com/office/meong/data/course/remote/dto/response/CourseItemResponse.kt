@@ -31,4 +31,8 @@ data class CourseItemResponse(
     val endTime: String,
     @SerialName("distanceFromPrevKm")
     val distanceFromPrevKm: Double,
+    @SerialName("thumbnailUrl")
+    val thumbnailUrl: String? = null,
+    @SerialName("lodgingType")
+    val lodgingType: String? = null,
 )

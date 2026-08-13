@@ -10,6 +10,15 @@ interface CourseRepository {
     suspend fun getDetailCourse(courseId: Long): Result<CourseDetail>
     suspend fun createCourse(request: CourseCreateInput): Result<CourseDetail>
     suspend fun deleteCourse(courseId: Long): Result<Unit>
+    suspend fun addCourseItem(
+        courseId: Long,
+        dayNumber: Int,
+        placeId: Long,
+        visitOrder: Int? = null,
+        startTime: String? = null,
+        endTime: String? = null,
+        slotLabel: String? = null
+    ): Result<CourseDetail>
     suspend fun updateCourseItem(
         courseId: Long,
         itemId: Long,

@@ -1,6 +1,7 @@
 package com.office.meong.data.course.remote.api
 
 import com.office.meong.core.network.model.BaseResponse
+import com.office.meong.data.course.remote.dto.request.CourseItemCreateRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemReorderRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemUpdateRequest
 import com.office.meong.data.course.remote.dto.request.CourseNameRequest
@@ -35,6 +36,12 @@ interface CourseService {
     suspend fun deleteCourse(
         @Path("courseId") courseId: Long
     ): BaseResponse<Unit>
+
+    @POST("courses/{courseId}/items")
+    suspend fun postCourseItem(
+        @Path("courseId") courseId: Long,
+        @Body courseItemCreateRequest: CourseItemCreateRequest
+    ): BaseResponse<CourseResponse>
 
     @PUT("courses/{courseId}/items/{itemId}")
     suspend fun putCourseItem(
