@@ -14,4 +14,5 @@ data class DetailCourseState(
 
 sealed interface DetailCourseSideEffect {
     data class ShowToast(val message: String) : DetailCourseSideEffect
+    data object NavigateUp : DetailCourseSideEffect
 }

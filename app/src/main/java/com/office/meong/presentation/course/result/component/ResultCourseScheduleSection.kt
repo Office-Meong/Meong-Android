@@ -24,12 +24,15 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
+import com.office.meong.presentation.course.result.model.ScheduleUiModel
 
 @Composable
 fun ResultCourseScheduleSection(
     dayNumber: String,
     tripDay: String,
+    accommodation: ScheduleUiModel?,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onRouteClick: () -> Unit,
@@ -43,20 +46,22 @@ fun ResultCourseScheduleSection(
             onNextClick = onNextClick
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (accommodation != null) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        ResultCoursePlaceSummaryItem(
-            placeType = "숙소",
-            placeName = "프렌즈애견펜션"
-        )
+            ResultCoursePlaceSummaryItem(
+                placeType = accommodation.placeType.label,
+                placeName = accommodation.placeName
+            )
 
-        Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-        RouteIndicator(
-            routeLength = "1.2",
-            onRouteClick = onRouteClick,
-            routeIndicatorType = RouteIndicatorType.START,
-        )
+            RouteIndicator(
+                routeLength = "1.2",
+                onRouteClick = onRouteClick,
+                routeIndicatorType = RouteIndicatorType.START,
+            )
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
     }
@@ -136,6 +141,7 @@ private fun ResultCourseScheduleSectionPreview() {
         ResultCourseScheduleSection(
             dayNumber = "2",
             tripDay = "8.11",
+            accommodation = ScheduleUiModel(id = "0", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
             onPreviousClick = {},
             onNextClick = {},
             onRouteClick = {}

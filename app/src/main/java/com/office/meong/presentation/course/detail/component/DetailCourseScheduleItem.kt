@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -42,7 +43,9 @@ fun DetailCourseScheduleItem(
     isLastItem: Boolean,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    thumbnailUrl: String? = null,
+    lodgingType: LodgingType? = null
 ) {
     var markerSize by remember { mutableStateOf(IntSize.Zero) }
     val lineColor = MeongTheme.colors.gray100
@@ -87,7 +90,9 @@ fun DetailCourseScheduleItem(
                 grade = grade,
                 isFavorite = false,
                 onFavoriteClick = onFavoriteClick,
-                placeType = placeType
+                placeType = placeType,
+                thumbnailUrl = thumbnailUrl,
+                lodgingType = lodgingType
             )
 
             if (!isLastItem) {

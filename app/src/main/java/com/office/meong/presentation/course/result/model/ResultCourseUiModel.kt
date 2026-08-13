@@ -1,4 +1,4 @@
-package com.office.meong.presentation.course.detail.model
+package com.office.meong.presentation.course.result.model
 
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.common.util.formatTripPeriod
@@ -7,7 +7,7 @@ import com.office.meong.core.model.region.Region
 import com.office.meong.data.course.model.CourseDetail
 
 @Immutable
-data class DetailCourseUiModel(
+data class ResultCourseUiModel(
     val name: String,
     val region: Region,
     val startDate: String,
@@ -18,12 +18,12 @@ data class DetailCourseUiModel(
     val tripPeriod: String
         get() = formatTripPeriod(startDate, endDate)
 
-    /** 코스 전체 일정 중 숙소(STAY)로 취급되는 아이템. 일정이 add/update/reorder로 바뀌어도 dayItems에서 매번 다시 계산되므로 항상 최신 상태 */
+    /** 코스 전체 일정 중 숙소(STAY)로 취급되는 아이템. dayItems에서 매번 다시 계산되므로 항상 최신 상태 */
     val accommodation: ScheduleUiModel?
         get() = dayItems.values.flatten().firstOrNull { it.placeType == PlaceType.ACCOMMODATION }
 }
 
-fun CourseDetail.toUiModel(): DetailCourseUiModel = DetailCourseUiModel(
+fun CourseDetail.toUiModel(): ResultCourseUiModel = ResultCourseUiModel(
     name = name,
     region = region,
     startDate = startDate,

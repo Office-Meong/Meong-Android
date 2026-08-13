@@ -31,4 +31,5 @@ data class CreateCourseState(
 
 sealed interface CreateCourseSideEffect {
     data class ShowToast(val message: String) : CreateCourseSideEffect
+    data class NavigateToResult(val courseId: Long) : CreateCourseSideEffect
 }

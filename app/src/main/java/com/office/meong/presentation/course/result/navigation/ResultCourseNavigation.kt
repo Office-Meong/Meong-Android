@@ -6,7 +6,9 @@ import com.office.meong.core.navigation.Route
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object ResultCourse: Route
+data class ResultCourse(val courseId: Long) : Route
 
-fun NavController.navigateToResultCourse(navOptions: NavOptions? = null) =
-    navigate(ResultCourse, navOptions)
+fun NavController.navigateToResultCourse(
+    courseId: Long,
+    navOptions: NavOptions? = null
+) = navigate(ResultCourse(courseId), navOptions)

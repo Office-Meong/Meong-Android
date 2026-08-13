@@ -55,7 +55,42 @@ class DetailCourseViewModel @Inject constructor(
 
     fun selectNextDay() {
         val totalDays = _state.value.course.successData?.totalDays ?: return
-        _state.update { it.copy(selectedDayNumber = (it.selectedDayNumber + 1).coerceAtMost(totalDays)) }
+        _state.update {
+            it.copy(
+                selectedDayNumber = (it.selectedDayNumber + 1).coerceAtMost(
+                    totalDays
+                )
+            )
+        }
+    }
+
+    fun removeCourse() {
+        viewModelScope.launch {
+            courseRepository.deleteCourse(
+                courseId = courseId
+            ).onSuccess {
+                _sideEffect.send(DetailCourseSideEffect.ShowToast("코스를 삭제했어요"))
+                _sideEffect.send(DetailCourseSideEffect.NavigateUp)
+            }.onFailure {
+                _sideEffect.send(DetailCourseSideEffect.ShowToast("코스 삭제에 실패했어요"))
+            }
+        }
+    }
+
+    fun addCourseItem(dayNumber: Int, placeId: Long) {
+        viewModelScope.launch {
+            courseRepository.addCourseItem(
+                courseId = courseId,
+                dayNumber = dayNumber,
+                placeId = placeId
+            )
+                .onSuccess { course ->
+                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                }
+                .onFailure {
+                    _sideEffect.send(DetailCourseSideEffect.ShowToast("장소 추가에 실패했어요"))
+                }
+        }
     }
 
     fun reorderCourseItems(dayNumber: Int, itemIds: List<Long>) {
@@ -76,7 +111,12 @@ class DetailCourseViewModel @Inject constructor(
 
             courseRepository.getDetailCourse(courseId)
                 .onSuccess { course ->
-                    _state.update { it.copy(course = UiState.Success(course.toUiModel()), selectedDayNumber = 1) }
+                    _state.update {
+                        it.copy(
+                            course = UiState.Success(course.toUiModel()),
+                            selectedDayNumber = 1
+                        )
+                    }
                 }
                 .onFailure {
                     _state.update { it.copy(course = UiState.Failure(LoadErrorHandleAction.Retry)) }

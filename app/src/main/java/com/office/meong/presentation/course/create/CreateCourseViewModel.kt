@@ -140,8 +140,9 @@ class CreateCourseViewModel @Inject constructor(
             _state.update { it.copy(isSubmitting = false) }
 
             result
-                .onSuccess {
+                .onSuccess { course ->
                     _sideEffect.send(CreateCourseSideEffect.ShowToast("코스가 생성되었어요"))
+                    _sideEffect.send(CreateCourseSideEffect.NavigateToResult(course.id))
                 }
                 .onFailure {
                     _sideEffect.send(CreateCourseSideEffect.ShowToast("코스 생성에 실패했어요"))

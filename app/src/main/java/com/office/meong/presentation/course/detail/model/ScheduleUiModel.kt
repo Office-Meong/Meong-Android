@@ -1,6 +1,7 @@
 package com.office.meong.presentation.course.detail.model
 
 import androidx.compose.runtime.Immutable
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.data.course.model.CourseItem
 import kotlinx.collections.immutable.persistentListOf
@@ -14,7 +15,10 @@ data class ScheduleUiModel(
     val location: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val distanceFromPrevKm: Double = 0.0
+    val distanceFromPrevKm: Double = 0.0,
+    val thumbnailUrl: String? = null,
+    val lodgingType: LodgingType? = null,
+    val placeId: Long? = null
 ) {
     companion object {
         val DUMMY_SEARCHABLE_PLACES = persistentListOf(
@@ -27,11 +31,14 @@ data class ScheduleUiModel(
 
 fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
     id = id.toString(),
-    placeType = PlaceType.entries.firstOrNull { it.name == placeType } ?: PlaceType.OTHER,
+    placeType = PlaceType.from(placeType),
     placeName = placeName,
     grade = "",
     location = address,
     latitude = latitude,
     longitude = longitude,
     distanceFromPrevKm = distanceFromPrevKm,
+    thumbnailUrl = thumbnailUrl,
+    lodgingType = LodgingType.from(lodgingType),
+    placeId = placeId,
 )

@@ -15,14 +15,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 
 @Composable
 fun DetailCourseAccommodationSection(
+    placeName: String,
+    location: String,
     onChangeAccommodationClick: () -> Unit,
     onFavoriteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    grade: String? = null,
+    thumbnailUrl: String? = null,
+    lodgingType: LodgingType? = null
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
@@ -50,14 +56,15 @@ fun DetailCourseAccommodationSection(
 
         Spacer(Modifier.height(4.dp))
 
-        // TODO: 숙소 API 추가되면 실제 숙소 정보로 교체
         MeongPlaceCard(
-            placeName = "프렌즈애견펜션",
-            location = "강원 강릉시 하남길 117-4",
-            grade = "A",
+            placeName = placeName,
+            location = location,
+            grade = grade,
             isFavorite = false,
             onFavoriteClick = onFavoriteClick,
-            placeType = PlaceType.ACCOMMODATION
+            placeType = PlaceType.ACCOMMODATION,
+            thumbnailUrl = thumbnailUrl,
+            lodgingType = lodgingType
         )
     }
 }
@@ -67,6 +74,9 @@ fun DetailCourseAccommodationSection(
 private fun DetailCourseAccommodationSectionPreview() {
     MeongTheme {
         DetailCourseAccommodationSection(
+            placeName = "프렌즈애견펜션",
+            location = "강원 강릉시 하남길 117-4",
+            grade = "A",
             onChangeAccommodationClick = {},
             onFavoriteClick = {}
         )

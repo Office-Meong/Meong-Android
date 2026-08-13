@@ -58,6 +58,7 @@ import kotlinx.datetime.LocalTime
 @Composable
 fun CreateCourseRoute(
     viewModel: CreateCourseViewModel = hiltViewModel(),
+    navigateToResultCourse: (courseId: Long) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
@@ -67,6 +68,7 @@ fun CreateCourseRoute(
             is CreateCourseSideEffect.ShowToast -> {
                 globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
             }
+            is CreateCourseSideEffect.NavigateToResult -> navigateToResultCourse(it.courseId)
         }
     }
 

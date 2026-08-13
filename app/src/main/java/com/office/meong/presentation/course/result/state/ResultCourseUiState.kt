@@ -1,4 +1,4 @@
-package com.office.meong.presentation.course.detail.state
+package com.office.meong.presentation.course.result.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -6,42 +6,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.office.meong.presentation.course.detail.model.PlaceEditChipType
+import com.office.meong.presentation.course.result.model.CurrentDialogType
+import com.office.meong.presentation.course.result.model.PlaceEditChipType
 
 @Composable
-fun rememberDetailCourseUiState(): DetailCourseUiState =
-    remember { DetailCourseUiState.create() }
+fun rememberResultCourseUiState(): ResultCourseUiState =
+    remember { ResultCourseUiState.create() }
 
 @Stable
-class DetailCourseUiState private constructor() {
-    var isTopActionVisible by mutableStateOf(false)
-        private set
-
+class ResultCourseUiState private constructor() {
     var isEditTitleVisible by mutableStateOf(false)
         private set
 
     var isEditAccommodationVisible by mutableStateOf(false)
         private set
 
-    var isAddPlaceVisible by mutableStateOf(false)
-        private set
-
     var isEditSchedule by mutableStateOf(false)
         private set
 
-    var isDeleteDialogVisible by mutableStateOf(false)
+    var currentDialogType by mutableStateOf<CurrentDialogType?>(null)
         private set
 
     var editPlaceChipType by mutableStateOf(PlaceEditChipType.SEARCH)
         private set
-
-    fun toggleTopAction() {
-        isTopActionVisible = !isTopActionVisible
-    }
-
-    fun hideTopAction() {
-        isTopActionVisible = false
-    }
 
     fun showEditTitle() {
         isEditTitleVisible = true
@@ -60,15 +47,6 @@ class DetailCourseUiState private constructor() {
         editPlaceChipType = PlaceEditChipType.SEARCH
     }
 
-    fun showAddPlace() {
-        isAddPlaceVisible = true
-    }
-
-    fun hideAddPlace() {
-        isAddPlaceVisible = false
-        editPlaceChipType = PlaceEditChipType.SEARCH
-    }
-
     fun selectPlaceEditChip(chipType: PlaceEditChipType) {
         editPlaceChipType = chipType
     }
@@ -81,15 +59,15 @@ class DetailCourseUiState private constructor() {
         isEditSchedule = false
     }
 
-    fun showDeleteDialog() {
-        isDeleteDialogVisible = true
+    fun showExitDialog(type: CurrentDialogType) {
+        currentDialogType = type
     }
 
-    fun hideDeleteDialog() {
-        isDeleteDialogVisible = false
+    fun hideExitDialog() {
+        currentDialogType = null
     }
 
     companion object {
-        fun create(): DetailCourseUiState = DetailCourseUiState()
+        fun create(): ResultCourseUiState = ResultCourseUiState()
     }
 }

@@ -16,6 +16,7 @@ import com.office.meong.presentation.course.my.MyCourseRoute
 import com.office.meong.presentation.course.my.navigation.MyCourse
 import com.office.meong.presentation.course.result.ResultCourseRoute
 import com.office.meong.presentation.course.result.navigation.ResultCourse
+import com.office.meong.presentation.course.result.navigation.navigateToResultCourse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -30,10 +31,12 @@ fun NavGraphBuilder.courseNavGraph(
     paddingValues: PaddingValues,
 ) {
     navigation<CourseGraph>(
-        startDestination = ResultCourse,
+        startDestination = MyCourse,
     ) {
         composable<CreateCourse> {
-            CreateCourseRoute()
+            CreateCourseRoute(
+                navigateToResultCourse = { courseId -> navController.navigateToResultCourse(courseId) }
+            )
         }
 
         composable<MyCourse> {
@@ -54,7 +57,7 @@ fun NavGraphBuilder.courseNavGraph(
         composable<ResultCourse> {
             ResultCourseRoute(
                 paddingValues = paddingValues,
-                navigateUp = {}
+                navigateUp = navController::navigateUp
             )
         }
     }

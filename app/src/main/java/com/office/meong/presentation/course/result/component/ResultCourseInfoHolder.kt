@@ -28,6 +28,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun ResultCourseInfoHolder(
+    title: String,
     onEditTitleClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -38,7 +39,7 @@ fun ResultCourseInfoHolder(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "강릉 2박 3일 워케이션",
+                text = title,
                 style = MeongTheme.typography.title.title20Sb,
                 color = MeongTheme.colors.gray900
             )
@@ -130,6 +131,7 @@ private fun InfoRow(
 private fun ResultCourseInfoHolderPreview() {
     MeongTheme {
         ResultCourseInfoHolder(
+            title = "강릉 2박 3일 워케이션",
             onEditTitleClick = {},
         )
     }

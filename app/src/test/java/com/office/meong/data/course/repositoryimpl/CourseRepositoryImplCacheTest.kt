@@ -7,6 +7,7 @@ import com.office.meong.data.course.model.CourseCreateInput
 import com.office.meong.data.course.model.CourseSummary
 import com.office.meong.data.course.remote.api.CourseService
 import com.office.meong.data.course.remote.datasource.CourseDataSource
+import com.office.meong.data.course.remote.dto.request.CourseItemCreateRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemReorderRequest
 import com.office.meong.data.course.remote.dto.request.CourseItemUpdateRequest
 import com.office.meong.data.course.remote.dto.request.CourseNameRequest
@@ -63,6 +64,11 @@ private class FakeCourseService : CourseService {
         )
 
     override suspend fun deleteCourse(courseId: Long) = throw NotImplementedError()
+    override suspend fun postCourseItem(
+        courseId: Long,
+        courseItemCreateRequest: CourseItemCreateRequest
+    ) = throw NotImplementedError()
+
     override suspend fun putCourseItem(
         courseId: Long,
         itemId: Long,

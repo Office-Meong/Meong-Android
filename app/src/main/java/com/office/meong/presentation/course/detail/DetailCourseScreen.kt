@@ -63,6 +63,7 @@ import com.office.meong.core.common.util.formatDayDate
 import com.office.meong.core.common.util.formatDistanceKm
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
+import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
@@ -85,6 +86,7 @@ import com.office.meong.presentation.course.detail.action.DetailCourseEditAction
 import com.office.meong.presentation.course.detail.action.ScheduleEditActions
 import com.office.meong.presentation.course.detail.action.TitleEditActions
 import com.office.meong.presentation.course.detail.component.DetailCourseAccommodationSection
+import com.office.meong.presentation.course.detail.component.DetailCourseDeleteDialog
 import com.office.meong.presentation.course.detail.component.DetailCourseEditScheduleItem
 import com.office.meong.presentation.course.detail.component.DetailCourseInfoHolder
 import com.office.meong.presentation.course.detail.component.DetailCoursePlaceSummaryItem
@@ -126,6 +128,7 @@ fun DetailCourseRoute(
             is DetailCourseSideEffect.ShowToast -> {
                 globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
             }
+            is DetailCourseSideEffect.NavigateUp -> navigateUp()
         }
     }
 
@@ -159,7 +162,9 @@ fun DetailCourseRoute(
                 onNextDayClick = viewModel::selectNextDay,
                 onBackClick = navigateUp,
                 onReorderComplete = viewModel::reorderCourseItems,
-                onRetryPetInfo = viewModel::retryPetInfo
+                onAddCourseItem = viewModel::addCourseItem,
+                onRetryPetInfo = viewModel::retryPetInfo,
+                onDeleteClick = viewModel::removeCourse
             )
         }
     }
@@ -175,6 +180,8 @@ private fun DetailCourseContent(
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
     onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
+    onDeleteClick: () -> Unit,
     onRetryPetInfo: () -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
@@ -226,6 +233,7 @@ private fun DetailCourseContent(
         tripPeriod = course.tripPeriod,
         dayNumber = selectedDayNumber,
         dayDate = formatDayDate(course.startDate, selectedDayNumber),
+        accommodation = course.accommodation,
         petInfo = petInfo,
         onRetryPetInfo = onRetryPetInfo,
         onPreviousDayClick = onPreviousDayClick,
@@ -246,6 +254,27 @@ private fun DetailCourseContent(
             onDismiss = editActions.accommodation::onClickComplete
         )
     }
+
+    if (uiState.isAddPlaceVisible) {
+        DetailCourseEditPlaceBottomSheet(
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideAddPlace,
+            onPlaceSelected = { place ->
+                place.placeId?.let { placeId ->
+                    onAddCourseItem(selectedDayNumber, placeId)
+                    uiState.hideAddPlace()
+                }
+            }
+        )
+    }
+
+    if (uiState.isDeleteDialogVisible) {
+        DetailCourseDeleteDialog(
+            onDismiss = uiState::hideDeleteDialog,
+            onDelete = onDeleteClick
+        )
+    }
 }
 
 @Composable
@@ -259,6 +288,7 @@ private fun DetailCourseScreen(
     tripPeriod: String,
     dayNumber: Int,
     dayDate: String,
+    accommodation: ScheduleUiModel?,
     petInfo: UiState<PetInfo>,
     onRetryPetInfo: () -> Unit,
     onPreviousDayClick: () -> Unit,
@@ -385,13 +415,20 @@ private fun DetailCourseScreen(
                         }
                     }
 
-                    Spacer(Modifier.height(24.dp))
+                    if (accommodation != null) {
+                        Spacer(Modifier.height(24.dp))
 
-                    DetailCourseAccommodationSection(
-                        onChangeAccommodationClick = editActions.accommodation::onClickEdit,
-                        onFavoriteClick = {},
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                        DetailCourseAccommodationSection(
+                            placeName = accommodation.placeName,
+                            location = accommodation.location,
+                            grade = accommodation.grade.ifBlank { null },
+                            thumbnailUrl = accommodation.thumbnailUrl,
+                            lodgingType = accommodation.lodgingType,
+                            onChangeAccommodationClick = editActions.accommodation::onClickEdit,
+                            onFavoriteClick = {},
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
 
                     Spacer(Modifier.height(24.dp))
 
@@ -424,6 +461,7 @@ private fun DetailCourseScreen(
                         dayNumber = dayNumber.toString(),
                         tripDay = dayDate,
                         routeLength = formatDistanceKm(scheduleUiModels.firstOrNull()?.distanceFromPrevKm ?: 0.0),
+                        accommodation = accommodation,
                         onPreviousClick = onPreviousDayClick,
                         onNextClick = onNextDayClick,
                         onRouteClick = {},
@@ -467,6 +505,8 @@ private fun DetailCourseScreen(
                             grade = item.grade.ifBlank { null },
                             routeLength = formatDistanceKm(nextItem?.distanceFromPrevKm ?: 0.0),
                             isLastItem = index == scheduleUiModels.lastIndex,
+                            thumbnailUrl = item.thumbnailUrl,
+                            lodgingType = item.lodgingType,
                             onFavoriteClick = {},
                             onRouteClick = {
                                 nextItem?.let {
@@ -489,26 +529,39 @@ private fun DetailCourseScreen(
                 }
 
                 item {
-                    Spacer(Modifier.height(10.dp))
+                    if (accommodation != null) {
+                        Spacer(Modifier.height(10.dp))
 
-                    // TODO: 숙소 API 추가되면 마지막 장소 -> 숙소 실제 거리/좌표로 교체하고 카카오맵 경로 보기 연결
-                    DetailCourseRouteIndicator(
-                        routeLength = "1.2",
-                        onRouteClick = {},
-                        routeIndicatorType = DetailCourseRouteIndicatorType.END,
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                        // TODO: 숙소 API 추가되면 마지막 장소 -> 숙소 실제 거리/좌표로 교체하고 카카오맵 경로 보기 연결
+                        DetailCourseRouteIndicator(
+                            routeLength = "1.2",
+                            onRouteClick = {},
+                            routeIndicatorType = DetailCourseRouteIndicatorType.END,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
 
-                    Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(10.dp))
 
-                    // TODO: 숙소 API 추가되면 실제 숙소 정보로 교체
-                    DetailCoursePlaceSummaryItem(
-                        placeType = "숙소",
-                        placeName = "프렌즈애견펜션",
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                        DetailCoursePlaceSummaryItem(
+                            placeType = accommodation.placeType.label,
+                            placeName = accommodation.placeName,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
 
                     Spacer(Modifier.height(40.dp))
+                }
+
+                item {
+                    if (uiState.isEditSchedule) {
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        MeongPillButton(
+                            text = "장소 추가",
+                            onClick = uiState::showAddPlace,
+                            prefixIcon = R.drawable.ic_plus
+                        )
+                    }
                 }
             }
         }
@@ -539,6 +592,7 @@ private fun DetailCourseScreen(
                 DetailCourseTopAction(
                     onClick = {
                         uiState.hideTopAction()
+                        uiState.showDeleteDialog()
                     }
                 )
             }
@@ -613,7 +667,8 @@ private fun DetailCourseEditPlaceBottomSheet(
     selectedChipType: PlaceEditChipType,
     onChipClick: (PlaceEditChipType) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
     val placeShimmer = rememberShimmer(
         shimmerBounds = ShimmerBounds.View,
@@ -696,7 +751,8 @@ private fun DetailCourseEditPlaceBottomSheet(
                             shimmer = placeShimmer,
                             emptyTitle = "검색 결과가 없어요",
                             emptyDescription = "다른 검색어를 입력해주세요",
-                            onFavoriteClick = {}
+                            onFavoriteClick = {},
+                            onPlaceClick = onPlaceSelected
                         )
                     }
                 }
@@ -722,7 +778,8 @@ private fun DetailCourseEditPlaceBottomSheet(
                         shimmer = placeShimmer,
                         emptyTitle = "저장된 관심 장소가 없어요",
                         emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
-                        onFavoriteClick = {}
+                        onFavoriteClick = {},
+                        onPlaceClick = onPlaceSelected
                     )
                 }
             }
@@ -742,6 +799,7 @@ private fun DetailCoursePlaceEditResultList(
     onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     emptyDescription: String? = null,
+    onPlaceClick: (ScheduleUiModel) -> Unit = {},
 ) {
     val maxListHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.7f).dp }
 
@@ -791,6 +849,7 @@ private fun DetailCoursePlaceEditResultList(
                         onFavoriteClick = { onFavoriteClick(place.id) },
                         placeType = place.placeType,
                         isBordered = true,
+                        modifier = Modifier.noRippleClickable(onClick = { onPlaceClick(place) }),
                     )
                 }
             }
@@ -862,6 +921,7 @@ private fun DetailCourseScreenPreview() {
             tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
             dayNumber = 2,
             dayDate = "8.11",
+            accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "강원 강릉시 하남길 117-4"),
             petInfo = UiState.Success(
                 PetInfo(
                     id = 1,
