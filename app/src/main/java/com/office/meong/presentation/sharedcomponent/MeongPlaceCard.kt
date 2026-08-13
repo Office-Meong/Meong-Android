@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,15 +17,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 
 @Composable
@@ -36,6 +41,8 @@ fun MeongPlaceCard(
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier,
     grade: String? = null,
+    thumbnailUrl: String? = null,
+    lodgingType: LodgingType? = null,
     isBordered: Boolean = false,
     isSelected: Boolean = false
 ) {
@@ -76,6 +83,13 @@ fun MeongPlaceCard(
                         isActivated = true
                     )
                 }
+
+                if (lodgingType != null) {
+                    MeongChip(
+                        chipText = lodgingType.label,
+                        isActivated = false
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -109,19 +123,27 @@ fun MeongPlaceCard(
 
         Box(
             modifier = Modifier
+                .size(80.dp)
                 .styleable {
                     background(iconBackgroundColor)
                     shape(RoundedCornerShape(12.dp))
                 },
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier.padding(26.dp)
-            ) {
+            if (thumbnailUrl.isNullOrBlank()) {
                 Icon(
                     imageVector = ImageVector.vectorResource(placeType.iconRes),
                     contentDescription = null,
                     tint = MeongTheme.colors.gray300
+                )
+            } else {
+                AsyncImage(
+                    model = thumbnailUrl,
+                    contentDescription = "장소 썸네일 이미지",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
                 )
             }
 
