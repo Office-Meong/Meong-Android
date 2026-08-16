@@ -15,14 +15,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 
 @Composable
 fun ResultCourseAccommodationSection(
+    placeName: String,
+    location: String,
     onEditAccommodationClick: () -> Unit,
     onFavoriteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    grade: String? = null,
+    thumbnailUrl: String? = null,
+    lodgingType: LodgingType? = null
 ) {
     Column(
         modifier = modifier
@@ -55,12 +61,14 @@ fun ResultCourseAccommodationSection(
         Spacer(modifier = Modifier.height(4.dp))
 
         MeongPlaceCard(
-            placeName = "프렌즈애견펜션",
-            location = "서울시 강남구",
-            grade = "A",
+            placeName = placeName,
+            location = location,
+            grade = grade,
             isFavorite = true,
             onFavoriteClick = onFavoriteClick,
-            placeType = PlaceType.ACCOMMODATION
+            placeType = PlaceType.ACCOMMODATION,
+            thumbnailUrl = thumbnailUrl,
+            lodgingType = lodgingType
         )
     }
 }
@@ -70,6 +78,9 @@ fun ResultCourseAccommodationSection(
 private fun ResultCourseAccommodationSectionPreview() {
     MeongTheme {
         ResultCourseAccommodationSection(
+            placeName = "프렌즈애견펜션",
+            location = "서울시 강남구",
+            grade = "A",
             onEditAccommodationClick = {},
             onFavoriteClick = {}
         )

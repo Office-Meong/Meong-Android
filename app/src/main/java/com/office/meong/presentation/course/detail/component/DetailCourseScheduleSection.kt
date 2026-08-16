@@ -24,12 +24,16 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
+import com.office.meong.presentation.course.detail.model.ScheduleUiModel
 
 @Composable
 fun DetailCourseScheduleSection(
     dayNumber: String,
     tripDay: String,
+    routeLength: String,
+    accommodation: ScheduleUiModel?,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onRouteClick: () -> Unit,
@@ -94,20 +98,22 @@ fun DetailCourseScheduleSection(
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+        if (accommodation != null) {
+            Spacer(Modifier.height(16.dp))
 
-        DetailCoursePlaceSummaryItem(
-            placeType = "숙소",
-            placeName = "프렌즈애견펜션"
-        )
+            DetailCoursePlaceSummaryItem(
+                placeType = accommodation.placeType.label,
+                placeName = accommodation.placeName
+            )
 
-        Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(10.dp))
 
-        DetailCourseRouteIndicator(
-            routeLength = "1.2",
-            onRouteClick = onRouteClick,
-            routeIndicatorType = DetailCourseRouteIndicatorType.START
-        )
+            DetailCourseRouteIndicator(
+                routeLength = routeLength,
+                onRouteClick = onRouteClick,
+                routeIndicatorType = DetailCourseRouteIndicatorType.START
+            )
+        }
 
         Spacer(Modifier.height(10.dp))
     }
@@ -120,6 +126,8 @@ private fun DetailCourseScheduleSectionPreview() {
         DetailCourseScheduleSection(
             dayNumber = "2",
             tripDay = "8.11",
+            routeLength = "1.2",
+            accommodation = ScheduleUiModel(id = "0", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
             onPreviousClick = {},
             onNextClick = {},
             onRouteClick = {}

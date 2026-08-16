@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.core.common.util.selectableEntries
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.data.pet.model.PetActivityLevel
-import com.office.meong.data.pet.model.PetHealthStatus
-import com.office.meong.data.pet.model.PetSizeCategory
-import com.office.meong.data.pet.model.PetSociability
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.presentation.auth.component.PetProfileChipGroup
 import com.office.meong.presentation.auth.component.PetProfileImagePicker
 import com.office.meong.presentation.auth.component.SignUpBottomButton

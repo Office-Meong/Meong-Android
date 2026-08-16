@@ -37,6 +37,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -48,25 +49,44 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
+import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.extension.disableNestedScroll
 import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.common.extension.openKakaoMapRoute
 import com.office.meong.core.common.extension.statusBarColor
+import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.formatDayDate
+import com.office.meong.core.common.util.formatDistanceKm
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
+import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
+import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
 import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.component.topbar.TopbarAction
+import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
+import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetInfo
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.trigger.SnackbarState
+import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.course.detail.action.AccommodationEditActions
 import com.office.meong.presentation.course.detail.action.DetailCourseEditActions
 import com.office.meong.presentation.course.detail.action.ScheduleEditActions
 import com.office.meong.presentation.course.detail.action.TitleEditActions
 import com.office.meong.presentation.course.detail.component.DetailCourseAccommodationSection
+import com.office.meong.presentation.course.detail.component.DetailCourseDeleteDialog
 import com.office.meong.presentation.course.detail.component.DetailCourseEditScheduleItem
 import com.office.meong.presentation.course.detail.component.DetailCourseInfoHolder
 import com.office.meong.presentation.course.detail.component.DetailCoursePlaceSummaryItem
@@ -75,6 +95,7 @@ import com.office.meong.presentation.course.detail.component.DetailCourseSchedul
 import com.office.meong.presentation.course.detail.component.DetailCourseScheduleSection
 import com.office.meong.presentation.course.detail.component.DetailCourseTopAction
 import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
+import com.office.meong.presentation.course.detail.model.DetailCourseUiModel
 import com.office.meong.presentation.course.detail.model.PlaceEditChipType
 import com.office.meong.presentation.course.detail.model.ScheduleUiModel
 import com.office.meong.presentation.course.detail.state.DetailCourseUiState
@@ -96,21 +117,80 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun DetailCourseRoute(
     paddingValues: PaddingValues,
-    navigateUp: () -> Unit = {}
+    navigateUp: () -> Unit = {},
+    viewModel: DetailCourseViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    viewModel.sideEffect.collectSideEffect {
+        when (it) {
+            is DetailCourseSideEffect.ShowToast -> {
+                globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
+            }
+            is DetailCourseSideEffect.NavigateUp -> navigateUp()
+        }
+    }
+
+    when (val course = state.course) {
+        is UiState.Loading -> {
+            MeongLoadingIndicator(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        }
+
+        is UiState.Failure -> {
+            MeongLoadErrorView(
+                action = LoadErrorViewAction.Retry(onRetryClick = viewModel::retryCourseDetail),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        }
+
+        is UiState.Empty -> Unit
+
+        is UiState.Success -> {
+            DetailCourseContent(
+                paddingValues = paddingValues,
+                course = course.data,
+                petInfo = state.petInfo,
+                selectedDayNumber = state.selectedDayNumber,
+                onPreviousDayClick = viewModel::selectPreviousDay,
+                onNextDayClick = viewModel::selectNextDay,
+                onBackClick = navigateUp,
+                onReorderComplete = viewModel::reorderCourseItems,
+                onAddCourseItem = viewModel::addCourseItem,
+                onRetryPetInfo = viewModel::retryPetInfo,
+                onDeleteClick = viewModel::removeCourse
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailCourseContent(
+    paddingValues: PaddingValues,
+    course: DetailCourseUiModel,
+    petInfo: UiState<PetInfo>,
+    selectedDayNumber: Int,
+    onPreviousDayClick: () -> Unit,
+    onNextDayClick: () -> Unit,
+    onBackClick: () -> Unit,
+    onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
+    onDeleteClick: () -> Unit,
+    onRetryPetInfo: () -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
 
-    val scheduleUiModels = remember {
-        mutableStateListOf(
-            ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 카페", grade = "A"),
-            ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 식당", grade = "A"),
-            ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
-            ScheduleUiModel(id = "4", placeType = PlaceType.WORKSPACE, placeName = "멍멍이 오피스", grade = "A"),
-            ScheduleUiModel(id = "5", placeType = PlaceType.RESTAURANT, placeName = "멍멍이 기사식당", grade = "A"),
-        )
+    val scheduleUiModels = remember(course, selectedDayNumber) {
+        mutableStateListOf(*course.dayItems[selectedDayNumber].orEmpty().toTypedArray())
     }
 
-    val editActions = remember(uiState) {
+    val editActions = remember(uiState, scheduleUiModels, selectedDayNumber) {
         object : DetailCourseEditActions {
             override val title = object : TitleEditActions {
                 override fun onClickEdit() {
@@ -137,6 +217,7 @@ fun DetailCourseRoute(
 
                 override fun onClickComplete() {
                     uiState.hideEditSchedule()
+                    onReorderComplete(selectedDayNumber, scheduleUiModels.map { it.id.toLong() })
                 }
             }
         }
@@ -147,7 +228,17 @@ fun DetailCourseRoute(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
-        onBackClick = navigateUp
+        title = course.name,
+        location = course.region.label,
+        tripPeriod = course.tripPeriod,
+        dayNumber = selectedDayNumber,
+        dayDate = formatDayDate(course.startDate, selectedDayNumber),
+        accommodation = course.accommodation,
+        petInfo = petInfo,
+        onRetryPetInfo = onRetryPetInfo,
+        onPreviousDayClick = onPreviousDayClick,
+        onNextDayClick = onNextDayClick,
+        onBackClick = onBackClick
     )
 
     if (uiState.isEditTitleVisible) {
@@ -163,6 +254,27 @@ fun DetailCourseRoute(
             onDismiss = editActions.accommodation::onClickComplete
         )
     }
+
+    if (uiState.isAddPlaceVisible) {
+        DetailCourseEditPlaceBottomSheet(
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideAddPlace,
+            onPlaceSelected = { place ->
+                place.placeId?.let { placeId ->
+                    onAddCourseItem(selectedDayNumber, placeId)
+                    uiState.hideAddPlace()
+                }
+            }
+        )
+    }
+
+    if (uiState.isDeleteDialogVisible) {
+        DetailCourseDeleteDialog(
+            onDismiss = uiState::hideDeleteDialog,
+            onDelete = onDeleteClick
+        )
+    }
 }
 
 @Composable
@@ -171,12 +283,22 @@ private fun DetailCourseScreen(
     uiState: DetailCourseUiState,
     editActions: DetailCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
+    title: String,
+    location: String,
+    tripPeriod: String,
+    dayNumber: Int,
+    dayDate: String,
+    accommodation: ScheduleUiModel?,
+    petInfo: UiState<PetInfo>,
+    onRetryPetInfo: () -> Unit,
+    onPreviousDayClick: () -> Unit,
+    onNextDayClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
 
-    // 팝업이 닫혀있는 동안엔 리컴포지션을 유발하지 않도록, 일반 배열에 최신 좌표만 계속 갱신해둔다.
     val latestMoreButtonCoordinates = remember { arrayOfNulls<LayoutCoordinates>(1) }
     var moreButtonCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
@@ -236,8 +358,9 @@ private fun DetailCourseScreen(
                     Spacer(Modifier.height(20.dp))
 
                     DetailCourseInfoHolder(
-                        location = "강릉",
-                        tripDay = "2박 3일 (2026.8.10 - 2026.8.12)",
+                        title = title,
+                        location = location,
+                        tripDay = tripPeriod,
                         onEditTitleClick = editActions.title::onClickEdit,
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
@@ -253,20 +376,59 @@ private fun DetailCourseScreen(
 
                     Spacer(Modifier.height(10.dp))
 
-                    PetProfileCard(
-                        petName = "몽몽이",
-                        imageUrl = "",
-                        tags = persistentListOf("소형견", "활동량 보통", "사회성 보통", "최근 수술, 치료중"),
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                    when (petInfo) {
+                        is UiState.Loading -> {
+                            MeongLoadingIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                                    .height(114.dp)
+                            )
+                        }
 
-                    Spacer(Modifier.height(24.dp))
+                        is UiState.Failure -> {
+                            MeongLoadErrorView(
+                                action = LoadErrorViewAction.Retry(onRetryClick = onRetryPetInfo),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                                    .height(114.dp)
+                            )
+                        }
 
-                    DetailCourseAccommodationSection(
-                        onChangeAccommodationClick = editActions.accommodation::onClickEdit,
-                        onFavoriteClick = {},
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                        is UiState.Empty -> Unit
+
+                        is UiState.Success -> {
+                            val pet = petInfo.data
+
+                            PetProfileCard(
+                                petName = pet.name,
+                                imageUrl = pet.imageUrl,
+                                tags = persistentListOf(
+                                    pet.sizeCategory.label,
+                                    "활동량 ${pet.activityLevel.label}",
+                                    "사회성 ${pet.sociability.label}",
+                                    pet.healthStatus.label
+                                ),
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+
+                    if (accommodation != null) {
+                        Spacer(Modifier.height(24.dp))
+
+                        DetailCourseAccommodationSection(
+                            placeName = accommodation.placeName,
+                            location = accommodation.location,
+                            grade = accommodation.grade.ifBlank { null },
+                            thumbnailUrl = accommodation.thumbnailUrl,
+                            lodgingType = accommodation.lodgingType,
+                            onChangeAccommodationClick = editActions.accommodation::onClickEdit,
+                            onFavoriteClick = {},
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
 
                     Spacer(Modifier.height(24.dp))
 
@@ -296,10 +458,12 @@ private fun DetailCourseScreen(
                     }
 
                     DetailCourseScheduleSection(
-                        dayNumber = "2",
-                        tripDay = "8.11",
-                        onPreviousClick = {},
-                        onNextClick = {},
+                        dayNumber = dayNumber.toString(),
+                        tripDay = dayDate,
+                        routeLength = formatDistanceKm(scheduleUiModels.firstOrNull()?.distanceFromPrevKm ?: 0.0),
+                        accommodation = accommodation,
+                        onPreviousClick = onPreviousDayClick,
+                        onNextClick = onNextDayClick,
                         onRouteClick = {},
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
@@ -331,13 +495,32 @@ private fun DetailCourseScreen(
                                 }
                         )
                     } else {
+                        val nextItem = scheduleUiModels.getOrNull(index + 1)
+
                         DetailCourseScheduleItem(
                             count = index + 1,
                             placeName = item.placeName,
                             placeType = item.placeType,
+                            location = item.location,
+                            grade = item.grade.ifBlank { null },
+                            routeLength = formatDistanceKm(nextItem?.distanceFromPrevKm ?: 0.0),
                             isLastItem = index == scheduleUiModels.lastIndex,
+                            thumbnailUrl = item.thumbnailUrl,
+                            lodgingType = item.lodgingType,
                             onFavoriteClick = {},
-                            onRouteClick = {},
+                            onRouteClick = {
+                                nextItem?.let {
+                                    context.openKakaoMapRoute(
+                                        originName = item.placeName,
+                                        originLatitude = item.latitude,
+                                        originLongitude = item.longitude,
+                                        destinationName = it.placeName,
+                                        destinationLatitude = it.latitude,
+                                        destinationLongitude = it.longitude,
+                                        type = "CAR"
+                                    )
+                                }
+                            },
                             modifier = Modifier
                                 .padding(horizontal = 20.dp)
                                 .animateItem()
@@ -346,24 +529,39 @@ private fun DetailCourseScreen(
                 }
 
                 item {
-                    Spacer(Modifier.height(10.dp))
+                    if (accommodation != null) {
+                        Spacer(Modifier.height(10.dp))
 
-                    DetailCourseRouteIndicator(
-                        routeLength = "1.2",
-                        onRouteClick = {},
-                        routeIndicatorType = DetailCourseRouteIndicatorType.END,
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                        // TODO: 숙소 API 추가되면 마지막 장소 -> 숙소 실제 거리/좌표로 교체하고 카카오맵 경로 보기 연결
+                        DetailCourseRouteIndicator(
+                            routeLength = "1.2",
+                            onRouteClick = {},
+                            routeIndicatorType = DetailCourseRouteIndicatorType.END,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
 
-                    Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(10.dp))
 
-                    DetailCoursePlaceSummaryItem(
-                        placeType = "숙소",
-                        placeName = "프렌즈애견펜션",
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                        DetailCoursePlaceSummaryItem(
+                            placeType = accommodation.placeType.label,
+                            placeName = accommodation.placeName,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
 
                     Spacer(Modifier.height(40.dp))
+                }
+
+                item {
+                    if (uiState.isEditSchedule) {
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        MeongPillButton(
+                            text = "장소 추가",
+                            onClick = uiState::showAddPlace,
+                            prefixIcon = R.drawable.ic_plus
+                        )
+                    }
                 }
             }
         }
@@ -389,11 +587,12 @@ private fun DetailCourseScreen(
             Popup(
                 popupPositionProvider = positionProvider,
                 onDismissRequest = { uiState.hideTopAction() },
-                properties = PopupProperties(focusable = true)
+                properties = PopupProperties(focusable = false)
             ) {
                 DetailCourseTopAction(
                     onClick = {
                         uiState.hideTopAction()
+                        uiState.showDeleteDialog()
                     }
                 )
             }
@@ -468,7 +667,8 @@ private fun DetailCourseEditPlaceBottomSheet(
     selectedChipType: PlaceEditChipType,
     onChipClick: (PlaceEditChipType) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
     val placeShimmer = rememberShimmer(
         shimmerBounds = ShimmerBounds.View,
@@ -551,7 +751,8 @@ private fun DetailCourseEditPlaceBottomSheet(
                             shimmer = placeShimmer,
                             emptyTitle = "검색 결과가 없어요",
                             emptyDescription = "다른 검색어를 입력해주세요",
-                            onFavoriteClick = {}
+                            onFavoriteClick = {},
+                            onPlaceClick = onPlaceSelected
                         )
                     }
                 }
@@ -577,7 +778,8 @@ private fun DetailCourseEditPlaceBottomSheet(
                         shimmer = placeShimmer,
                         emptyTitle = "저장된 관심 장소가 없어요",
                         emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
-                        onFavoriteClick = {}
+                        onFavoriteClick = {},
+                        onPlaceClick = onPlaceSelected
                     )
                 }
             }
@@ -597,6 +799,7 @@ private fun DetailCoursePlaceEditResultList(
     onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     emptyDescription: String? = null,
+    onPlaceClick: (ScheduleUiModel) -> Unit = {},
 ) {
     val maxListHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.7f).dp }
 
@@ -646,6 +849,7 @@ private fun DetailCoursePlaceEditResultList(
                         onFavoriteClick = { onFavoriteClick(place.id) },
                         placeType = place.placeType,
                         isBordered = true,
+                        modifier = Modifier.noRippleClickable(onClick = { onPlaceClick(place) }),
                     )
                 }
             }
@@ -712,6 +916,30 @@ private fun DetailCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
                 )
             },
+            title = "강릉 2박 3일 워케이션",
+            location = "강릉",
+            tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
+            dayNumber = 2,
+            dayDate = "8.11",
+            accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "강원 강릉시 하남길 117-4"),
+            petInfo = UiState.Success(
+                PetInfo(
+                    id = 1,
+                    name = "몽몽이",
+                    breed = "푸들",
+                    weightKg = 5.0,
+                    birthDate = "2020-01-01",
+                    isNeutered = true,
+                    imageUrl = "",
+                    sizeCategory = PetSizeCategory.SMALL,
+                    activityLevel = PetActivityLevel.MEDIUM,
+                    sociability = PetSociability.NORMAL,
+                    healthStatus = PetHealthStatus.RECENT_TREATMENT
+                )
+            ),
+            onRetryPetInfo = {},
+            onPreviousDayClick = {},
+            onNextDayClick = {},
             onBackClick = {}
         )
     }

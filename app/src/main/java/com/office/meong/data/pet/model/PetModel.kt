@@ -1,5 +1,10 @@
 package com.office.meong.data.pet.model
 
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetInfo
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.data.pet.remote.dto.request.DogRequest
 import com.office.meong.data.pet.remote.dto.response.DogResponse
 
@@ -42,4 +47,18 @@ fun DogResponse.toModel() = PetModel(
     activityLevel = PetActivityLevel.from(activityLevel),
     sociability = PetSociability.from(sociability),
     healthStatus = PetHealthStatus.from(healthStatus),
+)
+
+fun PetModel.toInfo() = PetInfo(
+    id = id,
+    name = name,
+    breed = breed,
+    weightKg = weightKg,
+    birthDate = birthDate,
+    isNeutered = isNeutered,
+    imageUrl = imageUrl,
+    sizeCategory = sizeCategory,
+    activityLevel = activityLevel,
+    sociability = sociability,
+    healthStatus = healthStatus,
 )

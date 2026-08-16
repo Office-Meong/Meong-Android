@@ -40,12 +40,17 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
+import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.extension.disableNestedScroll
-import com.office.meong.core.common.extension.disableUpWardEvent
 import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.formatDayDate
 import com.office.meong.core.common.extension.statusBarColor
+import com.office.meong.core.common.util.formatDistanceKm
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
 import com.office.meong.core.designsystem.component.chip.ChipType
@@ -53,11 +58,16 @@ import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.component.dialog.MeongDialog
 import com.office.meong.core.designsystem.component.dialog.action.MeongCancelAction
 import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAction
+import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
 import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.component.topbar.TopbarAction
+import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
+import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.trigger.SnackbarState
+import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.course.result.action.AccommodationEditActions
 import com.office.meong.presentation.course.result.action.ResultCourseEditActions
 import com.office.meong.presentation.course.result.action.ScheduleEditActions
@@ -72,9 +82,12 @@ import com.office.meong.presentation.course.result.component.ResultCourseTopSect
 import com.office.meong.presentation.course.result.component.RouteIndicator
 import com.office.meong.presentation.course.result.model.CurrentDialogType
 import com.office.meong.presentation.course.result.model.PlaceEditChipType
+import com.office.meong.presentation.course.result.model.ResultCourseUiModel
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
 import com.office.meong.presentation.course.result.model.ScheduleUiModel
 import com.office.meong.presentation.course.result.model.ScheduleUiModel.Companion.DUMMY_SEARCHABLE_PLACES
+import com.office.meong.presentation.course.result.state.ResultCourseUiState
+import com.office.meong.presentation.course.result.state.rememberResultCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 import com.office.meong.presentation.sharedcomponent.skeleton.MeongPlaceCardSkeleton
 import com.office.meong.presentation.sharedcomponent.skeleton.meongShimmerTheme
@@ -91,116 +104,151 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun ResultCourseRoute(
     paddingValues: PaddingValues,
-    navigateUp: () -> Unit
+    navigateUp: () -> Unit,
+    viewModel: ResultCourseViewModel = hiltViewModel()
 ) {
-    var currentDialogType by remember { mutableStateOf<CurrentDialogType?>(null) }
-    var isEditTitle by remember { mutableStateOf(false) }
-    var isEditSchedule by remember { mutableStateOf(false) }
-    var isEditAccommodation by remember { mutableStateOf(false) }
-    var editPlaceChipType by remember { mutableStateOf(PlaceEditChipType.SEARCH) }
-    var isScheduleLoading by remember { mutableStateOf(true) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val globalUiEventHolder = LocalGlobalUiEventTrigger.current
 
-    LaunchedEffect(Unit) {
-        delay(10.seconds)
-        isScheduleLoading = false
+    viewModel.sideEffect.collectSideEffect {
+        when (it) {
+            is ResultCourseSideEffect.ShowToast -> {
+                globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
+            }
+        }
     }
 
-    val scheduleUiModels = remember { mutableStateListOf(
-        ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "프렌즈애견펜션", grade = "A"),
-        ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "프렌즈애견펜션", grade = "A"),
-        ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
-        ScheduleUiModel(id = "4", placeType = PlaceType.SIGHTSEEING, placeName = "프렌즈애견펜션", grade = "A"),
-    ) }
+    when (val course = state.course) {
+        is UiState.Loading -> {
+            MeongLoadingIndicator(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        }
 
-    val editActions = remember {
+        is UiState.Failure -> {
+            MeongLoadErrorView(
+                action = LoadErrorViewAction.Retry(onRetryClick = viewModel::retryCourseDetail),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        }
+
+        is UiState.Empty -> Unit
+
+        is UiState.Success -> {
+            ResultCourseContent(
+                paddingValues = paddingValues,
+                course = course.data,
+                selectedDayNumber = state.selectedDayNumber,
+                onPreviousDayClick = viewModel::selectPreviousDay,
+                onNextDayClick = viewModel::selectNextDay,
+                onReorderComplete = viewModel::reorderCourseItems,
+                navigateUp = navigateUp
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultCourseContent(
+    paddingValues: PaddingValues,
+    course: ResultCourseUiModel,
+    selectedDayNumber: Int,
+    onPreviousDayClick: () -> Unit,
+    onNextDayClick: () -> Unit,
+    onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    navigateUp: () -> Unit
+) {
+    val uiState = rememberResultCourseUiState()
+
+    val scheduleUiModels = remember(course, selectedDayNumber) {
+        mutableStateListOf(*course.dayItems[selectedDayNumber].orEmpty().toTypedArray())
+    }
+
+    val editActions = remember(uiState, scheduleUiModels, selectedDayNumber) {
         object : ResultCourseEditActions {
             override val title = object : TitleEditActions {
                 override fun onClickEdit() {
-                    isEditTitle = true
+                    uiState.showEditTitle()
                 }
 
                 override fun onClickComplete() {
-                    isEditTitle = false
+                    uiState.hideEditTitle()
                 }
             }
             override val accommodation = object : AccommodationEditActions {
                 override fun onClickEdit() {
-                    isEditAccommodation = true
+                    uiState.showEditAccommodation()
                 }
 
                 override fun onClickComplete() {
-                    isEditAccommodation = false
+                    uiState.hideEditAccommodation()
                 }
             }
             override val schedule = object : ScheduleEditActions {
                 override fun onClickEdit() {
-                    isEditSchedule = true
+                    uiState.showEditSchedule()
                 }
 
                 override fun onClickComplete() {
-                    isEditSchedule = false
+                    uiState.hideEditSchedule()
+                    onReorderComplete(selectedDayNumber, scheduleUiModels.map { it.id.toLong() })
                 }
             }
         }
     }
 
     BackHandler {
-        currentDialogType = CurrentDialogType.BACK_PRESS_EXIT
+        uiState.showExitDialog(CurrentDialogType.BACK_PRESS_EXIT)
     }
 
     ResultCourseScreen(
         paddingValues = paddingValues,
-        scheduleUiModels = scheduleUiModels,
-        isEditSchedule = isEditSchedule,
-        isScheduleLoading = isScheduleLoading,
+        uiState = uiState,
         editActions = editActions,
-        onBackClick = {
-            currentDialogType = CurrentDialogType.BACK_PRESS_EXIT
-        },
-        removeCurrentRoute = {
-            currentDialogType = CurrentDialogType.COURSE_DELETE
-        }
+        scheduleUiModels = scheduleUiModels,
+        title = course.name,
+        dayNumber = selectedDayNumber,
+        dayDate = formatDayDate(course.startDate, selectedDayNumber),
+        accommodation = course.accommodation,
+        onPreviousDayClick = onPreviousDayClick,
+        onNextDayClick = onNextDayClick,
+        onSaveClick = {}
     )
 
-    if (currentDialogType != null) {
+    if (uiState.currentDialogType != null) {
         MeongDialog(
-            title = currentDialogType?.title,
+            title = uiState.currentDialogType?.title,
             subDescription = "저장하지 않은 코스는 사라져요",
             confirmAction = MeongConfirmAction(
                 text = "확인",
                 onClick = {
-                    currentDialogType = null
+                    uiState.hideExitDialog()
                     navigateUp()
                 }
             ),
             cancelAction = MeongCancelAction(
                 text = "취소",
-                onClick = {
-                    currentDialogType = null
-                }
+                onClick = uiState::hideExitDialog
             ),
-            onDismiss = {
-                currentDialogType = null
-            }
+            onDismiss = uiState::hideExitDialog
         )
     }
 
-    if (isEditTitle) {
+    if (uiState.isEditTitleVisible) {
         EditTitleBottomSheet(
-            onEditTitle = {
-                isEditTitle = it
-            }
+            onDismiss = editActions.title::onClickComplete
         )
     }
 
-    if (isEditAccommodation) {
+    if (uiState.isEditAccommodationVisible) {
         EditPlaceBottomSheet(
-            selectedChipType = editPlaceChipType,
-            onChipClick = { editPlaceChipType = it },
-            onDismiss = {
-                isEditAccommodation = false
-                editPlaceChipType = PlaceEditChipType.SEARCH
-            }
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = editActions.accommodation::onClickComplete
         )
     }
 }
@@ -208,12 +256,16 @@ fun ResultCourseRoute(
 @Composable
 private fun ResultCourseScreen(
     paddingValues: PaddingValues,
-    scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
-    isEditSchedule: Boolean,
-    isScheduleLoading: Boolean,
+    uiState: ResultCourseUiState,
     editActions: ResultCourseEditActions,
-    onBackClick: () -> Unit,
-    removeCurrentRoute: () -> Unit
+    scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
+    title: String,
+    dayNumber: Int,
+    dayDate: String,
+    accommodation: ScheduleUiModel?,
+    onPreviousDayClick: () -> Unit,
+    onNextDayClick: () -> Unit,
+    onSaveClick: () -> Unit
 ) {
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
@@ -256,10 +308,10 @@ private fun ResultCourseScreen(
         MeongTopbar(
             isBackVisible = true,
             actionType = TopbarAction.CLOSE,
-            onBackClick = onBackClick,
+            onBackClick = { uiState.showExitDialog(CurrentDialogType.BACK_PRESS_EXIT) },
             onActionClick = {
                 if (it == TopbarAction.CLOSE) {
-                    removeCurrentRoute()
+                    uiState.showExitDialog(CurrentDialogType.COURSE_DELETE)
                 }
             },
         )
@@ -277,6 +329,7 @@ private fun ResultCourseScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 ResultCourseInfoHolder(
+                    title = title,
                     onEditTitleClick = editActions.title::onClickEdit,
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
@@ -286,14 +339,21 @@ private fun ResultCourseScreen(
             }
 
             item {
-                ResultCourseAccommodationSection(
-                    onEditAccommodationClick = editActions.accommodation::onClickEdit,
-                    onFavoriteClick = {},
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                )
+                if (accommodation != null) {
+                    ResultCourseAccommodationSection(
+                        placeName = accommodation.placeName,
+                        location = accommodation.location,
+                        grade = accommodation.grade.ifBlank { null },
+                        thumbnailUrl = accommodation.thumbnailUrl,
+                        lodgingType = accommodation.lodgingType,
+                        onEditAccommodationClick = editActions.accommodation::onClickEdit,
+                        onFavoriteClick = {},
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
 
                 Row(
                     modifier = Modifier
@@ -309,13 +369,13 @@ private fun ResultCourseScreen(
                     )
 
                     Text(
-                        text = if (isEditSchedule) "편집 완료" else "일정 편집",
+                        text = if (uiState.isEditSchedule) "편집 완료" else "일정 편집",
                         style = MeongTheme.typography.label.label14Sb,
                         color = MeongTheme.colors.gray900,
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .noRippleClickable(
-                                onClick = if (isEditSchedule) editActions.schedule::onClickComplete else editActions.schedule::onClickEdit
+                                onClick = if (uiState.isEditSchedule) editActions.schedule::onClickComplete else editActions.schedule::onClickEdit
                             )
                     )
                 }
@@ -323,10 +383,11 @@ private fun ResultCourseScreen(
 
             item {
                 ResultCourseScheduleSection(
-                    dayNumber = "2",
-                    tripDay = "8.11",
-                    onPreviousClick = {},
-                    onNextClick = {},
+                    dayNumber = dayNumber.toString(),
+                    tripDay = dayDate,
+                    accommodation = accommodation,
+                    onPreviousClick = onPreviousDayClick,
+                    onNextClick = onNextDayClick,
                     onRouteClick = {},
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
@@ -337,7 +398,7 @@ private fun ResultCourseScreen(
                 items = scheduleUiModels,
                 key = { _, item -> item.id }
             ) { index, item ->
-                if (isEditSchedule) {
+                if (uiState.isEditSchedule) {
                     val isDragging = dragDropState.draggingItemKey == item.id
 
                     ResultCourseEditScheduleItem(
@@ -359,6 +420,8 @@ private fun ResultCourseScreen(
                             }
                     )
                 } else {
+                    val nextItem = scheduleUiModels.getOrNull(index + 1)
+
                     ResultCourseScheduleItem(
                         count = index + 1,
                         placeName = item.placeName,
@@ -366,8 +429,11 @@ private fun ResultCourseScreen(
                         location = item.location,
                         placeType = item.placeType,
                         isLastItem = index == scheduleUiModels.lastIndex,
-                        isLoading = isScheduleLoading,
+                        isLoading = false,
                         shimmer = scheduleShimmer,
+                        thumbnailUrl = item.thumbnailUrl,
+                        lodgingType = item.lodgingType,
+                        routeLength = formatDistanceKm(nextItem?.distanceFromPrevKm ?: 0.0),
                         onFavoriteClick = {},
                         onRouteClick = {},
                         modifier = Modifier
@@ -378,25 +444,28 @@ private fun ResultCourseScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(10.dp))
+                if (accommodation != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                RouteIndicator(
-                    routeLength = "1.2",
-                    onRouteClick = {},
-                    routeIndicatorType = RouteIndicatorType.END,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                )
+                    // TODO: 숙소 API 추가되면 마지막 장소 -> 숙소 실제 거리/좌표로 교체하고 카카오맵 경로 보기 연결
+                    RouteIndicator(
+                        routeLength = "1.2",
+                        onRouteClick = {},
+                        routeIndicatorType = RouteIndicatorType.END,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                ResultCoursePlaceSummaryItem(
-                    placeType = "숙소",
-                    placeName = "프렌즈애견펜션",
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                )
+                    ResultCoursePlaceSummaryItem(
+                        placeType = accommodation.placeType.label,
+                        placeName = accommodation.placeName,
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(40.dp))
             }
@@ -414,7 +483,7 @@ private fun ResultCourseScreen(
             MeongButton(
                 text = "코스 저장하기",
                 isEnabled = true,
-                onClick = {},
+                onClick = onSaveClick,
                 modifier = Modifier
                     .fillMaxWidth()
             )
@@ -425,13 +494,11 @@ private fun ResultCourseScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTitleBottomSheet(
-    onEditTitle: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     MeongBottomSheet(
-        onDismiss = {
-            onEditTitle(false)
-        },
+        onDismiss = onDismiss,
         modifier = modifier
             .imePadding()
     ) {
@@ -439,7 +506,7 @@ private fun EditTitleBottomSheet(
             title = "코스 이름 수정",
             isBackVisible = false,
             actionType = TopbarAction.CLOSE,
-            onActionClick = { onEditTitle(false) },
+            onActionClick = { onDismiss() },
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -473,7 +540,7 @@ private fun EditTitleBottomSheet(
             text = "저장하기",
             isEnabled = true,
             onClick = {
-                onEditTitle(false)
+                onDismiss()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -720,16 +787,7 @@ private fun ResultCourseScreenPreview() {
     MeongTheme {
         ResultCourseScreen(
             paddingValues = PaddingValues(),
-            scheduleUiModels = remember {
-                mutableStateListOf(
-                    ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "프렌즈애견펜션", grade = "A"),
-                    ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "프렌즈애견펜션", grade = "A"),
-                    ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
-                )
-            },
-            onBackClick = {},
-            isEditSchedule = false,
-            isScheduleLoading = false,
+            uiState = rememberResultCourseUiState(),
             editActions = remember {
                 object : ResultCourseEditActions {
                     override val title = object : TitleEditActions {
@@ -746,7 +804,20 @@ private fun ResultCourseScreenPreview() {
                     }
                 }
             },
-            removeCurrentRoute = {}
+            scheduleUiModels = remember {
+                mutableStateListOf(
+                    ScheduleUiModel(id = "1", placeType = PlaceType.WORKSPACE, placeName = "프렌즈애견펜션", grade = "A"),
+                    ScheduleUiModel(id = "2", placeType = PlaceType.RESTAURANT, placeName = "프렌즈애견펜션", grade = "A"),
+                    ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
+                )
+            },
+            title = "강릉 2박 3일 워케이션",
+            dayNumber = 2,
+            dayDate = "8.11",
+            accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "서울시 강남구"),
+            onPreviousDayClick = {},
+            onNextDayClick = {},
+            onSaveClick = {}
         )
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -48,7 +49,10 @@ fun ResultCourseScheduleItem(
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
     modifier: Modifier = Modifier,
-    location: String = ""
+    location: String = "",
+    thumbnailUrl: String? = null,
+    lodgingType: LodgingType? = null,
+    routeLength: String = "0.0"
 ) {
     val lineColor = MeongTheme.colors.gray100
 
@@ -92,12 +96,14 @@ fun ResultCourseScheduleItem(
                     isFavorite = false,
                     onFavoriteClick = onFavoriteClick,
                     placeType = placeType,
+                    thumbnailUrl = thumbnailUrl,
+                    lodgingType = lodgingType,
                 )
             }
 
             if (!isLastItem) {
                 RouteIndicator(
-                    routeLength = "1.2",
+                    routeLength = routeLength,
                     onRouteClick = onRouteClick,
                     routeIndicatorType = RouteIndicatorType.BETWEEN
                 )

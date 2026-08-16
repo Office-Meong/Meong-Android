@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -36,10 +37,15 @@ fun DetailCourseScheduleItem(
     count: Int,
     placeName: String,
     placeType: PlaceType,
+    location: String,
+    grade: String?,
+    routeLength: String,
     isLastItem: Boolean,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    thumbnailUrl: String? = null,
+    lodgingType: LodgingType? = null
 ) {
     var markerSize by remember { mutableStateOf(IntSize.Zero) }
     val lineColor = MeongTheme.colors.gray100
@@ -80,15 +86,17 @@ fun DetailCourseScheduleItem(
         ) {
             MeongPlaceCard(
                 placeName = placeName,
-                location = "강원 강릉시 하남길 117-4",
-                grade = "A",
+                location = location,
+                grade = grade,
                 isFavorite = false,
                 onFavoriteClick = onFavoriteClick,
-                placeType = placeType
+                placeType = placeType,
+                thumbnailUrl = thumbnailUrl,
+                lodgingType = lodgingType
             )
 
             if (!isLastItem) {
-                DetailCourseRouteIndicator("1.2", onRouteClick, routeIndicatorType = DetailCourseRouteIndicatorType.BETWEEN)
+                DetailCourseRouteIndicator(routeLength, onRouteClick, routeIndicatorType = DetailCourseRouteIndicatorType.BETWEEN)
             }
         }
     }
@@ -102,6 +110,9 @@ private fun DetailCourseScheduleItemPreview() {
             count = 1,
             placeName = "멍멍이 카페",
             placeType = PlaceType.WORKSPACE,
+            location = "강원 강릉시 하남길 117-4",
+            grade = "A",
+            routeLength = "1.2",
             isLastItem = false,
             onFavoriteClick = {},
             onRouteClick = {}

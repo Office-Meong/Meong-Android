@@ -23,10 +23,10 @@ import com.office.meong.presentation.course.create.model.CreateCourseRangeInputT
 @Composable
 fun CreateCourseRangeInput(
     type: CreateCourseRangeInputType,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     startText: String? = null,
     endText: String? = null,
+    onClick: () -> Unit = {},
     onStartClick: () -> Unit = onClick,
     onEndClick: () -> Unit = onClick,
 ) {

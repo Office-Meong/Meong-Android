@@ -81,9 +81,9 @@ fun MeongLoadErrorView(
 
 @Stable
 sealed class LoadErrorViewAction private constructor(
-    internal val handleAction: LoadErrorHandleAction,
-    internal val onActionButtonClick: () -> Unit,
-    internal open val onBackClick: (() -> Unit)?,
+    val handleAction: LoadErrorHandleAction,
+    val onActionButtonClick: () -> Unit,
+    open val onBackClick: (() -> Unit)?,
 ) {
     data class Retry(
         val onRetryClick: () -> Unit,

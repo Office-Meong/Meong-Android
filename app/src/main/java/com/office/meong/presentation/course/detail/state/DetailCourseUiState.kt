@@ -23,7 +23,13 @@ class DetailCourseUiState private constructor() {
     var isEditAccommodationVisible by mutableStateOf(false)
         private set
 
+    var isAddPlaceVisible by mutableStateOf(false)
+        private set
+
     var isEditSchedule by mutableStateOf(false)
+        private set
+
+    var isDeleteDialogVisible by mutableStateOf(false)
         private set
 
     var editPlaceChipType by mutableStateOf(PlaceEditChipType.SEARCH)
@@ -54,6 +60,15 @@ class DetailCourseUiState private constructor() {
         editPlaceChipType = PlaceEditChipType.SEARCH
     }
 
+    fun showAddPlace() {
+        isAddPlaceVisible = true
+    }
+
+    fun hideAddPlace() {
+        isAddPlaceVisible = false
+        editPlaceChipType = PlaceEditChipType.SEARCH
+    }
+
     fun selectPlaceEditChip(chipType: PlaceEditChipType) {
         editPlaceChipType = chipType
     }
@@ -66,7 +81,15 @@ class DetailCourseUiState private constructor() {
         isEditSchedule = false
     }
 
+    fun showDeleteDialog() {
+        isDeleteDialogVisible = true
+    }
+
+    fun hideDeleteDialog() {
+        isDeleteDialogVisible = false
+    }
+
     companion object {
-        internal fun create(): DetailCourseUiState = DetailCourseUiState()
+        fun create(): DetailCourseUiState = DetailCourseUiState()
     }
 }
