@@ -5,6 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
 
+fun Context.openUrl(url: String) {
+    startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+}
+
 fun Context.openKakaoMap(placeName: String) {
     val query = Uri.encode(placeName)
     openKakaoMapUri(
