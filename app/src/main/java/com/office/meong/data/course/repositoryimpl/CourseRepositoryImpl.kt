@@ -1,6 +1,8 @@
 package com.office.meong.data.course.repositoryimpl
 
+import android.util.LruCache
 import com.office.meong.core.cache.InMemoryCache
+import com.office.meong.core.cache.getOrFetch
 import com.office.meong.core.common.util.suspendRunCatching
 import com.office.meong.data.course.model.AlternativePlace
 import com.office.meong.data.course.model.CourseCreateInput
@@ -18,17 +20,27 @@ class CourseRepositoryImpl @Inject constructor(
     private val courseDataSource: CourseDataSource,
     private val coursesCache: InMemoryCache<List<CourseSummary>>,
 ) : CourseRepository {
+    private val alternativesCache = LruCache<String, List<AlternativePlace>>(ALTERNATIVES_CACHE_SIZE)
+
+    // 코스 생성 응답이 이미 AI가 만든 완성된 CourseDetail을 담고 있어서, 생성 직후 결과 화면 진입 시
+    // 같은 코스를 다시 GET하는 걸 한 번 건너뛰기 위한 1회용 캐시.
+    private var justCreatedCourse: CourseDetail? = null
 
     override suspend fun getCourses(): Result<List<CourseSummary>> = suspendRunCatching {
         coursesCache.getOrFetch { courseDataSource.getCourses().map { it.toModel() } }
     }
 
     override suspend fun getDetailCourse(courseId: Long): Result<CourseDetail> = suspendRunCatching {
-        courseDataSource.getDetailCourse(courseId).toModel()
+        justCreatedCourse?.takeIf { it.id == courseId }?.also { justCreatedCourse = null }
+            ?: courseDataSource.getDetailCourse(courseId).toModel()
     }
 
     override suspend fun createCourse(request: CourseCreateInput): Result<CourseDetail> = suspendRunCatching {
-        courseDataSource.postCourse(request.toDto()).toModel().also { coursesCache.invalidate() }
+        courseDataSource.postCourse(request.toDto()).toModel()
+            .also {
+                coursesCache.invalidate()
+                justCreatedCourse = it
+            }
     }
 
     override suspend fun deleteCourse(courseId: Long): Result<Unit> = suspendRunCatching {
@@ -73,14 +85,19 @@ class CourseRepositoryImpl @Inject constructor(
                 endTime = endTime,
                 newPlaceId = newPlaceId
             )
-        ).toModel().also { coursesCache.invalidate() }
+        ).toModel().also {
+            coursesCache.invalidate()
+            alternativesCache.remove(alternativesCacheKey(courseId, itemId))
+        }
     }
 
     override suspend fun getCourseItemAlternatives(
         courseId: Long,
         itemId: Long
     ): Result<List<AlternativePlace>> = suspendRunCatching {
-        courseDataSource.getCourseItemAlternatives(courseId, itemId).map { it.toModel() }
+        alternativesCache.getOrFetch(alternativesCacheKey(courseId, itemId)) {
+            courseDataSource.getCourseItemAlternatives(courseId, itemId).map { it.toModel() }
+        }
     }
 
     override suspend fun updateCourseName(courseId: Long, name: String): Result<CourseDetail> = suspendRunCatching {
@@ -97,5 +114,10 @@ class CourseRepositoryImpl @Inject constructor(
             dayNumber = dayNumber,
             itemIds = itemIds
         ).toModel().also { coursesCache.invalidate() }
+    }
+
+    companion object {
+        private const val ALTERNATIVES_CACHE_SIZE = 20
+        private fun alternativesCacheKey(courseId: Long, itemId: Long) = "$courseId:$itemId"
     }
 }
