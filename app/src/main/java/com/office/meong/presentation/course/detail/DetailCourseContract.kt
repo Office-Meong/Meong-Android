@@ -4,12 +4,15 @@ import androidx.compose.runtime.Immutable
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.model.pet.PetInfo
 import com.office.meong.presentation.course.detail.model.DetailCourseUiModel
+import com.office.meong.presentation.course.model.ScheduleUiModel
+import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
 data class DetailCourseState(
     val course: UiState<DetailCourseUiModel> = UiState.Loading,
     val petInfo: UiState<PetInfo> = UiState.Loading,
     val selectedDayNumber: Int = 1,
+    val accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
 )
 
 sealed interface DetailCourseSideEffect {

@@ -10,9 +10,12 @@ import com.office.meong.core.common.util.successData
 import com.office.meong.data.course.repository.CourseRepository
 import com.office.meong.data.pet.model.toInfo
 import com.office.meong.data.pet.repository.PetRepository
+import com.office.meong.presentation.course.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.toScheduleUiModel
 import com.office.meong.presentation.course.detail.model.toUiModel
 import com.office.meong.presentation.course.detail.navigation.DetailCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,6 +95,52 @@ class DetailCourseViewModel @Inject constructor(
                 }
         }
     }
+
+    fun fetchAccommodationAlternatives() {
+        val itemId = accommodationItemId() ?: return
+
+        viewModelScope.launch {
+            _state.update { it.copy(accommodationAlternatives = UiState.Loading) }
+
+            courseRepository.getCourseItemAlternatives(courseId, itemId)
+                .onSuccess { alternatives ->
+                    _state.update {
+                        it.copy(
+                            accommodationAlternatives = UiState.Success(
+                                alternatives.map { place -> place.toScheduleUiModel() }.toImmutableList()
+                            )
+                        )
+                    }
+                }
+                .onFailure {
+                    _state.update { it.copy(accommodationAlternatives = UiState.Failure(LoadErrorHandleAction.Retry)) }
+                }
+        }
+    }
+
+    fun selectAccommodationAlternative(place: ScheduleUiModel) {
+        val itemId = accommodationItemId() ?: return
+        val placeId = place.placeId ?: return
+
+        viewModelScope.launch {
+            courseRepository.updateCourseItem(
+                courseId = courseId,
+                itemId = itemId,
+                startTime = null,
+                endTime = null,
+                newPlaceId = placeId
+            )
+                .onSuccess { course ->
+                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                }
+                .onFailure {
+                    _sideEffect.send(DetailCourseSideEffect.ShowToast("숙소 변경에 실패했어요"))
+                }
+        }
+    }
+
+    private fun accommodationItemId(): Long? =
+        _state.value.course.successData?.accommodation?.id?.toLongOrNull()
 
     fun reorderCourseItems(dayNumber: Int, itemIds: List<Long>) {
         viewModelScope.launch {

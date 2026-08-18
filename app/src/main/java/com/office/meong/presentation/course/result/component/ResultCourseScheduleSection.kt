@@ -26,7 +26,7 @@ import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
-import com.office.meong.presentation.course.result.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.ScheduleUiModel
 
 @Composable
 fun ResultCourseScheduleSection(
