@@ -192,3 +192,6 @@ fabric.properties
 
 .DS_Store
 .kotlin/
+
+# Local reference docs
+docs/*.md
