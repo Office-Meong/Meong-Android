@@ -12,13 +12,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.BuildConfig
+import com.office.meong.core.common.extension.openUrl
+import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.presentation.mypage.action.MyPageAccountActions
 import com.office.meong.presentation.mypage.action.MyPageActions
@@ -32,23 +39,27 @@ fun MyPageRoute(
     paddingValues: PaddingValues,
     navigateUp: () -> Unit = {},
     navigateToOpenSourceLicense: () -> Unit = {},
-    navigateToFeedback: () -> Unit = {},
-    navigateToTermsOfService: () -> Unit = {},
-    navigateToPrivacyPolicy: () -> Unit = {},
-    navigateToPetEdit: () -> Unit = {}
+    navigateToPetEdit: () -> Unit = {},
+    viewModel: MyPageViewModel = hiltViewModel()
 ) {
-    val actions = remember(
-        navigateToOpenSourceLicense,
-        navigateToFeedback,
-        navigateToTermsOfService,
-        navigateToPrivacyPolicy
-    ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val actions = remember(state.policy, navigateToOpenSourceLicense) {
+        val policy = state.policy.successData
+
         object : MyPageActions {
             override val info = object : MyPageInfoActions {
-                override fun onClickTermsOfService() = navigateToTermsOfService()
-                override fun onClickPrivacyPolicy() = navigateToPrivacyPolicy()
+                override fun onClickTermsOfService() {
+                    policy?.termsUrl?.let(context::openUrl)
+                }
+                override fun onClickPrivacyPolicy() {
+                    policy?.privacyUrl?.let(context::openUrl)
+                }
                 override fun onClickOpenSourceLicense() = navigateToOpenSourceLicense()
-                override fun onClickFeedback() = navigateToFeedback()
+                override fun onClickFeedback() {
+                    policy?.inquiryUrl?.let(context::openUrl)
+                }
             }
             override val account = object : MyPageAccountActions {
                 override fun onClickLogout() {

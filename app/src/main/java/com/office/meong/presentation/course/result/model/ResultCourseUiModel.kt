@@ -5,6 +5,8 @@ import com.office.meong.core.common.util.formatTripPeriod
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.region.Region
 import com.office.meong.data.course.model.CourseDetail
+import com.office.meong.presentation.course.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.toUiModel
 
 @Immutable
 data class ResultCourseUiModel(

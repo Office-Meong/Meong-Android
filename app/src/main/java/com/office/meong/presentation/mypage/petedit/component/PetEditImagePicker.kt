@@ -18,17 +18,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.designsystem.component.image.UrlImage
+import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
 fun PetEditImagePicker(
     imageUrl: String?,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
     Box(
         modifier = modifier
-            .clickable(onClick = onClick)
+            .size(120.dp)
+            .clickable(enabled = !isLoading, onClick = onClick)
     ) {
         if (imageUrl.isNullOrBlank()) {
             Icon(
@@ -60,6 +63,13 @@ fun PetEditImagePicker(
                 contentDescription = "사진 변경",
                 tint = Color.Unspecified,
                 modifier = Modifier.size(20.dp)
+            )
+        }
+
+        if (isLoading) {
+            MeongLoadingIndicator(
+                modifier = Modifier.clip(CircleShape),
+                backgroundColor = MeongTheme.colors.white.copy(alpha = 0.7f)
             )
         }
     }

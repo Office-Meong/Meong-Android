@@ -1,8 +1,9 @@
-package com.office.meong.presentation.course.result.model
+package com.office.meong.presentation.course.model
 
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.data.course.model.AlternativePlace
 import com.office.meong.data.course.model.CourseItem
 import kotlinx.collections.immutable.persistentListOf
 
@@ -40,5 +41,16 @@ fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
     distanceFromPrevKm = distanceFromPrevKm,
     thumbnailUrl = thumbnailUrl,
     lodgingType = LodgingType.from(lodgingType),
+    placeId = placeId,
+)
+
+fun AlternativePlace.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
+    id = placeId.toString(),
+    placeType = PlaceType.from(placeType),
+    placeName = placeName,
+    grade = grade,
+    location = address,
+    latitude = latitude,
+    longitude = longitude,
     placeId = placeId,
 )

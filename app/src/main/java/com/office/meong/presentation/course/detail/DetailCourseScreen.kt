@@ -97,7 +97,7 @@ import com.office.meong.presentation.course.detail.component.DetailCourseTopActi
 import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndicatorType
 import com.office.meong.presentation.course.detail.model.DetailCourseUiModel
 import com.office.meong.presentation.course.detail.model.PlaceEditChipType
-import com.office.meong.presentation.course.detail.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.ScheduleUiModel
 import com.office.meong.presentation.course.detail.state.DetailCourseUiState
 import com.office.meong.presentation.course.detail.state.rememberDetailCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -158,13 +158,16 @@ fun DetailCourseRoute(
                 course = course.data,
                 petInfo = state.petInfo,
                 selectedDayNumber = state.selectedDayNumber,
+                accommodationAlternatives = state.accommodationAlternatives,
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
                 onBackClick = navigateUp,
                 onReorderComplete = viewModel::reorderCourseItems,
                 onAddCourseItem = viewModel::addCourseItem,
                 onRetryPetInfo = viewModel::retryPetInfo,
-                onDeleteClick = viewModel::removeCourse
+                onDeleteClick = viewModel::removeCourse,
+                onEditAccommodationClick = viewModel::fetchAccommodationAlternatives,
+                onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative
             )
         }
     }
@@ -176,13 +179,16 @@ private fun DetailCourseContent(
     course: DetailCourseUiModel,
     petInfo: UiState<PetInfo>,
     selectedDayNumber: Int,
+    accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
     onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
     onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
     onDeleteClick: () -> Unit,
-    onRetryPetInfo: () -> Unit
+    onRetryPetInfo: () -> Unit,
+    onEditAccommodationClick: () -> Unit,
+    onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
 
@@ -204,6 +210,7 @@ private fun DetailCourseContent(
             override val accommodation = object : AccommodationEditActions {
                 override fun onClickEdit() {
                     uiState.showEditAccommodation()
+                    onEditAccommodationClick()
                 }
 
                 override fun onClickComplete() {
@@ -251,7 +258,12 @@ private fun DetailCourseContent(
         DetailCourseEditPlaceBottomSheet(
             selectedChipType = uiState.editPlaceChipType,
             onChipClick = uiState::selectPlaceEditChip,
-            onDismiss = editActions.accommodation::onClickComplete
+            onDismiss = editActions.accommodation::onClickComplete,
+            alternatives = accommodationAlternatives,
+            onPlaceSelected = { place ->
+                onSelectAccommodationAlternative(place)
+                editActions.accommodation.onClickComplete()
+            }
         )
     }
 
@@ -659,7 +671,9 @@ private fun DetailCourseEditTitleBottomSheet(
 }
 
 /**
- * TODO: 서버 API 구조 확정 후 실제 검색/관심 장소 데이터 연동으로 교체
+ * `alternatives`가 주어지면(숙소 변경 플로우) 코스 아이템의 실제 대안 장소를 검색어로 필터링해 보여준다.
+ * `alternatives`가 없으면(장소 추가 플로우) 아직 서버에 전체 장소 검색 API가 없어 더미 데이터를 사용한다.
+ * TODO: 장소 추가용 전체 장소 검색 API 확정 후 더미 데이터 교체
  * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -668,12 +682,14 @@ private fun DetailCourseEditPlaceBottomSheet(
     onChipClick: (PlaceEditChipType) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
     val placeShimmer = rememberShimmer(
         shimmerBounds = ShimmerBounds.View,
         theme = meongShimmerTheme()
     )
+    var selectedPlace by remember(selectedChipType) { mutableStateOf<ScheduleUiModel?>(null) }
 
     MeongBottomSheet(
         onDismiss = onDismiss,
@@ -717,21 +733,6 @@ private fun DetailCourseEditPlaceBottomSheet(
                 PlaceEditChipType.SEARCH -> {
                     val searchFieldState = rememberTextFieldState()
                     val query = searchFieldState.text.toString()
-                    var isSearchLoading by remember { mutableStateOf(false) }
-                    var searchResults by remember { mutableStateOf(persistentListOf<ScheduleUiModel>()) }
-
-                    LaunchedEffect(query) {
-                        if (query.isBlank()) {
-                            isSearchLoading = false
-                            searchResults = persistentListOf()
-                            return@LaunchedEffect
-                        }
-
-                        isSearchLoading = true
-                        delay(3.seconds)
-                        searchResults = ScheduleUiModel.DUMMY_SEARCHABLE_PLACES.filter { it.placeName.contains(query) }.toPersistentList()
-                        isSearchLoading = false
-                    }
 
                     MeongTextField(
                         state = searchFieldState,
@@ -744,16 +745,54 @@ private fun DetailCourseEditPlaceBottomSheet(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    if (query.isNotBlank()) {
+                    if (alternatives != null) {
+                        val allPlaces = (alternatives as? UiState.Success)?.data ?: persistentListOf()
+                        val filteredPlaces = remember(query, allPlaces) {
+                            if (query.isBlank()) {
+                                allPlaces
+                            } else {
+                                allPlaces.filter { it.placeName.contains(query, ignoreCase = true) }.toPersistentList()
+                            }
+                        }
+
                         DetailCoursePlaceEditResultList(
-                            isLoading = isSearchLoading,
-                            places = searchResults,
+                            isLoading = alternatives is UiState.Loading,
+                            places = filteredPlaces,
                             shimmer = placeShimmer,
-                            emptyTitle = "검색 결과가 없어요",
-                            emptyDescription = "다른 검색어를 입력해주세요",
+                            emptyTitle = "변경 가능한 숙소가 없어요",
+                            emptyDescription = "다른 검색어를 입력해보세요",
                             onFavoriteClick = {},
-                            onPlaceClick = onPlaceSelected
+                            selectedPlaceId = selectedPlace?.id,
+                            onPlaceClick = { selectedPlace = it }
                         )
+                    } else {
+                        var isSearchLoading by remember { mutableStateOf(false) }
+                        var searchResults by remember { mutableStateOf(persistentListOf<ScheduleUiModel>()) }
+
+                        LaunchedEffect(query) {
+                            if (query.isBlank()) {
+                                isSearchLoading = false
+                                searchResults = persistentListOf()
+                                return@LaunchedEffect
+                            }
+
+                            isSearchLoading = true
+                            delay(3.seconds)
+                            searchResults = ScheduleUiModel.DUMMY_SEARCHABLE_PLACES.filter { it.placeName.contains(query) }.toPersistentList()
+                            isSearchLoading = false
+                        }
+
+                        if (query.isNotBlank()) {
+                            DetailCoursePlaceEditResultList(
+                                isLoading = isSearchLoading,
+                                places = searchResults,
+                                shimmer = placeShimmer,
+                                emptyTitle = "검색 결과가 없어요",
+                                emptyDescription = "다른 검색어를 입력해주세요",
+                                onFavoriteClick = {},
+                                onPlaceClick = onPlaceSelected
+                            )
+                        }
                     }
                 }
 
@@ -779,10 +818,30 @@ private fun DetailCourseEditPlaceBottomSheet(
                         emptyTitle = "저장된 관심 장소가 없어요",
                         emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
                         onFavoriteClick = {},
-                        onPlaceClick = onPlaceSelected
+                        selectedPlaceId = if (alternatives != null) selectedPlace?.id else null,
+                        onPlaceClick = if (alternatives != null) {
+                            { selectedPlace = it }
+                        } else {
+                            onPlaceSelected
+                        }
                     )
                 }
             }
+        }
+
+        if (alternatives != null) {
+            Spacer(modifier = Modifier.height(20.dp))
+
+            MeongButton(
+                text = "이 장소로 변경",
+                isEnabled = selectedPlace != null,
+                onClick = { selectedPlace?.let(onPlaceSelected) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -799,6 +858,7 @@ private fun DetailCoursePlaceEditResultList(
     onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     emptyDescription: String? = null,
+    selectedPlaceId: String? = null,
     onPlaceClick: (ScheduleUiModel) -> Unit = {},
 ) {
     val maxListHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.7f).dp }
@@ -849,6 +909,7 @@ private fun DetailCoursePlaceEditResultList(
                         onFavoriteClick = { onFavoriteClick(place.id) },
                         placeType = place.placeType,
                         isBordered = true,
+                        isSelected = place.id == selectedPlaceId,
                         modifier = Modifier.noRippleClickable(onClick = { onPlaceClick(place) }),
                     )
                 }

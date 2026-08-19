@@ -1,12 +1,13 @@
 package com.office.meong.presentation.mypage.petedit.model
 
 import com.office.meong.data.pet.model.PetInputModel
+import com.office.meong.presentation.mypage.petedit.PetEditState
 
-fun PetEditUiState.toPetInputModel() = PetInputModel(
-    name = petName,
-    breed = breed,
-    weightKg = weightKg.toDoubleOrNull() ?: 0.0,
-    birthDate = birthDate,
+fun PetEditState.toPetInputModel() = PetInputModel(
+    name = nameTextFieldState.text.toString(),
+    breed = breedTextFieldState.text.toString(),
+    weightKg = weightTextFieldState.text.toString().toDoubleOrNull() ?: 0.0,
+    birthDate = birthDateTextFieldState.text.toString(),
     isNeutered = isNeutered,
     imageUrl = imageUrl.orEmpty(),
     sizeCategory = requireNotNull(selectedSize),
