@@ -30,6 +30,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
+import com.office.meong.core.common.extension.disableUpWardEvent
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +41,8 @@ fun TermsBottomSheet(
     isSignUpEnabled: Boolean,
     onServiceTermClick: () -> Unit,
     onPrivacyTermClick: () -> Unit,
+    onViewServiceTermClick: () -> Unit,
+    onViewPrivacyTermClick: () -> Unit,
     onDismiss: () -> Unit,
     onSignUpClick: () -> Unit,
 ) {
@@ -58,6 +61,8 @@ fun TermsBottomSheet(
             isSignUpEnabled = isSignUpEnabled,
             onServiceTermClick = onServiceTermClick,
             onPrivacyTermClick = onPrivacyTermClick,
+            onViewServiceTermClick = onViewServiceTermClick,
+            onViewPrivacyTermClick = onViewPrivacyTermClick,
             onDismiss = onDismiss,
             onSignUpClick = onSignUpClick
         )
@@ -70,12 +75,15 @@ private fun TermsBottomSheetContent(
     isSignUpEnabled: Boolean,
     onServiceTermClick: () -> Unit,
     onPrivacyTermClick: () -> Unit,
+    onViewServiceTermClick: () -> Unit,
+    onViewPrivacyTermClick: () -> Unit,
     onDismiss: () -> Unit,
     onSignUpClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .disableUpWardEvent()
             .background(color = MeongTheme.colors.white)
             .padding(horizontal = 20.dp, vertical = 24.dp)
     ) {
@@ -111,7 +119,8 @@ private fun TermsBottomSheetContent(
         TermItemRow(
             text = "(필수) 오피스멍 이용약관 동의",
             isChecked = isServiceTermAgreed,
-            onClick = onServiceTermClick
+            onClick = onServiceTermClick,
+            onViewClick = onViewServiceTermClick
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -119,7 +128,8 @@ private fun TermsBottomSheetContent(
         TermItemRow(
             text = "(필수) 개인정보 필수 동의",
             isChecked = isPrivacyTermAgreed,
-            onClick = onPrivacyTermClick
+            onClick = onPrivacyTermClick,
+            onViewClick = onViewPrivacyTermClick
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -150,7 +160,8 @@ private fun TermsBottomSheetContent(
 private fun TermItemRow(
     text: String,
     isChecked: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onViewClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -197,7 +208,9 @@ private fun TermItemRow(
             imageVector = ImageVector.vectorResource(id = R.drawable.ic_chevron_right),
             contentDescription = "약관 보기",
             tint = MeongTheme.colors.gray500,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier
+                .size(16.dp)
+                .clickable { onViewClick() }
         )
     }
 }
@@ -213,6 +226,8 @@ private fun TermsBottomSheetPreview() {
             isSignUpEnabled = false,
             onServiceTermClick = {},
             onPrivacyTermClick = {},
+            onViewServiceTermClick = {},
+            onViewPrivacyTermClick = {},
             onDismiss = {},
             onSignUpClick = {}
         )

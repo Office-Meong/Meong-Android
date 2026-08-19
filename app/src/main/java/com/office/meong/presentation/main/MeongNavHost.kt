@@ -37,7 +37,9 @@ fun MeongNavHost(
             ExitTransition.None
         },
     ) {
-        splashNavGraph()
+        splashNavGraph(
+            navController = appState.navController
+        )
 
         homeNavGraph(
             paddingValues = paddingValues
@@ -53,6 +55,7 @@ fun MeongNavHost(
         )
 
         loginNavGraph(
+            navController = appState.navController,
             paddingValues = paddingValues
         )
 
