@@ -10,6 +10,8 @@ import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.util.DebugLogger
+import com.kakao.sdk.common.KakaoSdk
+import com.office.meong.core.network.di.NoAuthNetwork
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
 import timber.log.Timber
@@ -19,12 +21,14 @@ import javax.inject.Inject
 class MeongApplication : Application(), ImageLoaderFactory {
 
     @Inject
+    @NoAuthNetwork
     lateinit var okHttpClient: OkHttpClient
 
     override fun onCreate() {
         super.onCreate()
 
         setTimber()
+        KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
     }
 
     private fun setTimber() {

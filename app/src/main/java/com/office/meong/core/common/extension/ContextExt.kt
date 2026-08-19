@@ -1,12 +1,18 @@
 package com.office.meong.core.common.extension
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
+import timber.log.Timber
 
 fun Context.openUrl(url: String) {
-    startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    try {
+        startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    } catch (e: ActivityNotFoundException) {
+        Timber.w(e, "URL을 열 수 없습니다: $url")
+    }
 }
 
 fun Context.openKakaoMap(placeName: String) {
