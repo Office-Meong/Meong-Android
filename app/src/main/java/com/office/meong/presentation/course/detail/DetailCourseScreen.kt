@@ -61,6 +61,7 @@ import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.formatDayDate
 import com.office.meong.core.common.util.formatDistanceKm
+import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
 import com.office.meong.core.designsystem.component.button.MeongPillButton
@@ -108,7 +109,9 @@ import com.valentinilk.shimmer.Shimmer
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
@@ -159,6 +162,8 @@ fun DetailCourseRoute(
                 petInfo = state.petInfo,
                 selectedDayNumber = state.selectedDayNumber,
                 accommodationAlternatives = state.accommodationAlternatives,
+                favoritePlaces = state.favoritePlaces,
+                favoritePlaceIds = state.favoritePlaceIds,
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
                 onBackClick = navigateUp,
@@ -167,7 +172,8 @@ fun DetailCourseRoute(
                 onRetryPetInfo = viewModel::retryPetInfo,
                 onDeleteClick = viewModel::removeCourse,
                 onEditAccommodationClick = viewModel::fetchAccommodationAlternatives,
-                onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative
+                onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative,
+                onFavoriteToggle = viewModel::onFavoriteToggle
             )
         }
     }
@@ -180,6 +186,8 @@ private fun DetailCourseContent(
     petInfo: UiState<PetInfo>,
     selectedDayNumber: Int,
     accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
+    favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
+    favoritePlaceIds: ImmutableSet<Long>,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -188,7 +196,8 @@ private fun DetailCourseContent(
     onDeleteClick: () -> Unit,
     onRetryPetInfo: () -> Unit,
     onEditAccommodationClick: () -> Unit,
-    onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit
+    onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit,
+    onFavoriteToggle: (ScheduleUiModel) -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
 
@@ -242,6 +251,8 @@ private fun DetailCourseContent(
         dayDate = formatDayDate(course.startDate, selectedDayNumber),
         accommodation = course.accommodation,
         petInfo = petInfo,
+        favoritePlaceIds = favoritePlaceIds,
+        onFavoriteToggle = onFavoriteToggle,
         onRetryPetInfo = onRetryPetInfo,
         onPreviousDayClick = onPreviousDayClick,
         onNextDayClick = onNextDayClick,
@@ -260,6 +271,9 @@ private fun DetailCourseContent(
             onChipClick = uiState::selectPlaceEditChip,
             onDismiss = editActions.accommodation::onClickComplete,
             alternatives = accommodationAlternatives,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
             onPlaceSelected = { place ->
                 onSelectAccommodationAlternative(place)
                 editActions.accommodation.onClickComplete()
@@ -272,6 +286,9 @@ private fun DetailCourseContent(
             selectedChipType = uiState.editPlaceChipType,
             onChipClick = uiState::selectPlaceEditChip,
             onDismiss = uiState::hideAddPlace,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
             onPlaceSelected = { place ->
                 place.placeId?.let { placeId ->
                     onAddCourseItem(selectedDayNumber, placeId)
@@ -302,6 +319,8 @@ private fun DetailCourseScreen(
     dayDate: String,
     accommodation: ScheduleUiModel?,
     petInfo: UiState<PetInfo>,
+    favoritePlaceIds: ImmutableSet<Long>,
+    onFavoriteToggle: (ScheduleUiModel) -> Unit,
     onRetryPetInfo: () -> Unit,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
@@ -436,8 +455,9 @@ private fun DetailCourseScreen(
                             grade = accommodation.grade.ifBlank { null },
                             thumbnailUrl = accommodation.thumbnailUrl,
                             lodgingType = accommodation.lodgingType,
+                            isFavorite = accommodation.placeId in favoritePlaceIds,
                             onChangeAccommodationClick = editActions.accommodation::onClickEdit,
-                            onFavoriteClick = {},
+                            onFavoriteClick = { onFavoriteToggle(accommodation) },
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
                     }
@@ -519,7 +539,8 @@ private fun DetailCourseScreen(
                             isLastItem = index == scheduleUiModels.lastIndex,
                             thumbnailUrl = item.thumbnailUrl,
                             lodgingType = item.lodgingType,
-                            onFavoriteClick = {},
+                            isFavorite = item.placeId in favoritePlaceIds,
+                            onFavoriteClick = { onFavoriteToggle(item) },
                             onRouteClick = {
                                 nextItem?.let {
                                     context.openKakaoMapRoute(
@@ -681,6 +702,9 @@ private fun DetailCourseEditPlaceBottomSheet(
     selectedChipType: PlaceEditChipType,
     onChipClick: (PlaceEditChipType) -> Unit,
     onDismiss: () -> Unit,
+    favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
+    favoritePlaceIds: ImmutableSet<Long>,
+    onFavoriteToggle: (ScheduleUiModel) -> Unit,
     modifier: Modifier = Modifier,
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
@@ -761,7 +785,8 @@ private fun DetailCourseEditPlaceBottomSheet(
                             shimmer = placeShimmer,
                             emptyTitle = "변경 가능한 숙소가 없어요",
                             emptyDescription = "다른 검색어를 입력해보세요",
-                            onFavoriteClick = {},
+                            favoritePlaceIds = favoritePlaceIds,
+                            onFavoriteClick = onFavoriteToggle,
                             selectedPlaceId = selectedPlace?.id,
                             onPlaceClick = { selectedPlace = it }
                         )
@@ -797,27 +822,14 @@ private fun DetailCourseEditPlaceBottomSheet(
                 }
 
                 PlaceEditChipType.FAVORITE -> {
-                    val favoritePlaces = remember {
-                        persistentListOf(
-                            ScheduleUiModel(id = "favorite-1", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
-                            ScheduleUiModel(id = "favorite-2", placeType = PlaceType.RESTAURANT, placeName = "댕댕이 맛집", grade = "A"),
-                            ScheduleUiModel(id = "favorite-3", placeType = PlaceType.SIGHTSEEING, placeName = "산책하기 좋은 공원", grade = "A"),
-                        )
-                    }
-                    var isFavoriteLoading by remember { mutableStateOf(true) }
-
-                    LaunchedEffect(Unit) {
-                        delay(3.seconds)
-                        isFavoriteLoading = false
-                    }
-
                     DetailCoursePlaceEditResultList(
-                        isLoading = isFavoriteLoading,
-                        places = favoritePlaces,
+                        isLoading = favoritePlaces is UiState.Loading,
+                        places = favoritePlaces.successData ?: persistentListOf(),
                         shimmer = placeShimmer,
                         emptyTitle = "저장된 관심 장소가 없어요",
                         emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
-                        onFavoriteClick = {},
+                        favoritePlaceIds = favoritePlaceIds,
+                        onFavoriteClick = onFavoriteToggle,
                         selectedPlaceId = if (alternatives != null) selectedPlace?.id else null,
                         onPlaceClick = if (alternatives != null) {
                             { selectedPlace = it }
@@ -855,9 +867,10 @@ private fun DetailCoursePlaceEditResultList(
     places: ImmutableList<ScheduleUiModel>,
     shimmer: Shimmer,
     emptyTitle: String,
-    onFavoriteClick: (String) -> Unit,
+    onFavoriteClick: (ScheduleUiModel) -> Unit,
     modifier: Modifier = Modifier,
     emptyDescription: String? = null,
+    favoritePlaceIds: ImmutableSet<Long> = persistentSetOf(),
     selectedPlaceId: String? = null,
     onPlaceClick: (ScheduleUiModel) -> Unit = {},
 ) {
@@ -905,8 +918,8 @@ private fun DetailCoursePlaceEditResultList(
                         placeName = place.placeName,
                         location = place.location,
                         grade = place.grade,
-                        isFavorite = true,
-                        onFavoriteClick = { onFavoriteClick(place.id) },
+                        isFavorite = place.placeId in favoritePlaceIds,
+                        onFavoriteClick = { onFavoriteClick(place) },
                         placeType = place.placeType,
                         isBordered = true,
                         isSelected = place.id == selectedPlaceId,
@@ -983,6 +996,8 @@ private fun DetailCourseScreenPreview() {
             dayNumber = 2,
             dayDate = "8.11",
             accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "강원 강릉시 하남길 117-4"),
+            favoritePlaceIds = persistentSetOf(),
+            onFavoriteToggle = {},
             petInfo = UiState.Success(
                 PetInfo(
                     id = 1,

@@ -41,6 +41,7 @@ fun DetailCourseScheduleItem(
     grade: String?,
     routeLength: String,
     isLastItem: Boolean,
+    isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -88,7 +89,7 @@ fun DetailCourseScheduleItem(
                 placeName = placeName,
                 location = location,
                 grade = grade,
-                isFavorite = false,
+                isFavorite = isFavorite,
                 onFavoriteClick = onFavoriteClick,
                 placeType = placeType,
                 thumbnailUrl = thumbnailUrl,
@@ -114,6 +115,7 @@ private fun DetailCourseScheduleItemPreview() {
             grade = "A",
             routeLength = "1.2",
             isLastItem = false,
+            isFavorite = false,
             onFavoriteClick = {},
             onRouteClick = {}
         )

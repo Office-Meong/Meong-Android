@@ -5,6 +5,7 @@ import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.data.course.model.AlternativePlace
 import com.office.meong.data.course.model.CourseItem
+import com.office.meong.data.favorite.model.FavoriteModel
 import kotlinx.collections.immutable.persistentListOf
 
 @Immutable
@@ -52,5 +53,15 @@ fun AlternativePlace.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
     location = address,
     latitude = latitude,
     longitude = longitude,
+    placeId = placeId,
+)
+
+fun FavoriteModel.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
+    id = placeId.toString(),
+    placeType = PlaceType.from(placeType),
+    placeName = placeName,
+    grade = grade,
+    location = address,
+    thumbnailUrl = thumbnailUrl,
     placeId = placeId,
 )

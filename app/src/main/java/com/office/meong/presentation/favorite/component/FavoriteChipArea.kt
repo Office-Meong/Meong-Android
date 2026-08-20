@@ -1,4 +1,4 @@
-package com.office.meong.presentation.favorite.navigation.component
+package com.office.meong.presentation.favorite.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,19 +17,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.component.tag.MeongTag
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.region.Region
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
+private val FAVORITE_PLACE_TYPES = listOf(
+    PlaceType.ACCOMMODATION,
+    PlaceType.WORKSPACE,
+    PlaceType.RESTAURANT,
+    PlaceType.SIGHTSEEING,
+)
+
 @Composable
 fun FavoriteChipArea(
-    selectedRegion: FavoriteRegion,
-    selectedType: FavoritePlaceType,
-    onRegionSelected: (FavoriteRegion) -> Unit,
-    onTypeSelected: (FavoritePlaceType) -> Unit,
+    selectedRegion: Region?,
+    selectedType: PlaceType?,
+    onRegionSelected: (Region?) -> Unit,
+    onTypeSelected: (PlaceType?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val regionItems = FavoriteRegion.entries.toImmutableList()
-    val typeItems = FavoritePlaceType.entries.toImmutableList()
+    val regionItems = (listOf(null) + Region.entries).toImmutableList()
+    val typeItems = (listOf(null) + FAVORITE_PLACE_TYPES).toImmutableList()
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -40,7 +49,7 @@ fun FavoriteChipArea(
             items = regionItems,
             selectedItem = selectedRegion,
             onItemSelected = onRegionSelected,
-            itemLabel = { it.label }
+            itemLabel = { it?.label ?: "전체" }
         )
 
         FilterRow(
@@ -48,7 +57,7 @@ fun FavoriteChipArea(
             items = typeItems,
             selectedItem = selectedType,
             onItemSelected = onTypeSelected,
-            itemLabel = { it.label }
+            itemLabel = { it?.label ?: "전체" }
         )
     }
 }
@@ -98,8 +107,8 @@ private fun <T> FilterRow(
 private fun FavoriteChipAreaPreview() {
     MeongTheme {
         FavoriteChipArea(
-            selectedRegion = FavoriteRegion.ALL,
-            selectedType = FavoritePlaceType.ALL,
+            selectedRegion = null,
+            selectedType = null,
             onRegionSelected = {},
             onTypeSelected = {}
         )

@@ -23,6 +23,7 @@ import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 fun DetailCourseAccommodationSection(
     placeName: String,
     location: String,
+    isFavorite: Boolean,
     onChangeAccommodationClick: () -> Unit,
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,7 +61,7 @@ fun DetailCourseAccommodationSection(
             placeName = placeName,
             location = location,
             grade = grade,
-            isFavorite = false,
+            isFavorite = isFavorite,
             onFavoriteClick = onFavoriteClick,
             placeType = PlaceType.ACCOMMODATION,
             thumbnailUrl = thumbnailUrl,
@@ -77,6 +78,7 @@ private fun DetailCourseAccommodationSectionPreview() {
             placeName = "프렌즈애견펜션",
             location = "강원 강릉시 하남길 117-4",
             grade = "A",
+            isFavorite = true,
             onChangeAccommodationClick = {},
             onFavoriteClick = {}
         )

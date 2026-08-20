@@ -8,11 +8,14 @@ import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.successData
 import com.office.meong.data.course.repository.CourseRepository
+import com.office.meong.data.favorite.repository.FavoriteRepository
+import com.office.meong.domain.favorite.usecase.ToggleFavoriteUseCase
 import com.office.meong.presentation.course.model.ScheduleUiModel
 import com.office.meong.presentation.course.model.toScheduleUiModel
 import com.office.meong.presentation.course.result.model.toUiModel
 import com.office.meong.presentation.course.result.navigation.ResultCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +30,8 @@ import javax.inject.Inject
 class ResultCourseViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val courseRepository: CourseRepository,
+    private val favoriteRepository: FavoriteRepository,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
 ) : ViewModel() {
     private val courseId = savedStateHandle.toRoute<ResultCourse>().courseId
 
@@ -38,10 +43,60 @@ class ResultCourseViewModel @Inject constructor(
 
     init {
         fetchCourseDetail()
+        fetchFavoritePlaces()
     }
 
     fun retryCourseDetail() {
         fetchCourseDetail()
+    }
+
+    fun onFavoriteToggle(place: ScheduleUiModel) {
+        val placeId = place.placeId ?: return
+        val isFavorite = _state.value.favoritePlaceIds.contains(placeId)
+
+        viewModelScope.launch {
+            toggleFavoriteUseCase.toggle(placeId, isFavorite)
+                .onSuccess {
+                    _state.update { current ->
+                        val places = when (val favorites = current.favoritePlaces) {
+                            is UiState.Success -> favorites.data
+                            else -> persistentListOf()
+                        }
+                        val updated = if (isFavorite) {
+                            places.filterNot { it.placeId == placeId }
+                        } else {
+                            places + place
+                        }.toImmutableList()
+
+                        current.copy(
+                            favoritePlaces = if (updated.isEmpty()) UiState.Empty else UiState.Success(updated)
+                        )
+                    }
+                }
+                .onFailure {
+                    _sideEffect.send(ResultCourseSideEffect.ShowToast("즐겨찾기 처리에 실패했어요"))
+                }
+        }
+    }
+
+    private fun fetchFavoritePlaces() {
+        viewModelScope.launch {
+            favoriteRepository.getFavorites()
+                .onSuccess { favorites ->
+                    _state.update {
+                        it.copy(
+                            favoritePlaces = if (favorites.isEmpty()) {
+                                UiState.Empty
+                            } else {
+                                UiState.Success(favorites.map { favorite -> favorite.toScheduleUiModel() }.toImmutableList())
+                            }
+                        )
+                    }
+                }
+                .onFailure {
+                    _state.update { it.copy(favoritePlaces = UiState.Failure(LoadErrorHandleAction.Retry)) }
+                }
+        }
     }
 
     fun selectPreviousDay() {

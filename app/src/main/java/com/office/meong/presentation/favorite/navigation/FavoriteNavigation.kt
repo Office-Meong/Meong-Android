@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.office.meong.core.navigation.MainTabRoute
+import com.office.meong.presentation.favorite.FavoriteRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
