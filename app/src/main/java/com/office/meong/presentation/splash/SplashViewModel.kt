@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.office.meong.core.common.extension.isHttpUnauthorized
 import com.office.meong.core.localstorage.token.TokenManager
 import com.office.meong.data.auth.repository.AuthRepository
+import com.office.meong.data.pet.repository.PetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -16,6 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val petRepository: PetRepository,
     private val tokenManager: TokenManager,
 ) : ViewModel() {
     private val _sideEffect = Channel<SplashSideEffect>()
@@ -37,7 +39,8 @@ class SplashViewModel @Inject constructor(
             authRepository.refreshToken(refreshToken)
                 .onSuccess { token ->
                     tokenManager.saveTokens(token.accessToken, token.refreshToken)
-                    _sideEffect.send(SplashSideEffect.NavigateToHome)
+                    val hasNoDogs = petRepository.getDogs().getOrDefault(emptyList()).isEmpty()
+                    _sideEffect.send(if (hasNoDogs) SplashSideEffect.NavigateToSignup else SplashSideEffect.NavigateToHome)
                 }
                 .onFailure { throwable ->
                     if (throwable.isHttpUnauthorized()) {

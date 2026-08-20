@@ -24,12 +24,14 @@ import com.valentinilk.shimmer.shimmer
 @Composable
 fun SplashRoute(
     navigateToHome: () -> Unit = {},
+    navigateToSignup: () -> Unit = {},
     navigateToLogin: () -> Unit = {},
     viewModel: SplashViewModel = hiltViewModel()
 ) {
     viewModel.sideEffect.collectSideEffect {
         when (it) {
             is SplashSideEffect.NavigateToHome -> navigateToHome()
+            is SplashSideEffect.NavigateToSignup -> navigateToSignup()
             is SplashSideEffect.NavigateToLogin -> navigateToLogin()
         }
     }

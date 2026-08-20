@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navOptions
 import com.office.meong.core.navigation.Route
 import com.office.meong.presentation.auth.navigation.navigateToLogin
+import com.office.meong.presentation.auth.navigation.navigateToSignup
 import com.office.meong.presentation.home.navigation.navigateToHome
 import com.office.meong.presentation.splash.SplashRoute
 import kotlinx.serialization.Serializable
@@ -21,6 +22,11 @@ fun NavGraphBuilder.splashNavGraph(
         SplashRoute(
             navigateToHome = {
                 navController.navigateToHome(
+                    navOptions { popUpTo(Splash) { inclusive = true } }
+                )
+            },
+            navigateToSignup = {
+                navController.navigateToSignup(
                     navOptions { popUpTo(Splash) { inclusive = true } }
                 )
             },
