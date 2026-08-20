@@ -1,20 +1,27 @@
 package com.office.meong.presentation.main
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import com.office.meong.presentation.auth.navigation.loginNavGraph
 import com.office.meong.presentation.auth.navigation.signupNavGraph
 import com.office.meong.presentation.course.navigation.courseNavGraph
-import com.office.meong.presentation.explore.navigation.navigation.exploreDetailNavGraph
-import com.office.meong.presentation.explore.navigation.navigation.exploreNavGraph
+import com.office.meong.presentation.explore.navigation.exploreDetailNavGraph
+import com.office.meong.presentation.explore.exploreNavGraph
 import com.office.meong.presentation.favorite.navigation.favoriteNavGraph
 import com.office.meong.presentation.home.navigation.homeNavGraph
 import com.office.meong.presentation.main.state.MainAppState
 import com.office.meong.presentation.mypage.navigation.myPageNavGraph
 import com.office.meong.presentation.splash.navigation.splashNavGraph
+
+private const val NavigationAnimationDurationMillis = 280
 
 @Composable
 fun MeongNavHost(
@@ -25,16 +32,28 @@ fun MeongNavHost(
         navController = appState.navController,
         startDestination = appState.startDestination,
         enterTransition = {
-            EnterTransition.None
+            slideInHorizontally(
+                animationSpec = tween(NavigationAnimationDurationMillis, easing = FastOutSlowInEasing),
+                initialOffsetX = { it / 3 }
+            ) + fadeIn(tween(NavigationAnimationDurationMillis))
         },
         exitTransition = {
-            ExitTransition.None
+            slideOutHorizontally(
+                animationSpec = tween(NavigationAnimationDurationMillis, easing = FastOutSlowInEasing),
+                targetOffsetX = { -it / 6 }
+            ) + fadeOut(tween(NavigationAnimationDurationMillis))
         },
         popEnterTransition = {
-            EnterTransition.None
+            scaleIn(
+                animationSpec = tween(NavigationAnimationDurationMillis, easing = FastOutSlowInEasing),
+                initialScale = 0.92f
+            ) + fadeIn(tween(NavigationAnimationDurationMillis))
         },
         popExitTransition = {
-            ExitTransition.None
+            slideOutHorizontally(
+                animationSpec = tween(NavigationAnimationDurationMillis, easing = FastOutSlowInEasing),
+                targetOffsetX = { it / 3 }
+            ) + fadeOut(tween(NavigationAnimationDurationMillis))
         },
     ) {
         splashNavGraph(
@@ -51,6 +70,7 @@ fun MeongNavHost(
         )
 
         signupNavGraph(
+            navController = appState.navController,
             paddingValues = paddingValues
         )
 

@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.navigation
+package com.office.meong.presentation.explore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,10 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.explore.navigation.component.ExploreChipArea
-import com.office.meong.presentation.explore.navigation.component.ExploreSearchBar
-import com.office.meong.presentation.explore.navigation.model.ExplorePlaceType
-import com.office.meong.presentation.explore.navigation.model.ExploreRegion
+import com.office.meong.presentation.explore.component.ExploreChipArea
+import com.office.meong.presentation.explore.component.ExploreSearchBar
+import com.office.meong.presentation.explore.model.ExplorePlaceType
+import com.office.meong.presentation.explore.model.ExploreRegion
 
 @Composable
 fun ExploreRoute(

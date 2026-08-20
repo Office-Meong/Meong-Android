@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.navigation.component
+package com.office.meong.presentation.explore.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,15 +11,14 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.component.tag.MeongTag
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.explore.navigation.model.ExplorePlaceType
-import com.office.meong.presentation.explore.navigation.model.ExploreRegion
+import com.office.meong.presentation.explore.model.ExplorePlaceType
+import com.office.meong.presentation.explore.model.ExploreRegion
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 

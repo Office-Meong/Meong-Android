@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.navigation.component.detail
+package com.office.meong.presentation.explore.component.detail
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.navigation.component
+package com.office.meong.presentation.explore.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

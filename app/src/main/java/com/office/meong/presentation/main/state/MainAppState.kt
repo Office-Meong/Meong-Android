@@ -9,9 +9,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.office.meong.core.network.monitor.NetworkMonitor
-import com.office.meong.presentation.explore.navigation.navigation.navigateToExplore
+import com.office.meong.presentation.explore.navigateToExplore
 import com.office.meong.presentation.course.my.navigation.navigateToMyCourse
-import com.office.meong.presentation.course.navigation.CourseGraph
 import com.office.meong.presentation.favorite.navigation.navigateToFavorite
 import com.office.meong.presentation.home.navigation.navigateToHome
 import com.office.meong.presentation.main.MainTab

@@ -16,14 +16,14 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.core.common.extension.openKakaoMap
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailCongestionInfo
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailOperationInfo
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailAccessibilityInfo
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailActionRow
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailHeader
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailPetCompanionInfo
-import com.office.meong.presentation.explore.navigation.component.detail.ExploreDetailPetWorkIndex
-import com.office.meong.presentation.explore.navigation.model.ExploreDetailUiState
+import com.office.meong.presentation.explore.component.detail.ExploreDetailCongestionInfo
+import com.office.meong.presentation.explore.component.detail.ExploreDetailOperationInfo
+import com.office.meong.presentation.explore.component.detail.ExploreDetailAccessibilityInfo
+import com.office.meong.presentation.explore.component.detail.ExploreDetailActionRow
+import com.office.meong.presentation.explore.component.detail.ExploreDetailHeader
+import com.office.meong.presentation.explore.component.detail.ExploreDetailPetCompanionInfo
+import com.office.meong.presentation.explore.component.detail.ExploreDetailPetWorkIndex
+import com.office.meong.presentation.explore.model.ExploreDetailUiState
 
 @Composable
 fun ExploreDetailRoute(

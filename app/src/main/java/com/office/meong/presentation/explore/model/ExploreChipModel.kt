@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.navigation.model
+package com.office.meong.presentation.explore.model
 
 enum class ExploreRegion(val label: String) {
     ALL("전체"),
