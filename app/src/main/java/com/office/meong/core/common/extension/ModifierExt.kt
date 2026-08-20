@@ -8,12 +8,21 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.style.styleable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -42,6 +51,27 @@ fun Modifier.styleableBackground(
     shape(shape)
     background(color)
     if (padding != 0.dp) contentPadding(padding)
+}
+
+// 탭하거나 IME의 next로 포커스가 넘어올 때, 가상 키보드 위로 스크롤해서 보여준다
+fun Modifier.focusScrollable(): Modifier = composed {
+    val focusRequester = remember { FocusRequester() }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    var isFocused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isFocused) {
+        if (isFocused) {
+            withFrameNanos {}
+            bringIntoViewRequester.bringIntoView()
+        }
+    }
+
+    this
+        .focusRequester(focusRequester)
+        .bringIntoViewRequester(bringIntoViewRequester)
+        .onFocusEvent { focusState ->
+            isFocused = focusState.isFocused
+        }
 }
 
 fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = composed {

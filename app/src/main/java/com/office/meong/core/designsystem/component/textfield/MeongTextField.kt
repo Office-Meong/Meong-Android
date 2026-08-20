@@ -39,6 +39,7 @@ fun MeongTextField(
     state: TextFieldState,
     placeholder: String,
     modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
     @DrawableRes leadingIcon: Int? = null,
     @DrawableRes trailingIcon: Int? = null,
     enabled: Boolean = true,
@@ -60,6 +61,7 @@ fun MeongTextField(
 
     BasicTextField(
         state = state,
+        modifier = fieldModifier,
         enabled = enabled,
         readOnly = readOnly,
         inputTransformation = inputTransformation,
