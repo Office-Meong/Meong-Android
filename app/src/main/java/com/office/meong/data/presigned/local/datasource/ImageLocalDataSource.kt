@@ -11,7 +11,6 @@ import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -31,14 +30,6 @@ class ImageLocalDataSource @Inject constructor(
 
     fun clearCache() {
         getDirectory().listFiles()?.forEach { it.delete() }
-    }
-
-    fun deleteOriginalUri(uriString: String) {
-        try {
-            context.contentResolver.delete(uriString.toUri(), null, null)
-        } catch (e: Exception) {
-            Timber.e(e, "원본 파일 삭제 실패")
-        }
     }
 
     private fun getDirectory(): File {

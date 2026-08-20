@@ -1,5 +1,6 @@
 package com.office.meong.data.auth.remote.dto.request
 
+import com.office.meong.BuildConfig
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -7,6 +8,8 @@ import kotlinx.serialization.Serializable
 data class KakaoLoginRequest(
     @SerialName("code")
     val code: String,
+    @SerialName("redirectUri")
+    val redirectUri: String = "kakao${BuildConfig.KAKAO_NATIVE_APP_KEY}://oauth",
     @SerialName("termsAgreed")
     val termsAgreed: Boolean,
     @SerialName("privacyAgreed")

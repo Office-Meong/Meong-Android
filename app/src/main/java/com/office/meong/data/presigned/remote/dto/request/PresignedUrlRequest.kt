@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PresignedUrlRequest(
-    @SerialName("fileName")
+    @SerialName("filename")
     val fileName: String,
     @SerialName("contentType")
     val contentType: String,
