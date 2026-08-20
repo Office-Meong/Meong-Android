@@ -47,6 +47,7 @@ import com.office.meong.presentation.auth.model.LoginUiState
 fun LoginRoute(
     paddingValues: PaddingValues,
     navigateToHome: () -> Unit = {},
+    navigateToSignup: () -> Unit = {},
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
@@ -56,6 +57,7 @@ fun LoginRoute(
     viewModel.sideEffect.collectSideEffect {
         when (it) {
             is LoginSideEffect.NavigateToHome -> navigateToHome()
+            is LoginSideEffect.NavigateToSignup -> navigateToSignup()
             is LoginSideEffect.ShowToast -> globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
             is LoginSideEffect.OpenUrl -> context.openUrl(it.url)
         }

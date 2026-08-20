@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
@@ -22,14 +24,18 @@ fun PetEditNeuteredToggle(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "중성화 여부",
+            text = "중성화 여부 (선택)",
             style = MeongTheme.typography.label.label14Sb,
             color = MeongTheme.colors.gray900
         )
 
         Switch(
             checked = isNeutered,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                uncheckedTrackColor = Color.White,
+                uncheckedBorderColor = MeongTheme.colors.gray200
+            )
         )
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.office.meong.core.localstorage.token.TokenManager
 import com.office.meong.data.auth.repository.AuthRepository
+import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.data.policy.repository.PolicyRepository
 import com.office.meong.presentation.auth.model.LoginSideEffect
 import com.office.meong.presentation.auth.model.LoginUiState
@@ -22,6 +23,7 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val policyRepository: PolicyRepository,
+    private val petRepository: PetRepository,
     private val tokenManager: TokenManager,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginUiState())
@@ -99,7 +101,9 @@ class LoginViewModel @Inject constructor(
             ).onSuccess { token ->
                 tokenManager.saveTokens(token.accessToken, token.refreshToken)
                 _state.update { it.copy(isLoading = false, isTermsBottomSheetVisible = false) }
-                _sideEffect.send(LoginSideEffect.NavigateToHome)
+
+                val hasNoDogs = petRepository.getDogs().getOrDefault(emptyList()).isEmpty()
+                _sideEffect.send(if (hasNoDogs) LoginSideEffect.NavigateToSignup else LoginSideEffect.NavigateToHome)
             }.onFailure {
                 _state.update { it.copy(isLoading = false) }
                 _sideEffect.send(LoginSideEffect.ShowToast("회원가입에 실패했어요"))

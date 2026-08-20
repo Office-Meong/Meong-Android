@@ -28,6 +28,11 @@ fun NavGraphBuilder.loginNavGraph(
                 navController.navigateToHome(
                     navOptions { popUpTo(0) { inclusive = true } }
                 )
+            },
+            navigateToSignup = {
+                navController.navigateToSignup(
+                    navOptions { popUpTo(0) { inclusive = true } }
+                )
             }
         )
     }
