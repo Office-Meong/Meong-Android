@@ -1,4 +1,4 @@
-package com.office.meong.presentation.mypage.petedit.component
+package com.office.meong.presentation.sharedcomponent
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,11 +25,12 @@ import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndica
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
-fun PetEditImagePicker(
+fun CircularImagePicker(
     imageUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    emptyIconRes: Int = R.drawable.ic_empty_pet_holder
 ) {
     Box(
         modifier = modifier
@@ -43,7 +44,7 @@ fun PetEditImagePicker(
     ) {
         if (imageUrl.isNullOrBlank()) {
             Icon(
-                imageVector = ImageVector.vectorResource(id = R.drawable.ic_empty_pet_holder),
+                imageVector = ImageVector.vectorResource(id = emptyIconRes),
                 contentDescription = null,
                 tint = Color.Unspecified,
                 modifier = Modifier.size(120.dp)
@@ -85,9 +86,9 @@ fun PetEditImagePicker(
 
 @Preview
 @Composable
-private fun PetEditImagePickerPreview() {
+private fun CircularImagePickerPreview() {
     MeongTheme {
-        PetEditImagePicker(
+        CircularImagePicker(
             imageUrl = null,
             onClick = {}
         )

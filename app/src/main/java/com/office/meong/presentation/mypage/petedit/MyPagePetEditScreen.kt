@@ -62,9 +62,9 @@ import com.office.meong.core.model.pet.PetSizeCategory
 import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.presentation.mypage.petedit.action.PetEditActions
 import com.office.meong.presentation.mypage.petedit.component.PetEditChipGroup
-import com.office.meong.presentation.mypage.petedit.component.PetEditImagePicker
+import com.office.meong.presentation.sharedcomponent.CircularImagePicker
 import com.office.meong.presentation.mypage.petedit.component.PetEditNeuteredToggle
-import com.office.meong.presentation.mypage.petedit.component.PetEditTextField
+import com.office.meong.presentation.sharedcomponent.LabeledTextField
 import kotlinx.collections.immutable.toPersistentList
 
 @Composable
@@ -188,7 +188,7 @@ private fun MyPagePetEditScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            PetEditImagePicker(
+            CircularImagePicker(
                 imageUrl = state.imageUrl,
                 onClick = actions::onImageClick,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -197,7 +197,7 @@ private fun MyPagePetEditScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "반려견 이름",
                 description = "15자 이내로 입력해주세요",
                 placeholder = "반려견 이름을 입력해주세요",
@@ -210,7 +210,7 @@ private fun MyPagePetEditScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "품종 (선택)",
                 description = "예: 말티즈",
                 placeholder = "반려견 품종을 입력해주세요",
@@ -221,7 +221,7 @@ private fun MyPagePetEditScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "몸무게 (kg) (선택)",
                 description = "예: 3.5",
                 placeholder = "반려견 몸무게를 입력해주세요",
@@ -232,7 +232,7 @@ private fun MyPagePetEditScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "생년월일 (선택)",
                 description = "예: 2021-03-15",
                 placeholder = "20210315",

@@ -2,6 +2,7 @@ package com.office.meong.presentation.course.create
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.extension.collectSideEffect
+import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.button.MeongButton
@@ -57,8 +59,10 @@ import kotlinx.datetime.LocalTime
 
 @Composable
 fun CreateCourseRoute(
-    viewModel: CreateCourseViewModel = hiltViewModel(),
+    paddingValues: PaddingValues,
+    navigateUp: () -> Unit = {},
     navigateToResultCourse: (courseId: Long) -> Unit = {},
+    viewModel: CreateCourseViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
@@ -73,7 +77,9 @@ fun CreateCourseRoute(
     }
 
     CreateCourseScreen(
+        paddingValues = paddingValues,
         state = state,
+        navigateUp = navigateUp,
         onRetryPetInfo = viewModel::retryPetInfo,
         onSelectRegion = viewModel::selectRegion,
         onSelectAccommodationType = viewModel::selectAccommodationType,
@@ -87,7 +93,9 @@ fun CreateCourseRoute(
 
 @Composable
 private fun CreateCourseScreen(
+    paddingValues: PaddingValues,
     state: CreateCourseState,
+    navigateUp: () -> Unit,
     onRetryPetInfo: () -> Unit,
     onSelectRegion: (Region) -> Unit,
     onSelectAccommodationType: (String) -> Unit,
@@ -110,6 +118,7 @@ private fun CreateCourseScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(color = MeongTheme.colors.white)
+            .padding(paddingValues = paddingValues)
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -143,6 +152,9 @@ private fun CreateCourseScreen(
                 contentDescription = "닫기",
                 modifier = Modifier
                     .size(24.dp)
+                    .noRippleClickable(
+                        onClick = navigateUp
+                    )
             )
         }
 
@@ -299,6 +311,7 @@ private fun CreateCourseScreen(
 private fun CreateCourseScreenPreview() {
     MeongTheme {
         CreateCourseScreen(
+            paddingValues = PaddingValues(),
             state = CreateCourseState(),
             onRetryPetInfo = {},
             onSelectRegion = {},
@@ -308,6 +321,7 @@ private fun CreateCourseScreenPreview() {
             onSelectEndWorkTime = {},
             onSelectWorkFocusLevel = {},
             onSubmit = {},
+            navigateUp = {}
         )
     }
 }

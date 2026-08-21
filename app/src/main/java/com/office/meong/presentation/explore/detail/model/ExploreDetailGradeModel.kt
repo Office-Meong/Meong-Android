@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.model
+package com.office.meong.presentation.explore.detail.model
 
 import androidx.annotation.DrawableRes
 import com.office.meong.R

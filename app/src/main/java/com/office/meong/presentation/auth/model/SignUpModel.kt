@@ -3,7 +3,7 @@ package com.office.meong.presentation.auth.model
 import com.office.meong.core.designsystem.component.textfield.toIsoBirthDateOrEmpty
 import com.office.meong.data.pet.model.PetInputModel
 
-fun SignUpUiState.toPetInputModel() = PetInputModel(
+fun SignUpState.toPetInputModel() = PetInputModel(
     name = nameTextFieldState.text.toString(),
     breed = breedTextFieldState.text.toString(),
     weightKg = weightTextFieldState.text.toString().toDoubleOrNull() ?: 0.0,

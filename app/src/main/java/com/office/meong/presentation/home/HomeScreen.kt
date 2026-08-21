@@ -53,6 +53,7 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun HomeRoute(
     paddingValues: PaddingValues,
+    navigateToCreateCourse: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -76,6 +77,7 @@ fun HomeRoute(
         homeCourseSummaries = state.homeCourseSummaries,
         onRetryCourses = viewModel::retryLoad,
         onRetryPetInfo = viewModel::retryPetInfo,
+        navigateToCreateCourse = navigateToCreateCourse
     )
 }
 
@@ -86,6 +88,7 @@ private fun HomeScreen(
     homeCourseSummaries: UiState<ImmutableList<HomeCourseSummaryUiModel>>,
     onRetryCourses: () -> Unit,
     onRetryPetInfo: () -> Unit,
+    navigateToCreateCourse: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -221,7 +224,7 @@ private fun HomeScreen(
             is UiState.Success -> {
                 if (homeCourseSummaries.data.isEmpty()) {
                     CourseEmptyContent(
-                        onClickPillButton = {},
+                        onClickPillButton = navigateToCreateCourse,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
@@ -254,7 +257,7 @@ private fun HomeScreen(
                                 text = "새 코스 만들기",
                                 isPrimary = false,
                                 prefixIcon = R.drawable.ic_plus,
-                                onClick = {}
+                                onClick = navigateToCreateCourse
                             )
 
                             Spacer(modifier = Modifier.height(15.dp))
@@ -289,7 +292,8 @@ private fun HomeScreenPreview() {
                     sociability = PetSociability.NORMAL,
                     healthStatus = PetHealthStatus.HEALTHY
                 )
-            )
+            ),
+            navigateToCreateCourse = {}
         )
     }
 }

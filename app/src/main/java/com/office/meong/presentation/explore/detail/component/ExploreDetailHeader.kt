@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.component.detail
+package com.office.meong.presentation.explore.detail.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,15 +24,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.office.meong.R
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.place.PlaceType
 
 @Composable
 fun ExploreDetailHeader(
-    typeText: String,
+    placeType: PlaceType,
     title: String,
     address: String,
     imageUrl: String?,
@@ -44,7 +47,7 @@ fun ExploreDetailHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             MeongChip(
-                chipText = typeText,
+                chipText = placeType.label,
                 chipType = ChipType.SMALL
             )
 
@@ -78,22 +81,9 @@ fun ExploreDetailHeader(
         Spacer(modifier = Modifier.width(16.dp))
 
         if (imageUrl.isNullOrBlank()) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MeongTheme.colors.gray100),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_bed_filled),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Unspecified
-                )
-            }
+            ExploreDetailHeaderImageFallback(placeType = placeType)
         } else {
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = imageUrl,
                 contentDescription = "장소 썸네일 이미지",
                 modifier = Modifier
@@ -101,8 +91,32 @@ fun ExploreDetailHeader(
                     .clip(RoundedCornerShape(10.dp))
                     .background(MeongTheme.colors.gray100),
                 contentScale = ContentScale.Crop
-            )
+            ) {
+                if (painter.state is AsyncImagePainter.State.Error) {
+                    ExploreDetailHeaderImageFallback(placeType = placeType)
+                } else {
+                    SubcomposeAsyncImageContent()
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun ExploreDetailHeaderImageFallback(placeType: PlaceType) {
+    Box(
+        modifier = Modifier
+            .size(84.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MeongTheme.colors.gray100),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = ImageVector.vectorResource(id = placeType.iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = MeongTheme.colors.gray300
+        )
     }
 }
 
@@ -111,7 +125,7 @@ fun ExploreDetailHeader(
 private fun ExploreDetailHeaderPreview() {
     MeongTheme {
         ExploreDetailHeader(
-            typeText = "숙소",
+            placeType = PlaceType.ACCOMMODATION,
             title = "프렌즈애견펜션",
             address = "강원 강릉시 하남길 117-4",
             imageUrl = null,

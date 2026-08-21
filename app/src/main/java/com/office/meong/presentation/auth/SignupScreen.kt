@@ -7,7 +7,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,10 +35,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.office.meong.R
 import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.extension.focusScrollable
 import com.office.meong.core.common.util.selectableEntries
 import com.office.meong.core.designsystem.component.button.MeongButton
+import com.office.meong.core.designsystem.component.indicator.MeongStepProgressBar
 import com.office.meong.core.designsystem.component.textfield.BirthDateInputTransformation
 import com.office.meong.core.designsystem.component.textfield.BirthDateOutputTransformation
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
@@ -51,12 +52,12 @@ import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.auth.model.SignUpSideEffect
-import com.office.meong.presentation.auth.model.SignUpUiState
+import com.office.meong.presentation.auth.model.SignUpState
 import com.office.meong.presentation.mypage.petedit.action.PetEditActions
 import com.office.meong.presentation.mypage.petedit.component.PetEditChipGroup
-import com.office.meong.presentation.mypage.petedit.component.PetEditImagePicker
+import com.office.meong.presentation.sharedcomponent.CircularImagePicker
 import com.office.meong.presentation.mypage.petedit.component.PetEditNeuteredToggle
-import com.office.meong.presentation.mypage.petedit.component.PetEditTextField
+import com.office.meong.presentation.sharedcomponent.LabeledTextField
 import kotlinx.collections.immutable.toPersistentList
 
 @Composable
@@ -80,10 +81,16 @@ fun SignUpRoute(
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        uri?.let { viewModel.onImageSelected(it.toString()) }
+        uri?.let {
+            if (state.currentStep == 1) {
+                viewModel.onUserImageSelected(it.toString())
+            } else {
+                viewModel.onImageSelected(it.toString())
+            }
+        }
     }
 
-    val actions = remember(viewModel, photoPickerLauncher) {
+    val petActions = remember(viewModel, photoPickerLauncher) {
         object : PetEditActions {
             override fun onImageClick() {
                 photoPickerLauncher.launch(
@@ -103,19 +110,26 @@ fun SignUpRoute(
     SignUpScreen(
         paddingValues = paddingValues,
         state = state,
-        actions = actions
+        petActions = petActions,
+        onUserImageClick = {
+            photoPickerLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        },
+        onUserInfoNextClick = viewModel::onUserInfoNextClick,
+        onPreviousStepClick = viewModel::onPreviousStepClick
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SignUpScreen(
     paddingValues: PaddingValues,
-    state: SignUpUiState,
-    actions: PetEditActions
+    state: SignUpState,
+    petActions: PetEditActions,
+    onUserImageClick: () -> Unit,
+    onUserInfoNextClick: () -> Unit,
+    onPreviousStepClick: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -123,8 +137,108 @@ private fun SignUpScreen(
             .padding(paddingValues)
             .imePadding()
     ) {
-        MeongTopbar(isBackVisible = false)
+        MeongTopbar(
+            isBackVisible = state.currentStep > 1,
+            onBackClick = onPreviousStepClick
+        )
 
+        MeongStepProgressBar(
+            currentStep = state.currentStep,
+            totalSteps = state.totalSteps,
+            modifier = Modifier.padding(horizontal = 20.dp)
+        )
+
+        if (state.currentStep == 1) {
+            UserInfoStepContent(
+                state = state,
+                onImageClick = onUserImageClick,
+                onNextClick = onUserInfoNextClick
+            )
+        } else {
+            PetInfoStepContent(
+                state = state,
+                actions = petActions
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun UserInfoStepContent(
+    state: SignUpState,
+    onImageClick: () -> Unit,
+    onNextClick: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp),
+        ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "사용할\n프로필을 설정해주세요.",
+                style = MeongTheme.typography.title.title20Sb,
+                color = MeongTheme.colors.gray900
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            CircularImagePicker(
+                imageUrl = state.userImageUrl,
+                onClick = onImageClick,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                isLoading = state.isUserImageUploading,
+                emptyIconRes = R.drawable.ic_empty_user_holder
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            LabeledTextField(
+                label = "닉네임",
+                description = "10자 이내로 입력해주세요",
+                placeholder = "닉네임을 입력해주세요",
+                state = state.nicknameTextFieldState,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                inputTransformation = InputTransformation.maxLength(10),
+                errorMessage = state.nicknameErrorMessage,
+                fieldModifier = Modifier.focusScrollable()
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+
+        AnimatedVisibility(
+            visible = !WindowInsets.isImeVisible,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            MeongButton(
+                text = "다음",
+                isEnabled = state.isUserInfoNextEnabled,
+                onClick = onNextClick,
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 20.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PetInfoStepContent(
+    state: SignUpState,
+    actions: PetEditActions
+) {
+    val scrollState = rememberScrollState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -141,7 +255,7 @@ private fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            PetEditImagePicker(
+            CircularImagePicker(
                 imageUrl = state.imageUrl,
                 onClick = actions::onImageClick,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -150,7 +264,7 @@ private fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "반려견 이름",
                 description = "15자 이내로 입력해주세요",
                 placeholder = "반려견 이름을 입력해주세요",
@@ -163,7 +277,7 @@ private fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "품종 (선택)",
                 description = "예: 말티즈",
                 placeholder = "반려견 품종을 입력해주세요",
@@ -174,7 +288,7 @@ private fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "몸무게 (kg) (선택)",
                 description = "예: 3.5",
                 placeholder = "반려견 몸무게를 입력해주세요",
@@ -188,7 +302,7 @@ private fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PetEditTextField(
+            LabeledTextField(
                 label = "생년월일 (선택)",
                 description = "예: 2021-03-15",
                 placeholder = "20210315",
@@ -264,12 +378,12 @@ private fun SignUpScreen(
 
 @Preview
 @Composable
-private fun SignUpScreenPreview() {
+private fun SignUpScreenUserInfoStepPreview() {
     MeongTheme {
         SignUpScreen(
             paddingValues = PaddingValues(),
-            state = SignUpUiState(),
-            actions = remember {
+            state = SignUpState(currentStep = 1),
+            petActions = remember {
                 object : PetEditActions {
                     override fun onImageClick() {}
                     override fun onNeuteredToggle(isNeutered: Boolean) {}
@@ -279,7 +393,35 @@ private fun SignUpScreenPreview() {
                     override fun onHealthSelect(health: PetHealthStatus) {}
                     override fun onSaveClick() {}
                 }
-            }
+            },
+            onUserImageClick = {},
+            onUserInfoNextClick = {},
+            onPreviousStepClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SignUpScreenPetInfoStepPreview() {
+    MeongTheme {
+        SignUpScreen(
+            paddingValues = PaddingValues(),
+            state = SignUpState(currentStep = 2),
+            petActions = remember {
+                object : PetEditActions {
+                    override fun onImageClick() {}
+                    override fun onNeuteredToggle(isNeutered: Boolean) {}
+                    override fun onSizeSelect(size: PetSizeCategory) {}
+                    override fun onActivitySelect(activity: PetActivityLevel) {}
+                    override fun onSociabilitySelect(sociability: PetSociability) {}
+                    override fun onHealthSelect(health: PetHealthStatus) {}
+                    override fun onSaveClick() {}
+                }
+            },
+            onUserImageClick = {},
+            onUserInfoNextClick = {},
+            onPreviousStepClick = {}
         )
     }
 }

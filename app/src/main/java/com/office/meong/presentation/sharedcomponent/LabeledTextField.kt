@@ -1,4 +1,4 @@
-package com.office.meong.presentation.mypage.petedit.component
+package com.office.meong.presentation.sharedcomponent
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +16,7 @@ import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
-fun PetEditTextField(
+fun LabeledTextField(
     label: String,
     description: String,
     placeholder: String,

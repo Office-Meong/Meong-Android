@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.component.detail
+package com.office.meong.presentation.explore.detail.component
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,10 +15,12 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun ExploreDetailAccessibilityInfo(
-    accessibilityTags: List<String>,
+    accessibilityTags: ImmutableList<String>,
     modifier: Modifier = Modifier
 ) {
     if (accessibilityTags.isEmpty()) return
@@ -74,7 +76,7 @@ private fun ExploreDetailTagsInfoPreview() {
                 notice = "이동 시 목줄을 착용해주세요"
             )
             ExploreDetailAccessibilityInfo(
-                accessibilityTags = listOf("경사로 있음", "유모차 이동 가능"),
+                accessibilityTags = persistentListOf("경사로 있음", "유모차 이동 가능"),
                 modifier = Modifier.padding(top = 24.dp)
             )
         }

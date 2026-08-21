@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.component.detail
+package com.office.meong.presentation.explore.detail.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
@@ -29,11 +29,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.designsystem.theme.MeongTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun ExploreDetailOperationInfo(
     todayHours: String,
-    weeklyHours: List<String>,
+    weeklyHours: ImmutableList<String>,
     closedDays: String,
     parkingInfo: String,
     phoneNumber: String,
@@ -112,7 +114,7 @@ private fun ExploreDetailOperationInfoPreview() {
     MeongTheme {
         ExploreDetailOperationInfo(
             todayHours = "월 10:30 - 21:00",
-            weeklyHours = listOf(
+            weeklyHours = persistentListOf(
                 "화 10:30 - 21:00",
                 "수 10:30 - 21:00",
                 "목 10:30 - 21:00",

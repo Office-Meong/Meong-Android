@@ -35,6 +35,8 @@ fun NavGraphBuilder.courseNavGraph(
     ) {
         composable<CreateCourse> {
             CreateCourseRoute(
+                paddingValues = paddingValues,
+                navigateUp = navController::navigateUp,
                 navigateToResultCourse = { courseId -> navController.navigateToResultCourse(courseId) }
             )
         }

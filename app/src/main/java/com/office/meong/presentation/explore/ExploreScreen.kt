@@ -1,6 +1,7 @@
 package com.office.meong.presentation.explore
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,44 +11,95 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.office.meong.core.common.extension.collectSideEffect
+import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.common.util.UiState
+import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
+import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
+import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.explore.component.ExploreChipArea
+import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.region.Region
+import com.office.meong.core.model.trigger.SnackbarState
+import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.explore.component.ExploreSearchBar
-import com.office.meong.presentation.explore.model.ExplorePlaceType
-import com.office.meong.presentation.explore.model.ExploreRegion
+import com.office.meong.presentation.explore.model.ExplorePlaceUiModel
+import com.office.meong.presentation.favorite.component.FavoriteChipArea
+import com.office.meong.presentation.sharedcomponent.CourseEmptyContent
+import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun ExploreRoute(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    navigateToDetail: (Long) -> Unit = {},
+    viewModel: ExploreViewModel = hiltViewModel()
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val searchState = rememberTextFieldState()
+    val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    viewModel.sideEffect.collectSideEffect {
+        when (it) {
+            is ExploreSideEffect.ShowSnackBar -> {
+                globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
+            }
+        }
+    }
+
+    LaunchedEffect(searchState) {
+        snapshotFlow { searchState.text.toString() }
+            .distinctUntilChanged()
+            .collect { viewModel.onKeywordChanged(it) }
+    }
+
     ExploreScreen(
-        paddingValues = paddingValues
+        paddingValues = paddingValues,
+        state = state,
+        searchState = searchState,
+        onRegionSelected = viewModel::onRegionSelected,
+        onTypeSelected = viewModel::onTypeSelected,
+        onFavoriteClick = viewModel::onFavoriteClick,
+        onPlaceClick = navigateToDetail,
+        onRetry = viewModel::retryPlaces,
+        onLoadMore = viewModel::onLoadMore
     )
 }
 
 @Composable
 private fun ExploreScreen(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    state: ExploreState,
+    searchState: TextFieldState,
+    onRegionSelected: (Region?) -> Unit,
+    onTypeSelected: (PlaceType?) -> Unit,
+    onFavoriteClick: (Long) -> Unit,
+    onPlaceClick: (Long) -> Unit,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit
 ) {
-    val searchState = rememberTextFieldState()
-    var selectedRegion by remember { mutableStateOf(ExploreRegion.ALL) }
-    var selectedType by remember { mutableStateOf(ExplorePlaceType.ALL) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = MeongTheme.colors.gray50)
+            .background(color = MeongTheme.colors.white)
             .padding(paddingValues)
     ) {
         Spacer(modifier = Modifier.height(16.dp))
@@ -61,11 +113,11 @@ private fun ExploreScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        ExploreChipArea(
-            selectedRegion = selectedRegion,
-            selectedType = selectedType,
-            onRegionSelected = { selectedRegion = it },
-            onTypeSelected = { selectedType = it },
+        FavoriteChipArea(
+            selectedRegion = state.selectedRegion,
+            selectedType = state.selectedType,
+            onRegionSelected = onRegionSelected,
+            onTypeSelected = onTypeSelected,
             modifier = Modifier.padding(start = 20.dp)
         )
 
@@ -77,23 +129,112 @@ private fun ExploreScreen(
             thickness = 1.dp
         )
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(color = MeongTheme.colors.gray50)
-                .weight(1f),
-            contentPadding = PaddingValues(all = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            item{
-                Text(
-                    text ="총\${0}개의 장소",
-                    color = MeongTheme.colors.gray700,
-                    style = MeongTheme.typography.label.label14Sb
+        when (val places = state.places) {
+            is UiState.Loading -> {
+                MeongLoadingIndicator(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 )
             }
 
-            //TODO: 민성 컴포 붙히기 + Loading state시 Skeleton 붙히기
+            is UiState.Failure -> {
+                MeongLoadErrorView(
+                    action = LoadErrorViewAction.Retry(onRetryClick = onRetry),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            }
+
+            is UiState.Empty -> {
+                CourseEmptyContent(
+                    onClickPillButton = {},
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(color = MeongTheme.colors.gray50)
+                        .padding(20.dp)
+                )
+            }
+
+            is UiState.Success -> {
+                ExploreList(
+                    places = places.data,
+                    totalCount = state.totalCount,
+                    isLoadingMore = state.isLoadingMore,
+                    onFavoriteClick = onFavoriteClick,
+                    onPlaceClick = onPlaceClick,
+                    onLoadMore = onLoadMore,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExploreList(
+    places: ImmutableList<ExplorePlaceUiModel>,
+    totalCount: Int,
+    isLoadingMore: Boolean,
+    onFavoriteClick: (Long) -> Unit,
+    onPlaceClick: (Long) -> Unit,
+    onLoadMore: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberLazyListState()
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisibleIndex >= listState.layoutInfo.totalItemsCount - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) onLoadMore()
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.background(color = MeongTheme.colors.gray50),
+        contentPadding = PaddingValues(all = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Text(
+                text = "총 ${totalCount}개의 장소",
+                color = MeongTheme.colors.gray700,
+                style = MeongTheme.typography.label.label14Sb
+            )
+        }
+
+        items(
+            items = places,
+            key = { it.placeId }
+        ) { place ->
+            MeongPlaceCard(
+                placeName = place.placeName,
+                location = place.address,
+                placeType = place.placeType,
+                grade = place.grade,
+                thumbnailUrl = place.thumbnailUrl,
+                isFavorite = place.isFavorite,
+                onFavoriteClick = { onFavoriteClick(place.placeId) },
+                modifier = Modifier.noRippleClickable { onPlaceClick(place.placeId) }
+            )
+        }
+
+        if (isLoadingMore) {
+            item {
+                MeongLoadingIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                )
+            }
         }
     }
 }
@@ -103,7 +244,15 @@ private fun ExploreScreen(
 private fun ExploreScreenPreview() {
     MeongTheme {
         ExploreScreen(
-            paddingValues = PaddingValues()
+            paddingValues = PaddingValues(),
+            state = ExploreState(),
+            searchState = rememberTextFieldState(),
+            onRegionSelected = {},
+            onTypeSelected = {},
+            onFavoriteClick = {},
+            onPlaceClick = {},
+            onRetry = {},
+            onLoadMore = {}
         )
     }
 }

@@ -1,4 +1,4 @@
-package com.office.meong.presentation.explore.component.detail
+package com.office.meong.presentation.explore.detail.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -17,7 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.presentation.explore.model.PetWorkGrade
+import com.office.meong.presentation.explore.detail.model.PetWorkGrade
 
 @Composable
 fun ExploreDetailPetWorkIndex(

@@ -8,8 +8,9 @@ import com.office.meong.core.model.pet.PetSizeCategory
 import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.data.presigned.repository.PresignedRepository
+import com.office.meong.data.user.repository.UserRepository
 import com.office.meong.presentation.auth.model.SignUpSideEffect
-import com.office.meong.presentation.auth.model.SignUpUiState
+import com.office.meong.presentation.auth.model.SignUpState
 import com.office.meong.presentation.auth.model.toPetInputModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -26,12 +27,57 @@ import javax.inject.Inject
 class SignUpViewModel @Inject constructor(
     private val petRepository: PetRepository,
     private val presignedRepository: PresignedRepository,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(SignUpUiState())
-    val state: StateFlow<SignUpUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(SignUpState())
+    val state: StateFlow<SignUpState> = _state.asStateFlow()
 
     private val _sideEffect = Channel<SignUpSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
+
+    fun onUserImageSelected(uriString: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isUserImageUploading = true) }
+
+            presignedRepository.uploadImage(
+                uriString = uriString,
+                fileName = "${UUID.randomUUID()}.webp"
+            ).onSuccess { url ->
+                _state.update { it.copy(userImageUrl = url, isUserImageUploading = false) }
+            }.onFailure {
+                _state.update { it.copy(isUserImageUploading = false) }
+                _sideEffect.send(SignUpSideEffect.ShowSnackBar("이미지 업로드에 실패했어요"))
+            }
+        }
+    }
+
+    fun onUserInfoNextClick() {
+        val currentState = _state.value
+
+        if (currentState.nicknameTextFieldState.text.isBlank()) {
+            _state.update { it.copy(hasAttemptedUserInfoSave = true) }
+            return
+        }
+        if (!currentState.isUserInfoNextEnabled) return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSavingUserInfo = true) }
+
+            userRepository.patchUser(
+                nickname = currentState.nicknameTextFieldState.text.toString(),
+                profileImageUrl = currentState.userImageUrl.orEmpty()
+            ).onSuccess {
+                _state.update { it.copy(isSavingUserInfo = false, currentStep = 2) }
+            }.onFailure {
+                _state.update { it.copy(isSavingUserInfo = false) }
+                _sideEffect.send(SignUpSideEffect.ShowSnackBar("프로필 저장에 실패했어요"))
+            }
+        }
+    }
+
+    fun onPreviousStepClick() {
+        _state.update { it.copy(currentStep = 1) }
+    }
 
     fun onImageSelected(uriString: String) {
         viewModelScope.launch {
