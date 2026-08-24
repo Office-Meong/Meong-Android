@@ -24,6 +24,9 @@ class ResultCourseUiState private constructor() {
     var isEditSchedule by mutableStateOf(false)
         private set
 
+    var isEditScheduleItemVisible by mutableStateOf(false)
+        private set
+
     var isSaved by mutableStateOf(false)
         private set
 
@@ -60,6 +63,15 @@ class ResultCourseUiState private constructor() {
 
     fun hideEditSchedule() {
         isEditSchedule = false
+    }
+
+    fun showEditScheduleItem() {
+        isEditScheduleItemVisible = true
+    }
+
+    fun hideEditScheduleItem() {
+        isEditScheduleItemVisible = false
+        editPlaceChipType = PlaceEditChipType.SEARCH
     }
 
     fun showExitDialog(type: CurrentDialogType) {

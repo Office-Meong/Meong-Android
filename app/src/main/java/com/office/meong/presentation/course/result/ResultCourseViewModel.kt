@@ -154,6 +154,51 @@ class ResultCourseViewModel @Inject constructor(
     private fun accommodationItemId(): Long? =
         _state.value.course.successData?.accommodation?.id?.toLongOrNull()
 
+    fun fetchScheduleItemAlternatives(itemId: Long) {
+        viewModelScope.launch {
+            _state.update { it.copy(scheduleItemAlternatives = UiState.Loading, editingScheduleItemId = itemId) }
+
+            courseRepository.getCourseItemAlternatives(courseId, itemId)
+                .onSuccess { alternatives ->
+                    _state.update {
+                        it.copy(
+                            scheduleItemAlternatives = UiState.Success(
+                                alternatives.map { place -> place.toScheduleUiModel() }.toImmutableList()
+                            )
+                        )
+                    }
+                }
+                .onFailure {
+                    _state.update { it.copy(scheduleItemAlternatives = UiState.Failure(LoadErrorHandleAction.Retry)) }
+                }
+        }
+    }
+
+    fun selectScheduleItemAlternative(place: ScheduleUiModel) {
+        val itemId = _state.value.editingScheduleItemId ?: return
+        val placeId = place.placeId ?: return
+
+        viewModelScope.launch {
+            courseRepository.updateCourseItem(
+                courseId = courseId,
+                itemId = itemId,
+                startTime = null,
+                endTime = null,
+                newPlaceId = placeId
+            )
+                .onSuccess { course -> _state.update { it.copy(course = UiState.Success(course.toUiModel())) } }
+                .onFailure { _sideEffect.send(ResultCourseSideEffect.ShowToast("장소 변경에 실패했어요")) }
+        }
+    }
+
+    fun deleteScheduleItem(itemId: Long) {
+        viewModelScope.launch {
+            courseRepository.deleteCourseItem(courseId, itemId)
+                .onSuccess { course -> _state.update { it.copy(course = UiState.Success(course.toUiModel())) } }
+                .onFailure { _sideEffect.send(ResultCourseSideEffect.ShowToast("장소 삭제에 실패했어요")) }
+        }
+    }
+
     fun discardCourseAndGoBack() {
         viewModelScope.launch {
             courseRepository.deleteCourse(courseId)

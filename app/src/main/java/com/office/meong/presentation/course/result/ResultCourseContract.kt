@@ -16,6 +16,8 @@ data class ResultCourseState(
     val selectedDayNumber: Int = 1,
     val accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
     val favoritePlaces: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
+    val scheduleItemAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
+    val editingScheduleItemId: Long? = null,
 ) {
     val favoritePlaceIds: ImmutableSet<Long>
         get() = (favoritePlaces as? UiState.Success)?.data?.mapNotNull { it.placeId }?.toImmutableSet()

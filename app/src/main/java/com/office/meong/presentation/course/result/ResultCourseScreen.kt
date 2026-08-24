@@ -155,6 +155,7 @@ fun ResultCourseRoute(
                 accommodationAlternatives = state.accommodationAlternatives,
                 favoritePlaces = state.favoritePlaces,
                 favoritePlaceIds = state.favoritePlaceIds,
+                scheduleItemAlternatives = state.scheduleItemAlternatives,
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
                 onReorderComplete = viewModel::reorderCourseItems,
@@ -163,6 +164,9 @@ fun ResultCourseRoute(
                 onFavoriteToggle = viewModel::onFavoriteToggle,
                 onDiscardAndGoBack = viewModel::discardCourseAndGoBack,
                 onDiscardAndExit = viewModel::discardCourseAndExit,
+                onEditScheduleItemClick = viewModel::fetchScheduleItemAlternatives,
+                onSelectScheduleItemAlternative = viewModel::selectScheduleItemAlternative,
+                onDeleteScheduleItemClick = viewModel::deleteScheduleItem,
                 navigateToDetailCourse = { navigateToDetailCourse(state.courseId) },
                 navigateToHome = navigateToHome
             )
@@ -178,6 +182,7 @@ private fun ResultCourseContent(
     accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
     favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
     favoritePlaceIds: ImmutableSet<Long>,
+    scheduleItemAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
@@ -186,6 +191,9 @@ private fun ResultCourseContent(
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
     onDiscardAndGoBack: () -> Unit,
     onDiscardAndExit: () -> Unit,
+    onEditScheduleItemClick: (itemId: Long) -> Unit,
+    onSelectScheduleItemAlternative: (ScheduleUiModel) -> Unit,
+    onDeleteScheduleItemClick: (itemId: Long) -> Unit,
     navigateToDetailCourse: () -> Unit,
     navigateToHome: () -> Unit
 ) {
@@ -257,7 +265,12 @@ private fun ResultCourseContent(
         onFavoriteToggle = onFavoriteToggle,
         onPreviousDayClick = onPreviousDayClick,
         onNextDayClick = onNextDayClick,
-        onSaveClick = uiState::markSaved
+        onSaveClick = uiState::markSaved,
+        onChangeScheduleItemClick = { itemId ->
+            uiState.showEditScheduleItem()
+            onEditScheduleItemClick(itemId)
+        },
+        onDeleteScheduleItemClick = onDeleteScheduleItemClick
     )
 
     if (uiState.currentDialogType != null) {
@@ -303,6 +316,23 @@ private fun ResultCourseContent(
             }
         )
     }
+
+    if (uiState.isEditScheduleItemVisible) {
+        EditPlaceBottomSheet(
+            title = "다른 장소로 변경",
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideEditScheduleItem,
+            alternatives = scheduleItemAlternatives,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
+            onPlaceSelected = { place ->
+                onSelectScheduleItemAlternative(place)
+                uiState.hideEditScheduleItem()
+            }
+        )
+    }
 }
 
 @Composable
@@ -319,7 +349,9 @@ private fun ResultCourseScreen(
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    onChangeScheduleItemClick: (itemId: Long) -> Unit,
+    onDeleteScheduleItemClick: (itemId: Long) -> Unit
 ) {
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
@@ -480,8 +512,9 @@ private fun ResultCourseScreen(
                         },
                         onDrag = { dragDropState.onDrag(it) },
                         onDragEnd = { dragDropState.onDragEnd() },
+                        onChangePlaceClick = { onChangeScheduleItemClick(item.id.toLong()) },
+                        onDeleteClick = { onDeleteScheduleItemClick(item.id.toLong()) },
                         modifier = Modifier
-                            .padding(horizontal = 20.dp)
                             .let { if (isDragging) it else it.animateItem() }
                             .zIndex(if (isDragging) 1f else 0f)
                             .graphicsLayer {
@@ -652,6 +685,7 @@ private fun EditPlaceBottomSheet(
     favoritePlaceIds: ImmutableSet<Long>,
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
     modifier: Modifier = Modifier,
+    title: String = "장소 추가",
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
@@ -670,7 +704,7 @@ private fun EditPlaceBottomSheet(
     ) {
         Column(modifier = Modifier.fillMaxHeight()) {
             MeongTopbar(
-                title = "장소 추가",
+                title = title,
                 isBackVisible = false,
                 actionType = TopbarAction.CLOSE,
                 onActionClick = { onDismiss() },
@@ -918,7 +952,9 @@ private fun ResultCourseScreenPreview() {
             onFavoriteToggle = {},
             onPreviousDayClick = {},
             onNextDayClick = {},
-            onSaveClick = {}
+            onSaveClick = {},
+            onChangeScheduleItemClick = {},
+            onDeleteScheduleItemClick = {}
         )
     }
 }

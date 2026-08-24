@@ -26,6 +26,9 @@ class DetailCourseUiState private constructor() {
     var isAddPlaceVisible by mutableStateOf(false)
         private set
 
+    var isEditScheduleItemVisible by mutableStateOf(false)
+        private set
+
     var isEditSchedule by mutableStateOf(false)
         private set
 
@@ -66,6 +69,15 @@ class DetailCourseUiState private constructor() {
 
     fun hideAddPlace() {
         isAddPlaceVisible = false
+        editPlaceChipType = PlaceEditChipType.SEARCH
+    }
+
+    fun showEditScheduleItem() {
+        isEditScheduleItemVisible = true
+    }
+
+    fun hideEditScheduleItem() {
+        isEditScheduleItemVisible = false
         editPlaceChipType = PlaceEditChipType.SEARCH
     }
 

@@ -25,6 +25,8 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.extension.collectSideEffect
@@ -59,6 +61,10 @@ fun HomeRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.retryLoad()
+    }
 
     viewModel.sideEffect.collectSideEffect {
         when (it) {

@@ -163,6 +163,7 @@ fun DetailCourseRoute(
                 favoritePlaces = state.favoritePlaces,
                 favoritePlaceIds = state.favoritePlaceIds,
                 placeSearchResults = state.placeSearchResults,
+                scheduleItemAlternatives = state.scheduleItemAlternatives,
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
                 onBackClick = navigateUp,
@@ -174,7 +175,10 @@ fun DetailCourseRoute(
                 onEditAccommodationClick = viewModel::fetchAccommodationAlternatives,
                 onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative,
                 onPlaceSearchQueryChanged = viewModel::onPlaceSearchQueryChanged,
-                onFavoriteToggle = viewModel::onFavoriteToggle
+                onFavoriteToggle = viewModel::onFavoriteToggle,
+                onEditScheduleItemClick = viewModel::fetchScheduleItemAlternatives,
+                onSelectScheduleItemAlternative = viewModel::selectScheduleItemAlternative,
+                onDeleteScheduleItemClick = viewModel::deleteScheduleItem
             )
         }
     }
@@ -190,6 +194,7 @@ private fun DetailCourseContent(
     favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
     favoritePlaceIds: ImmutableSet<Long>,
     placeSearchResults: UiState<ImmutableList<ScheduleUiModel>>,
+    scheduleItemAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -201,7 +206,10 @@ private fun DetailCourseContent(
     onEditAccommodationClick: () -> Unit,
     onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit,
     onPlaceSearchQueryChanged: (String) -> Unit,
-    onFavoriteToggle: (ScheduleUiModel) -> Unit
+    onFavoriteToggle: (ScheduleUiModel) -> Unit,
+    onEditScheduleItemClick: (itemId: Long) -> Unit,
+    onSelectScheduleItemAlternative: (ScheduleUiModel) -> Unit,
+    onDeleteScheduleItemClick: (itemId: Long) -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
 
@@ -268,7 +276,12 @@ private fun DetailCourseContent(
         onRetryPetInfo = onRetryPetInfo,
         onPreviousDayClick = onPreviousDayClick,
         onNextDayClick = onNextDayClick,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onChangeScheduleItemClick = { itemId ->
+            uiState.showEditScheduleItem()
+            onEditScheduleItemClick(itemId)
+        },
+        onDeleteScheduleItemClick = onDeleteScheduleItemClick
     )
 
     if (uiState.isEditTitleVisible) {
@@ -294,6 +307,23 @@ private fun DetailCourseContent(
             onPlaceSelected = { place ->
                 onSelectAccommodationAlternative(place)
                 editActions.accommodation.onClickComplete()
+            }
+        )
+    }
+
+    if (uiState.isEditScheduleItemVisible) {
+        DetailCourseEditPlaceBottomSheet(
+            title = "다른 장소로 변경",
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideEditScheduleItem,
+            alternatives = scheduleItemAlternatives,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
+            onPlaceSelected = { place ->
+                onSelectScheduleItemAlternative(place)
+                uiState.hideEditScheduleItem()
             }
         )
     }
@@ -344,7 +374,9 @@ private fun DetailCourseScreen(
     onRetryPetInfo: () -> Unit,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onChangeScheduleItemClick: (itemId: Long) -> Unit,
+    onDeleteScheduleItemClick: (itemId: Long) -> Unit
 ) {
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
@@ -552,8 +584,9 @@ private fun DetailCourseScreen(
                             },
                             onDrag = { dragDropState.onDrag(it) },
                             onDragEnd = { dragDropState.onDragEnd() },
+                            onChangePlaceClick = { onChangeScheduleItemClick(item.id.toLong()) },
+                            onDeleteClick = { onDeleteScheduleItemClick(item.id.toLong()) },
                             modifier = Modifier
-                                .padding(horizontal = 20.dp)
                                 .let { if (isDragging) it else it.animateItem() }
                                 .zIndex(if (isDragging) 1f else 0f)
                                 .graphicsLayer {
@@ -744,6 +777,7 @@ private fun DetailCourseEditPlaceBottomSheet(
     favoritePlaceIds: ImmutableSet<Long>,
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
     modifier: Modifier = Modifier,
+    title: String = "장소 추가",
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
     placeSearchResults: UiState<ImmutableList<ScheduleUiModel>> = UiState.Empty,
     onPlaceSearchQueryChanged: (String) -> Unit = {},
@@ -764,7 +798,7 @@ private fun DetailCourseEditPlaceBottomSheet(
     ) {
         Column(modifier = Modifier.fillMaxHeight()) {
             MeongTopbar(
-                title = "장소 추가",
+                title = title,
                 isBackVisible = false,
                 actionType = TopbarAction.CLOSE,
                 onActionClick = { onDismiss() },
@@ -1056,7 +1090,9 @@ private fun DetailCourseScreenPreview() {
             onRetryPetInfo = {},
             onPreviousDayClick = {},
             onNextDayClick = {},
-            onBackClick = {}
+            onBackClick = {},
+            onChangeScheduleItemClick = {},
+            onDeleteScheduleItemClick = {}
         )
     }
 }
