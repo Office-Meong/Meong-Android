@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,6 +24,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,14 +44,14 @@ import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 private object ExploreDetailTooltipDefaults {
-    val BodyWidth = 281.dp
+    val BodyWidth = 320.dp
     val BodyHeight = 40.dp
-    val ArrowOffsetFromLeft = 30.dp
     val ArrowHeight = 12.dp
     val ArrowWidth = 20.dp
     val CornerRadius = 10.dp
     val AnchorGap = 2.dp
     val HorizontalPadding = 12.dp
+    val ScreenEdgeMargin = 20.dp
 }
 
 @Composable
@@ -88,12 +91,19 @@ fun ExploreDetailCongestionInfo(
 @Composable
 private fun InfoIconWithTooltip(message: String) {
     var showTooltip by remember { mutableStateOf(false) }
+    var anchorCenterXInWindow by remember { mutableFloatStateOf(0f) }
+    var popupXInWindow by remember { mutableFloatStateOf(0f) }
 
     val density = LocalDensity.current
-    val arrowOffsetPx = with(density) { ExploreDetailTooltipDefaults.ArrowOffsetFromLeft.roundToPx() }
-    val gapPx = with(density) { ExploreDetailTooltipDefaults.AnchorGap.roundToPx() }
+    val arrowOffsetPx = remember(anchorCenterXInWindow, popupXInWindow, density) {
+        val cornerRadiusPx = with(density) { ExploreDetailTooltipDefaults.CornerRadius.toPx() }
+        val arrowHalfWidthPx = with(density) { (ExploreDetailTooltipDefaults.ArrowWidth / 2).toPx() }
+        val bodyWidthPx = with(density) { ExploreDetailTooltipDefaults.BodyWidth.toPx() }
+        (anchorCenterXInWindow - popupXInWindow)
+            .coerceIn(cornerRadiusPx + arrowHalfWidthPx, bodyWidthPx - cornerRadiusPx - arrowHalfWidthPx)
+    }
 
-    val positionProvider = remember(arrowOffsetPx, gapPx) {
+    val positionProvider = remember(density) {
         object : PopupPositionProvider {
             override fun calculatePosition(
                 anchorBounds: IntRect,
@@ -101,17 +111,27 @@ private fun InfoIconWithTooltip(message: String) {
                 layoutDirection: LayoutDirection,
                 popupContentSize: IntSize,
             ): IntOffset {
-                val x = anchorBounds.left + anchorBounds.width / 2 - arrowOffsetPx
-                val y = anchorBounds.top - popupContentSize.height - gapPx
-                return IntOffset(
-                    x = x.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)),
-                    y = y.coerceAtLeast(0),
-                )
+                val gapPx = with(density) { ExploreDetailTooltipDefaults.AnchorGap.roundToPx() }
+                val edgeMarginPx = with(density) { ExploreDetailTooltipDefaults.ScreenEdgeMargin.roundToPx() }
+
+                val anchorCenterX = anchorBounds.left + anchorBounds.width / 2
+                val maxX = (windowSize.width - popupContentSize.width - edgeMarginPx).coerceAtLeast(edgeMarginPx)
+                val x = (anchorCenterX - popupContentSize.width / 2).coerceIn(edgeMarginPx, maxX)
+                val y = (anchorBounds.top - popupContentSize.height - gapPx).coerceAtLeast(0)
+
+                popupXInWindow = x.toFloat()
+
+                return IntOffset(x = x, y = y)
             }
         }
     }
 
-    Box {
+    Box(
+        modifier = Modifier.onGloballyPositioned { coordinates ->
+            val position = coordinates.positionInWindow()
+            anchorCenterXInWindow = position.x + coordinates.size.width / 2f
+        }
+    ) {
         Icon(
             imageVector = ImageVector.vectorResource(id = R.drawable.ic_info),
             contentDescription = "혼잡도 정보",
@@ -129,6 +149,7 @@ private fun InfoIconWithTooltip(message: String) {
             ) {
                 TooltipBubble(
                     message = message,
+                    arrowOffsetPx = arrowOffsetPx,
                     onDismiss = { showTooltip = false },
                 )
             }
@@ -139,6 +160,7 @@ private fun InfoIconWithTooltip(message: String) {
 @Composable
 private fun TooltipBubble(
     message: String,
+    arrowOffsetPx: Float,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -152,7 +174,6 @@ private fun TooltipBubble(
                 val arrowHeightPx = ExploreDetailTooltipDefaults.ArrowHeight.toPx()
                 val arrowWidthPx = ExploreDetailTooltipDefaults.ArrowWidth.toPx()
                 val cornerRadiusPx = ExploreDetailTooltipDefaults.CornerRadius.toPx()
-                val arrowCenterX = ExploreDetailTooltipDefaults.ArrowOffsetFromLeft.toPx()
                 val bodyHeight = size.height - arrowHeightPx
 
                 val path = Path().apply {
@@ -165,9 +186,9 @@ private fun TooltipBubble(
                             cornerRadius = CornerRadius(cornerRadiusPx),
                         )
                     )
-                    moveTo((arrowCenterX - arrowWidthPx / 2).coerceAtLeast(cornerRadiusPx), bodyHeight)
-                    lineTo(arrowCenterX, size.height)
-                    lineTo((arrowCenterX + arrowWidthPx / 2).coerceAtMost(size.width - cornerRadiusPx), bodyHeight)
+                    moveTo((arrowOffsetPx - arrowWidthPx / 2).coerceAtLeast(cornerRadiusPx), bodyHeight)
+                    lineTo(arrowOffsetPx, size.height)
+                    lineTo((arrowOffsetPx + arrowWidthPx / 2).coerceAtMost(size.width - cornerRadiusPx), bodyHeight)
                     close()
                 }
                 drawPath(path, color = backgroundColor)
@@ -187,7 +208,9 @@ private fun TooltipBubble(
                 style = MeongTheme.typography.body.body14M,
                 color = MeongTheme.colors.white,
                 maxLines = 1,
-                modifier = Modifier.padding(start = 10.dp),
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(start = 10.dp),
             )
             Icon(
                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_close),
@@ -197,7 +220,6 @@ private fun TooltipBubble(
                     .noRippleClickable(onDismiss),
                 tint = MeongTheme.colors.white,
             )
-            Spacer(modifier = Modifier.width(6.dp))
         }
     }
 }

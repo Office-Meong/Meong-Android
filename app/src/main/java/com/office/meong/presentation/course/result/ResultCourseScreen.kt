@@ -68,7 +68,14 @@ import com.office.meong.core.designsystem.component.topbar.TopbarAction
 import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
 import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.course.WorkFocusLevel
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetInfo
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.region.Region
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.course.result.action.AccommodationEditActions
@@ -100,6 +107,7 @@ import com.valentinilk.shimmer.rememberShimmer
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 
@@ -151,6 +159,7 @@ fun ResultCourseRoute(
             ResultCourseContent(
                 paddingValues = paddingValues,
                 course = course.data,
+                petInfo = state.petInfo,
                 selectedDayNumber = state.selectedDayNumber,
                 accommodationAlternatives = state.accommodationAlternatives,
                 favoritePlaces = state.favoritePlaces,
@@ -159,6 +168,7 @@ fun ResultCourseRoute(
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
                 onReorderComplete = viewModel::reorderCourseItems,
+                onUpdateCourseName = viewModel::updateCourseName,
                 onEditAccommodationClick = viewModel::fetchAccommodationAlternatives,
                 onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative,
                 onFavoriteToggle = viewModel::onFavoriteToggle,
@@ -178,6 +188,7 @@ fun ResultCourseRoute(
 private fun ResultCourseContent(
     paddingValues: PaddingValues,
     course: ResultCourseUiModel,
+    petInfo: UiState<PetInfo>,
     selectedDayNumber: Int,
     accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
     favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
@@ -186,6 +197,7 @@ private fun ResultCourseContent(
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    onUpdateCourseName: (String) -> Unit,
     onEditAccommodationClick: () -> Unit,
     onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit,
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
@@ -211,7 +223,11 @@ private fun ResultCourseContent(
     }
 
     val scheduleUiModels = remember(course, selectedDayNumber) {
-        mutableStateListOf(*course.dayItems[selectedDayNumber].orEmpty().toTypedArray())
+        mutableStateListOf(
+            *course.dayItems[selectedDayNumber].orEmpty()
+                .filterNot { it.placeType == PlaceType.ACCOMMODATION }
+                .toTypedArray()
+        )
     }
 
     val editActions = remember(uiState, scheduleUiModels, selectedDayNumber) {
@@ -242,7 +258,10 @@ private fun ResultCourseContent(
 
                 override fun onClickComplete() {
                     uiState.hideEditSchedule()
-                    onReorderComplete(selectedDayNumber, scheduleUiModels.map { it.id.toLong() })
+                    val accommodationId = course.dayItems[selectedDayNumber].orEmpty()
+                        .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLong()
+                    val itemIds = listOfNotNull(accommodationId) + scheduleUiModels.map { it.id.toLong() }
+                    onReorderComplete(selectedDayNumber, itemIds)
                 }
             }
         }
@@ -257,10 +276,9 @@ private fun ResultCourseContent(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
-        title = course.name,
+        course = course,
+        petInfo = petInfo,
         dayNumber = selectedDayNumber,
-        dayDate = formatDayDate(course.startDate, selectedDayNumber),
-        accommodation = course.accommodation,
         favoritePlaceIds = favoritePlaceIds,
         onFavoriteToggle = onFavoriteToggle,
         onPreviousDayClick = onPreviousDayClick,
@@ -297,7 +315,12 @@ private fun ResultCourseContent(
 
     if (uiState.isEditTitleVisible) {
         EditTitleBottomSheet(
-            onDismiss = editActions.title::onClickComplete
+            initialTitle = course.name,
+            onDismiss = editActions.title::onClickComplete,
+            onSave = { name ->
+                onUpdateCourseName(name)
+                editActions.title.onClickComplete()
+            }
         )
     }
 
@@ -341,10 +364,9 @@ private fun ResultCourseScreen(
     uiState: ResultCourseUiState,
     editActions: ResultCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
-    title: String,
+    course: ResultCourseUiModel,
+    petInfo: UiState<PetInfo>,
     dayNumber: Int,
-    dayDate: String,
-    accommodation: ScheduleUiModel?,
     favoritePlaceIds: ImmutableSet<Long>,
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
     onPreviousDayClick: () -> Unit,
@@ -353,6 +375,13 @@ private fun ResultCourseScreen(
     onChangeScheduleItemClick: (itemId: Long) -> Unit,
     onDeleteScheduleItemClick: (itemId: Long) -> Unit
 ) {
+    val title = course.name
+    val dayDate = formatDayDate(course.startDate, dayNumber)
+    val accommodation = course.accommodation
+    val pet = petInfo.successData
+    val petName = pet?.name ?: "반려견"
+    val petSummary = pet?.let { "${it.name}·${it.sizeCategory.label}" } ?: "반려견"
+
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -404,6 +433,7 @@ private fun ResultCourseScreen(
         )
 
         ResultCourseTopSection(
+            petName = petName,
             modifier = Modifier
                 .fillMaxWidth()
         )
@@ -417,6 +447,15 @@ private fun ResultCourseScreen(
 
                 ResultCourseInfoHolder(
                     title = title,
+                    tripSummaryInfo = persistentListOf(
+                        course.region.label,
+                        course.tripPeriod,
+                        petSummary
+                    ),
+                    workStyleInfo = persistentListOf(
+                        course.workTimeRange,
+                        course.workFocusLevel.shortLabel
+                    ),
                     onEditTitleClick = editActions.title::onClickEdit,
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
@@ -487,7 +526,7 @@ private fun ResultCourseScreen(
                                 destinationName = firstItem.location.ifBlank { firstItem.placeName },
                                 destinationLatitude = firstItem.latitude,
                                 destinationLongitude = firstItem.longitude,
-                                type = "CAR"
+                                type = "car"
                             )
                         }
                     },
@@ -548,7 +587,7 @@ private fun ResultCourseScreen(
                                     destinationName = it.location.ifBlank { it.placeName },
                                     destinationLatitude = it.latitude,
                                     destinationLongitude = it.longitude,
-                                    type = "CAR"
+                                    type = "car"
                                 )
                             }
                         },
@@ -610,9 +649,13 @@ private fun ResultCourseScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTitleBottomSheet(
+    initialTitle: String,
     onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val titleFieldState = rememberTextFieldState(initialText = initialTitle)
+
     MeongBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier
@@ -639,14 +682,14 @@ private fun EditTitleBottomSheet(
         Spacer(modifier = Modifier.height(8.dp))
 
         MeongTextField(
-            state = rememberTextFieldState(),
+            state = titleFieldState,
             placeholder = "코스 이름을 입력해주세요",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
-            trailingIcon = if (rememberTextFieldState().text.toString().isEmpty()) null else R.drawable.ic_close_filled,
+            trailingIcon = if (titleFieldState.text.isEmpty()) null else R.drawable.ic_close_filled,
             onTrailingIconClick = {
-                // Todo: text 제거
+                titleFieldState.edit { replace(0, length, "") }
             }
         )
 
@@ -654,10 +697,8 @@ private fun EditTitleBottomSheet(
 
         MeongButton(
             text = "저장하기",
-            isEnabled = true,
-            onClick = {
-                onDismiss()
-            },
+            isEnabled = titleFieldState.text.isNotBlank(),
+            onClick = { onSave(titleFieldState.text.toString()) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
@@ -698,11 +739,11 @@ private fun EditPlaceBottomSheet(
     MeongBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier
-            .fillMaxHeight(0.7f)
             .imePadding()
-            .disableNestedScroll()
     ) {
-        Column(modifier = Modifier.fillMaxHeight()) {
+        Column(
+            modifier = Modifier.fillMaxHeight(0.7f)
+        ) {
             MeongTopbar(
                 title = title,
                 isBackVisible = false,
@@ -833,7 +874,8 @@ private fun PlaceEditResultList(
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .disableNestedScroll(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -860,7 +902,8 @@ private fun PlaceEditResultList(
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .disableNestedScroll(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -944,10 +987,37 @@ private fun ResultCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
                 )
             },
-            title = "강릉 2박 3일 워케이션",
+            course = ResultCourseUiModel(
+                name = "강릉 2박 3일 워케이션",
+                region = Region.GANGNEUNG,
+                startDate = "2026-08-10",
+                endDate = "2026-08-12",
+                totalDays = 3,
+                workStartTime = "11:00",
+                workEndTime = "18:00",
+                workFocusLevel = WorkFocusLevel.HIGH,
+                dayItems = persistentMapOf(
+                    2 to persistentListOf(
+                        ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "서울시 강남구")
+                    )
+                )
+            ),
+            petInfo = UiState.Success(
+                PetInfo(
+                    id = 1,
+                    name = "몽몽이",
+                    breed = "푸들",
+                    weightKg = 5.0,
+                    birthDate = "2020-01-01",
+                    isNeutered = true,
+                    imageUrl = "",
+                    sizeCategory = PetSizeCategory.SMALL,
+                    activityLevel = PetActivityLevel.MEDIUM,
+                    sociability = PetSociability.NORMAL,
+                    healthStatus = PetHealthStatus.RECENT_TREATMENT
+                )
+            ),
             dayNumber = 2,
-            dayDate = "8.11",
-            accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "서울시 강남구"),
             favoritePlaceIds = persistentSetOf(),
             onFavoriteToggle = {},
             onPreviousDayClick = {},

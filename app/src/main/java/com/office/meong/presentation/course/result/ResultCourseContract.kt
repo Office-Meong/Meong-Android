@@ -2,6 +2,7 @@ package com.office.meong.presentation.course.result
 
 import androidx.compose.runtime.Immutable
 import com.office.meong.core.common.util.UiState
+import com.office.meong.core.model.pet.PetInfo
 import com.office.meong.presentation.course.result.model.ResultCourseUiModel
 import com.office.meong.presentation.course.model.ScheduleUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -13,6 +14,7 @@ import kotlinx.collections.immutable.toImmutableSet
 data class ResultCourseState(
     val courseId: Long,
     val course: UiState<ResultCourseUiModel> = UiState.Loading,
+    val petInfo: UiState<PetInfo> = UiState.Loading,
     val selectedDayNumber: Int = 1,
     val accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
     val favoritePlaces: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,

@@ -48,7 +48,6 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun MyPageRoute(
     paddingValues: PaddingValues,
-    navigateUp: () -> Unit = {},
     navigateToOpenSourceLicense: () -> Unit = {},
     navigateToPetEdit: () -> Unit = {},
     navigateToUserEdit: () -> Unit = {},
@@ -114,7 +113,6 @@ fun MyPageRoute(
             cancelAction = MeongCancelAction(onClick = { isLogoutDialogVisible = false }),
             confirmAction = MeongConfirmAction(
                 text = "로그아웃",
-                backgroundColor = MeongTheme.colors.red,
                 onClick = {
                     isLogoutDialogVisible = false
                     viewModel.onLogoutClick()

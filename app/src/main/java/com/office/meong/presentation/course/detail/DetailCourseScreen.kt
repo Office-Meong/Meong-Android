@@ -80,6 +80,7 @@ import com.office.meong.core.model.pet.PetInfo
 import com.office.meong.core.model.pet.PetSizeCategory
 import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.region.Region
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.course.detail.action.AccommodationEditActions
@@ -111,6 +112,7 @@ import com.valentinilk.shimmer.rememberShimmer
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 
@@ -263,13 +265,8 @@ private fun DetailCourseContent(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
-        title = course.name,
-        location = course.region.label,
-        tripPeriod = course.tripPeriod,
+        course = course,
         dayNumber = selectedDayNumber,
-        totalDays = course.totalDays,
-        dayDate = formatDayDate(course.startDate, selectedDayNumber),
-        accommodation = course.accommodation,
         petInfo = petInfo,
         favoritePlaceIds = favoritePlaceIds,
         onFavoriteToggle = onFavoriteToggle,
@@ -361,13 +358,8 @@ private fun DetailCourseScreen(
     uiState: DetailCourseUiState,
     editActions: DetailCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
-    title: String,
-    location: String,
-    tripPeriod: String,
+    course: DetailCourseUiModel,
     dayNumber: Int,
-    totalDays: Int,
-    dayDate: String,
-    accommodation: ScheduleUiModel?,
     petInfo: UiState<PetInfo>,
     favoritePlaceIds: ImmutableSet<Long>,
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
@@ -378,6 +370,13 @@ private fun DetailCourseScreen(
     onChangeScheduleItemClick: (itemId: Long) -> Unit,
     onDeleteScheduleItemClick: (itemId: Long) -> Unit
 ) {
+    val title = course.name
+    val location = course.region.label
+    val tripPeriod = course.tripPeriod
+    val totalDays = course.totalDays
+    val dayDate = formatDayDate(course.startDate, dayNumber)
+    val accommodation = course.accommodation
+
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -560,7 +559,7 @@ private fun DetailCourseScreen(
                                     destinationName = firstItem.location.ifBlank { firstItem.placeName },
                                     destinationLatitude = firstItem.latitude,
                                     destinationLongitude = firstItem.longitude,
-                                    type = "CAR"
+                                    type = "car"
                                 )
                             }
                         },
@@ -688,7 +687,7 @@ private fun DetailCourseScreen(
             Popup(
                 popupPositionProvider = positionProvider,
                 onDismissRequest = { uiState.hideTopAction() },
-                properties = PopupProperties(focusable = false)
+                properties = PopupProperties(focusable = false, dismissOnBackPress = false)
             ) {
                 DetailCourseTopAction(
                     onClick = {
@@ -792,11 +791,11 @@ private fun DetailCourseEditPlaceBottomSheet(
     MeongBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier
-            .fillMaxHeight(0.7f)
             .imePadding()
-            .disableNestedScroll()
     ) {
-        Column(modifier = Modifier.fillMaxHeight()) {
+        Column(
+            modifier = Modifier.fillMaxHeight(0.7f)
+        ) {
             MeongTopbar(
                 title = title,
                 isBackVisible = false,
@@ -954,7 +953,8 @@ private fun DetailCoursePlaceEditResultList(
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .disableNestedScroll(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -979,7 +979,8 @@ private fun DetailCoursePlaceEditResultList(
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .disableNestedScroll(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1063,13 +1064,19 @@ private fun DetailCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
                 )
             },
-            title = "강릉 2박 3일 워케이션",
-            location = "강릉",
-            tripPeriod = "2박 3일 (2026.8.10 - 2026.8.12)",
+            course = DetailCourseUiModel(
+                name = "강릉 2박 3일 워케이션",
+                region = Region.GANGNEUNG,
+                startDate = "2026-08-10",
+                endDate = "2026-08-12",
+                totalDays = 3,
+                dayItems = persistentMapOf(
+                    2 to persistentListOf(
+                        ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "강원 강릉시 하남길 117-4")
+                    )
+                )
+            ),
             dayNumber = 2,
-            totalDays = 3,
-            dayDate = "8.11",
-            accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "강원 강릉시 하남길 117-4"),
             favoritePlaceIds = persistentSetOf(),
             onFavoriteToggle = {},
             petInfo = UiState.Success(

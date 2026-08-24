@@ -25,6 +25,7 @@ import com.office.meong.presentation.course.detail.navigation.DetailCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -254,7 +255,8 @@ class DetailCourseViewModel @Inject constructor(
         return uiModel.copy(
             dayItems = uiModel.dayItems.mapValues { (_, items) ->
                 items.map { item -> resolvedAddresses[item.id]?.let { address -> item.copy(location = address) } ?: item }
-            }
+                    .toImmutableList()
+            }.toImmutableMap()
         )
     }
 

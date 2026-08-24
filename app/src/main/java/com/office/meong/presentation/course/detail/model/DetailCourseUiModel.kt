@@ -7,6 +7,10 @@ import com.office.meong.core.model.region.Region
 import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.presentation.course.model.ScheduleUiModel
 import com.office.meong.presentation.course.model.toUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 
 @Immutable
 data class DetailCourseUiModel(
@@ -15,7 +19,7 @@ data class DetailCourseUiModel(
     val startDate: String,
     val endDate: String,
     val totalDays: Int,
-    val dayItems: Map<Int, List<ScheduleUiModel>>,
+    val dayItems: ImmutableMap<Int, ImmutableList<ScheduleUiModel>>,
 ) {
     val tripPeriod: String
         get() = formatTripPeriod(startDate, endDate)
@@ -32,5 +36,6 @@ fun CourseDetail.toUiModel(): DetailCourseUiModel = DetailCourseUiModel(
     endDate = endDate,
     totalDays = totalDays,
     dayItems = dayItems.mapKeys { (day, _) -> day.toInt() }
-        .mapValues { (_, items) -> items.map { it.toUiModel() } },
+        .mapValues { (_, items) -> items.map { it.toUiModel() }.toImmutableList() }
+        .toImmutableMap(),
 )

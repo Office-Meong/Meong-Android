@@ -9,6 +9,8 @@ import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.successData
 import com.office.meong.data.course.repository.CourseRepository
 import com.office.meong.data.favorite.repository.FavoriteRepository
+import com.office.meong.data.pet.model.toInfo
+import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.domain.favorite.usecase.ToggleFavoriteUseCase
 import com.office.meong.presentation.course.model.ScheduleUiModel
 import com.office.meong.presentation.course.model.toScheduleUiModel
@@ -30,6 +32,7 @@ import javax.inject.Inject
 class ResultCourseViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val courseRepository: CourseRepository,
+    private val petRepository: PetRepository,
     private val favoriteRepository: FavoriteRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
 ) : ViewModel() {
@@ -43,11 +46,33 @@ class ResultCourseViewModel @Inject constructor(
 
     init {
         fetchCourseDetail()
+        fetchPetInfo()
         fetchFavoritePlaces()
     }
 
     fun retryCourseDetail() {
         fetchCourseDetail()
+    }
+
+    private fun fetchPetInfo() {
+        viewModelScope.launch {
+            _state.update { it.copy(petInfo = UiState.Loading) }
+
+            petRepository.getDogs()
+                .onSuccess { pets ->
+                    _state.update { currentState ->
+                        currentState.copy(
+                            petInfo = pets.firstOrNull()?.toInfo()
+                                ?.let { UiState.Success(it) }
+                                ?: UiState.Empty
+                        )
+                    }
+                }
+                .onFailure {
+                    _state.update { it.copy(petInfo = UiState.Failure(LoadErrorHandleAction.Retry)) }
+                    _sideEffect.send(ResultCourseSideEffect.ShowToast("반려견 정보를 불러오지 못했어요"))
+                }
+        }
     }
 
     fun onFavoriteToggle(place: ScheduleUiModel) {
@@ -106,6 +131,18 @@ class ResultCourseViewModel @Inject constructor(
     fun selectNextDay() {
         val totalDays = _state.value.course.successData?.totalDays ?: return
         _state.update { it.copy(selectedDayNumber = (it.selectedDayNumber + 1).coerceAtMost(totalDays)) }
+    }
+
+    fun updateCourseName(name: String) {
+        viewModelScope.launch {
+            courseRepository.updateCourseName(courseId, name)
+                .onSuccess { course ->
+                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                }
+                .onFailure {
+                    _sideEffect.send(ResultCourseSideEffect.ShowToast("코스 이름 변경에 실패했어요"))
+                }
+        }
     }
 
     fun fetchAccommodationAlternatives() {

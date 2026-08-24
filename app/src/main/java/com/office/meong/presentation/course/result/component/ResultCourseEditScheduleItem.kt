@@ -58,10 +58,7 @@ fun ResultCourseEditScheduleItem(
     val currentOnDragEnd = rememberUpdatedState(onDragEnd)
 
     var isExpanded by remember { mutableStateOf(false) }
-    // 리스트가 화면 좌우 20dp 여백을 주기 때문에, 이 컴포넌트가 그 여백까지 포함한 전체 폭을 넘겨받아
-    // indication(리플)을 먼저 붙이고 padding은 그 다음에 적용해서 카드 내용물만 안쪽으로 밀어 넣는다.
-    // 그러면 실제 탭 판정은 카드 영역(아래 헤더 Row)에서만 일어나지만, 리플은 같은 interactionSource를
-    // 공유하는 바깥 Row에 그려지기 때문에 화면 끝까지 꽉 차게 보인다.
+
     val interactionSource = remember { MutableInteractionSource() }
 
     Row(
@@ -71,7 +68,6 @@ fun ResultCourseEditScheduleItem(
             .padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // 타입 + 장소명이 표시되는 영역. 탭하면 그 안에서(Column) 구분선과 메뉴가 펼쳐진다.
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -152,7 +148,6 @@ fun ResultCourseEditScheduleItem(
             }
         }
 
-        // 드래그 핸들. 타입/장소 영역과 겹치지 않는 별도 영역이라 펼침 탭과 제스처가 서로 간섭하지 않는다.
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_drag_indicator),
             contentDescription = "드래그",

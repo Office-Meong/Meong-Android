@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
@@ -55,8 +54,8 @@ import com.office.meong.presentation.auth.model.SignUpSideEffect
 import com.office.meong.presentation.auth.model.SignUpState
 import com.office.meong.presentation.mypage.petedit.action.PetEditActions
 import com.office.meong.presentation.mypage.petedit.component.PetEditChipGroup
-import com.office.meong.presentation.sharedcomponent.CircularImagePicker
 import com.office.meong.presentation.mypage.petedit.component.PetEditNeuteredToggle
+import com.office.meong.presentation.sharedcomponent.CircularImagePicker
 import com.office.meong.presentation.sharedcomponent.LabeledTextField
 import kotlinx.collections.immutable.toPersistentList
 
