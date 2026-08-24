@@ -27,6 +27,7 @@ interface CourseRepository {
         newPlaceId: Long?
     ): Result<CourseDetail>
     suspend fun getCourseItemAlternatives(courseId: Long, itemId: Long): Result<List<AlternativePlace>>
+    suspend fun deleteCourseItem(courseId: Long, itemId: Long): Result<CourseDetail>
     suspend fun updateCourseName(courseId: Long, name: String): Result<CourseDetail>
     suspend fun reorderCourseItems(courseId: Long, dayNumber: Int, itemIds: List<Long>): Result<CourseDetail>
 }

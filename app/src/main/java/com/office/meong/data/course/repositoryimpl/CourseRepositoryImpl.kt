@@ -104,6 +104,13 @@ class CourseRepositoryImpl @Inject constructor(
         courseDataSource.patchCourseName(courseId, name).toModel().also { coursesCache.invalidate() }
     }
 
+    override suspend fun deleteCourseItem(courseId: Long, itemId: Long): Result<CourseDetail> = suspendRunCatching {
+        courseDataSource.deleteCourseItem(courseId, itemId).toModel().also {
+            coursesCache.invalidate()
+            alternativesCache.remove(alternativesCacheKey(courseId, itemId))
+        }
+    }
+
     override suspend fun reorderCourseItems(
         courseId: Long,
         dayNumber: Int,

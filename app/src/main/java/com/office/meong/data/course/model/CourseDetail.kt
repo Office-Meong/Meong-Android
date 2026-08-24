@@ -64,6 +64,6 @@ fun CourseResponse.toModel(): CourseDetail = CourseDetail(
     workEndTime = workEndTime,
     workFocusLevel = workFocusLevel,
     totalDays = totalDays,
-    dayItems = dayItems.mapValues { (_, items) -> items.map { it.toModel() } },
+    dayItems = dayItems.mapValues { (_, items) -> items.map { it.toModel() }.sortedBy { it.visitOrder } },
     createdAt = createdAt,
 )
