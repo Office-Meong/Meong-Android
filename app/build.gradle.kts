@@ -33,6 +33,14 @@ android {
         buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties["kakao.rest.api.key"]}\"")
         manifestPlaceholders["kakaonativeappkey"] = properties["kakao.native.app.key"].toString()
     }
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = File("${project.rootDir.absolutePath}/keystore/debug.keystore")
+            storePassword = "android"
+        }
+    }
 
     buildTypes {
         release {
