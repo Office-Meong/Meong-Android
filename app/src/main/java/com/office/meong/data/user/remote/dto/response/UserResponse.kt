@@ -10,9 +10,9 @@ data class UserResponse(
     @SerialName("nickname")
     val nickname: String,
     @SerialName("profileImageUrl")
-    val profileImageUrl: String,
+    val profileImageUrl: String?,
     @SerialName("email")
-    val email: String,
+    val email: String?,
     @SerialName("createdAt")
     val createdAt: String
 )

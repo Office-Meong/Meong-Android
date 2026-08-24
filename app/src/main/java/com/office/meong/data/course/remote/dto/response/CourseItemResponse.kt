@@ -20,7 +20,7 @@ data class CourseItemResponse(
     @SerialName("placeType")
     val placeType: String,
     @SerialName("address")
-    val address: String,
+    val address: String?,
     @SerialName("latitude")
     val latitude: Double,
     @SerialName("longitude")
@@ -30,7 +30,7 @@ data class CourseItemResponse(
     @SerialName("endTime")
     val endTime: String,
     @SerialName("distanceFromPrevKm")
-    val distanceFromPrevKm: Double,
+    val distanceFromPrevKm: Double?,
     @SerialName("thumbnailUrl")
     val thumbnailUrl: String? = null,
     @SerialName("lodgingType")

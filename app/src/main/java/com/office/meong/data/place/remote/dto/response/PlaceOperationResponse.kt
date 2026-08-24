@@ -12,7 +12,7 @@ data class PlaceOperationResponse(
     @SerialName("usageFee")
     val usageFee: String?,
     @SerialName("parkingAvailable")
-    val parkingAvailable: Boolean,
+    val parkingAvailable: Boolean?,
     @SerialName("indoorOutdoorType")
     val indoorOutdoorType: String?,
     @SerialName("lodgingType")

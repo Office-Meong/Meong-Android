@@ -6,6 +6,7 @@ import com.office.meong.data.user.model.UserInfoModel
 import com.office.meong.data.user.model.toModel
 import com.office.meong.data.user.remote.datasource.UserDataSource
 import com.office.meong.data.user.repository.UserRepository
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
@@ -15,6 +16,8 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun getUserInfo(): Result<UserInfoModel> = suspendRunCatching {
         userInfoCache.getOrFetch { userDataSource.getUserInfo().toModel() }
     }
+
+    override fun observeUserInfo(): Flow<UserInfoModel?> = userInfoCache.data
 
     override suspend fun deleteUser(): Result<Unit> = suspendRunCatching {
         userDataSource.deleteUser()

@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 data class KakaoLoginRequest(
     @SerialName("code")
     val code: String,
+    @SerialName("clientId")
+    val clientId: String = BuildConfig.KAKAO_NATIVE_APP_KEY,
     @SerialName("redirectUri")
     val redirectUri: String = "kakao${BuildConfig.KAKAO_NATIVE_APP_KEY}://oauth",
     @SerialName("termsAgreed")

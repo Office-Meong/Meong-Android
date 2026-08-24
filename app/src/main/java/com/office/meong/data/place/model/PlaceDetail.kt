@@ -59,7 +59,7 @@ data class PlaceOperation(
     val operatingHours: String?,
     val closedDays: String?,
     val usageFee: String?,
-    val parkingAvailable: Boolean,
+    val parkingAvailable: Boolean?,
     val indoorOutdoorType: String?,
     val lodgingType: String?,
 )
