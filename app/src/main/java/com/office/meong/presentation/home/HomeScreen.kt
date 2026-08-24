@@ -54,6 +54,7 @@ import kotlinx.collections.immutable.persistentListOf
 fun HomeRoute(
     paddingValues: PaddingValues,
     navigateToCreateCourse: () -> Unit = {},
+    navigateToDetailCourse: (Long) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -77,7 +78,8 @@ fun HomeRoute(
         homeCourseSummaries = state.homeCourseSummaries,
         onRetryCourses = viewModel::retryLoad,
         onRetryPetInfo = viewModel::retryPetInfo,
-        navigateToCreateCourse = navigateToCreateCourse
+        navigateToCreateCourse = navigateToCreateCourse,
+        navigateToDetailCourse = navigateToDetailCourse
     )
 }
 
@@ -89,6 +91,7 @@ private fun HomeScreen(
     onRetryCourses: () -> Unit,
     onRetryPetInfo: () -> Unit,
     navigateToCreateCourse: () -> Unit,
+    navigateToDetailCourse: (Long) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -102,8 +105,6 @@ private fun HomeScreen(
             modifier = Modifier
                 .padding(vertical = 12.dp, horizontal = 20.dp)
         )
-
-        Spacer(modifier = Modifier.height(10.dp))
 
         when (petInfo) {
             is UiState.Loading -> {
@@ -214,7 +215,7 @@ private fun HomeScreen(
 
             is UiState.Empty -> {
                 CourseEmptyContent(
-                    onClickPillButton = {},
+                    onClickPillButton = navigateToCreateCourse,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
@@ -248,14 +249,13 @@ private fun HomeScreen(
                                 title = item.name,
                                 grade = item.averageGrade,
                                 places = item.places,
-                                onClickCourseItem = {}
+                                onClickCourseItem = { navigateToDetailCourse(item.id) }
                             )
                         }
 
                         item {
                             MeongPillButton(
                                 text = "새 코스 만들기",
-                                isPrimary = false,
                                 prefixIcon = R.drawable.ic_plus,
                                 onClick = navigateToCreateCourse
                             )
@@ -293,7 +293,8 @@ private fun HomeScreenPreview() {
                     healthStatus = PetHealthStatus.HEALTHY
                 )
             ),
-            navigateToCreateCourse = {}
+            navigateToCreateCourse = {},
+            navigateToDetailCourse = {}
         )
     }
 }
