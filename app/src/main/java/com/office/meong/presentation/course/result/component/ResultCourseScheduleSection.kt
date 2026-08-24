@@ -32,6 +32,7 @@ import com.office.meong.presentation.course.model.ScheduleUiModel
 fun ResultCourseScheduleSection(
     dayNumber: String,
     tripDay: String,
+    routeLength: String,
     accommodation: ScheduleUiModel?,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -57,7 +58,7 @@ fun ResultCourseScheduleSection(
             Spacer(modifier = Modifier.height(10.dp))
 
             RouteIndicator(
-                routeLength = "1.2",
+                routeLength = routeLength,
                 onRouteClick = onRouteClick,
                 routeIndicatorType = RouteIndicatorType.START,
             )
@@ -141,6 +142,7 @@ private fun ResultCourseScheduleSectionPreview() {
         ResultCourseScheduleSection(
             dayNumber = "2",
             tripDay = "8.11",
+            routeLength = "1.2",
             accommodation = ScheduleUiModel(id = "0", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
             onPreviousClick = {},
             onNextClick = {},

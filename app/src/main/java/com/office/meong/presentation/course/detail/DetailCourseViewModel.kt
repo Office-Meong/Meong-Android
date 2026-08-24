@@ -7,11 +7,17 @@ import androidx.navigation.toRoute
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.successData
+import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.data.course.repository.CourseRepository
 import com.office.meong.data.favorite.repository.FavoriteRepository
+import com.office.meong.data.geocoding.repository.GeocodingRepository
 import com.office.meong.data.pet.model.toInfo
 import com.office.meong.data.pet.repository.PetRepository
+import com.office.meong.data.place.model.PlacePage
 import com.office.meong.domain.favorite.usecase.ToggleFavoriteUseCase
+import com.office.meong.domain.place.model.PlaceSearchQuery
+import com.office.meong.domain.place.usecase.PlaceSearchUseCase
+import com.office.meong.presentation.course.detail.model.DetailCourseUiModel
 import com.office.meong.presentation.course.model.ScheduleUiModel
 import com.office.meong.presentation.course.model.toScheduleUiModel
 import com.office.meong.presentation.course.detail.model.toUiModel
@@ -19,7 +25,9 @@ import com.office.meong.presentation.course.detail.navigation.DetailCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +43,8 @@ class DetailCourseViewModel @Inject constructor(
     private val petRepository: PetRepository,
     private val favoriteRepository: FavoriteRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val placeSearchUseCase: PlaceSearchUseCase,
+    private val geocodingRepository: GeocodingRepository,
 ) : ViewModel() {
     private val courseId = savedStateHandle.toRoute<DetailCourse>().courseId
 
@@ -44,10 +54,16 @@ class DetailCourseViewModel @Inject constructor(
     private val _sideEffect = Channel<DetailCourseSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
 
+    private val placeSearchQueries = MutableStateFlow(PlaceSearchQuery())
+
     init {
         fetchCourseDetail()
         fetchPetInfo()
         fetchFavoritePlaces()
+
+        viewModelScope.launch {
+            placeSearchUseCase.search(placeSearchQueries).collect(::handlePlaceSearchResult)
+        }
     }
 
     fun retryCourseDetail() {
@@ -135,6 +151,35 @@ class DetailCourseViewModel @Inject constructor(
         }
     }
 
+    fun onPlaceSearchQueryChanged(keyword: String) {
+        if (keyword.isBlank()) {
+            _state.update { it.copy(placeSearchResults = UiState.Empty) }
+            return
+        }
+
+        _state.update { it.copy(placeSearchResults = UiState.Loading) }
+        placeSearchQueries.update {
+            it.copy(
+                keyword = keyword,
+                region = _state.value.course.successData?.region,
+                page = 0
+            )
+        }
+    }
+
+    private fun handlePlaceSearchResult(result: Result<PlacePage>) {
+        result
+            .onSuccess { page ->
+                val places = page.content.map { it.toScheduleUiModel() }.toImmutableList()
+                _state.update {
+                    it.copy(placeSearchResults = if (places.isEmpty()) UiState.Empty else UiState.Success(places))
+                }
+            }
+            .onFailure {
+                _state.update { it.copy(placeSearchResults = UiState.Failure(LoadErrorHandleAction.Retry)) }
+            }
+    }
+
     fun addCourseItem(dayNumber: Int, placeId: Long) {
         viewModelScope.launch {
             courseRepository.addCourseItem(
@@ -143,7 +188,7 @@ class DetailCourseViewModel @Inject constructor(
                 placeId = placeId
             )
                 .onSuccess { course ->
-                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                    _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) }
                 }
                 .onFailure {
                     _sideEffect.send(DetailCourseSideEffect.ShowToast("장소 추가에 실패했어요"))
@@ -186,7 +231,7 @@ class DetailCourseViewModel @Inject constructor(
                 newPlaceId = placeId
             )
                 .onSuccess { course ->
-                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                    _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) }
                 }
                 .onFailure {
                     _sideEffect.send(DetailCourseSideEffect.ShowToast("숙소 변경에 실패했어요"))
@@ -194,14 +239,45 @@ class DetailCourseViewModel @Inject constructor(
         }
     }
 
+    /** 백엔드가 주소를 안 준 항목(주로 도보 코스형)은 좌표 기준으로 카카오 로컬 API를 통해 채워넣는다 */
+    private suspend fun mapCourseToUiModel(course: CourseDetail): DetailCourseUiModel {
+        val uiModel = course.toUiModel()
+        val itemsMissingAddress = uiModel.dayItems.values.flatten().filter { it.location.isBlank() }
+        if (itemsMissingAddress.isEmpty()) return uiModel
+
+        val resolvedAddresses = coroutineScope {
+            itemsMissingAddress
+                .associate { item -> item.id to async { geocodingRepository.getAddress(item.latitude, item.longitude).getOrNull() } }
+                .mapValues { it.value.await() }
+        }
+
+        return uiModel.copy(
+            dayItems = uiModel.dayItems.mapValues { (_, items) ->
+                items.map { item -> resolvedAddresses[item.id]?.let { address -> item.copy(location = address) } ?: item }
+            }
+        )
+    }
+
     private fun accommodationItemId(): Long? =
         _state.value.course.successData?.accommodation?.id?.toLongOrNull()
+
+    fun updateCourseName(name: String) {
+        viewModelScope.launch {
+            courseRepository.updateCourseName(courseId, name)
+                .onSuccess { course ->
+                    _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) }
+                }
+                .onFailure {
+                    _sideEffect.send(DetailCourseSideEffect.ShowToast("코스 이름 변경에 실패했어요"))
+                }
+        }
+    }
 
     fun reorderCourseItems(dayNumber: Int, itemIds: List<Long>) {
         viewModelScope.launch {
             courseRepository.reorderCourseItems(courseId, dayNumber, itemIds)
                 .onSuccess { course ->
-                    _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                    _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) }
                 }
                 .onFailure {
                     _sideEffect.send(DetailCourseSideEffect.ShowToast("일정 순서 변경에 실패했어요"))
@@ -217,7 +293,7 @@ class DetailCourseViewModel @Inject constructor(
                 .onSuccess { course ->
                     _state.update {
                         it.copy(
-                            course = UiState.Success(course.toUiModel()),
+                            course = UiState.Success(mapCourseToUiModel(course)),
                             selectedDayNumber = 1
                         )
                     }

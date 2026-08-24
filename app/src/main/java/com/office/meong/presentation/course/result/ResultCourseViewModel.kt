@@ -35,7 +35,7 @@ class ResultCourseViewModel @Inject constructor(
 ) : ViewModel() {
     private val courseId = savedStateHandle.toRoute<ResultCourse>().courseId
 
-    private val _state = MutableStateFlow(ResultCourseState())
+    private val _state = MutableStateFlow(ResultCourseState(courseId = courseId))
     val state: StateFlow<ResultCourseState> = _state.asStateFlow()
 
     private val _sideEffect = Channel<ResultCourseSideEffect>()
@@ -153,6 +153,22 @@ class ResultCourseViewModel @Inject constructor(
 
     private fun accommodationItemId(): Long? =
         _state.value.course.successData?.accommodation?.id?.toLongOrNull()
+
+    fun discardCourseAndGoBack() {
+        viewModelScope.launch {
+            courseRepository.deleteCourse(courseId)
+                .onSuccess { _sideEffect.send(ResultCourseSideEffect.NavigateBackToCreate) }
+                .onFailure { _sideEffect.send(ResultCourseSideEffect.ShowToast("코스 삭제에 실패했어요")) }
+        }
+    }
+
+    fun discardCourseAndExit() {
+        viewModelScope.launch {
+            courseRepository.deleteCourse(courseId)
+                .onSuccess { _sideEffect.send(ResultCourseSideEffect.NavigateToEntryScreen) }
+                .onFailure { _sideEffect.send(ResultCourseSideEffect.ShowToast("코스 삭제에 실패했어요")) }
+        }
+    }
 
     fun reorderCourseItems(dayNumber: Int, itemIds: List<Long>) {
         viewModelScope.launch {

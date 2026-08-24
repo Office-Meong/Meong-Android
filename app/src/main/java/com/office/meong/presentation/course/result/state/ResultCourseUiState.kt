@@ -24,6 +24,9 @@ class ResultCourseUiState private constructor() {
     var isEditSchedule by mutableStateOf(false)
         private set
 
+    var isSaved by mutableStateOf(false)
+        private set
+
     var currentDialogType by mutableStateOf<CurrentDialogType?>(null)
         private set
 
@@ -65,6 +68,10 @@ class ResultCourseUiState private constructor() {
 
     fun hideExitDialog() {
         currentDialogType = null
+    }
+
+    fun markSaved() {
+        isSaved = true
     }
 
     companion object {

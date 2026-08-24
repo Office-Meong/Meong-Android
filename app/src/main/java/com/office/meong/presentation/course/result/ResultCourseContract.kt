@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.toImmutableSet
 
 @Immutable
 data class ResultCourseState(
+    val courseId: Long,
     val course: UiState<ResultCourseUiModel> = UiState.Loading,
     val selectedDayNumber: Int = 1,
     val accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
@@ -23,4 +24,6 @@ data class ResultCourseState(
 
 sealed interface ResultCourseSideEffect {
     data class ShowToast(val message: String) : ResultCourseSideEffect
+    data object NavigateBackToCreate : ResultCourseSideEffect
+    data object NavigateToEntryScreen : ResultCourseSideEffect
 }

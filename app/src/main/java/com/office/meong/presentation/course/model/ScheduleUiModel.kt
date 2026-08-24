@@ -6,7 +6,7 @@ import com.office.meong.core.model.place.PlaceType
 import com.office.meong.data.course.model.AlternativePlace
 import com.office.meong.data.course.model.CourseItem
 import com.office.meong.data.favorite.model.FavoriteModel
-import kotlinx.collections.immutable.persistentListOf
+import com.office.meong.data.place.model.PlaceSummary
 
 @Immutable
 data class ScheduleUiModel(
@@ -21,25 +21,17 @@ data class ScheduleUiModel(
     val thumbnailUrl: String? = null,
     val lodgingType: LodgingType? = null,
     val placeId: Long? = null
-) {
-    companion object {
-        val DUMMY_SEARCHABLE_PLACES = persistentListOf(
-            ScheduleUiModel(id = "search-1", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
-            ScheduleUiModel(id = "search-2", placeType = PlaceType.RESTAURANT, placeName = "댕댕이 맛집", grade = "A"),
-            ScheduleUiModel(id = "search-3", placeType = PlaceType.SIGHTSEEING, placeName = "산책하기 좋은 공원", grade = "A"),
-        )
-    }
-}
+)
 
 fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
     id = id.toString(),
     placeType = PlaceType.from(placeType),
     placeName = placeName,
     grade = "",
-    location = address,
+    location = address.orEmpty(),
     latitude = latitude,
     longitude = longitude,
-    distanceFromPrevKm = distanceFromPrevKm,
+    distanceFromPrevKm = distanceFromPrevKm ?: 0.0,
     thumbnailUrl = thumbnailUrl,
     lodgingType = LodgingType.from(lodgingType),
     placeId = placeId,
@@ -64,4 +56,14 @@ fun FavoriteModel.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
     location = address,
     thumbnailUrl = thumbnailUrl,
     placeId = placeId,
+)
+
+fun PlaceSummary.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
+    id = id.toString(),
+    placeType = PlaceType.from(placeType),
+    placeName = name,
+    grade = grade,
+    location = address,
+    thumbnailUrl = thumbnailUrl,
+    placeId = id,
 )
