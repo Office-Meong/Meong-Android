@@ -90,8 +90,8 @@ class MainAppState(
         when (tab) {
             MainTab.HOME -> navController.navigateToHome(navOptions = navOptions)
             MainTab.EXPLORE -> navController.navigateToExplore(navOptions = refreshNavOptions)
-            MainTab.MY_COURSE -> navController.navigateToMyCourse(navOptions = navOptions)
-            MainTab.FAVORITE -> navController.navigateToFavorite(navOptions = navOptions)
+            MainTab.MY_COURSE -> navController.navigateToMyCourse(navOptions = refreshNavOptions)
+            MainTab.FAVORITE -> navController.navigateToFavorite(navOptions = refreshNavOptions)
             MainTab.MY_PAGE -> navController.navigateToMyPage(navOptions = navOptions)
         }
     }
@@ -117,12 +117,10 @@ fun rememberMainAppState(
     networkMonitor: NetworkMonitor,
     navController: NavHostController = rememberNavController(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-): MainAppState {
-    return remember(networkMonitor, navController, coroutineScope) {
-        MainAppState(
-            networkMonitor = networkMonitor,
-            navController = navController,
-            coroutineScope = coroutineScope
-        )
-    }
+): MainAppState = remember(networkMonitor, navController, coroutineScope) {
+    MainAppState(
+        networkMonitor = networkMonitor,
+        navController = navController,
+        coroutineScope = coroutineScope
+    )
 }
