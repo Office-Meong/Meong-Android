@@ -76,6 +76,11 @@ private class FakeCourseService : CourseService {
     ) = throw NotImplementedError()
 
     override suspend fun getCourseItemAlternatives(courseId: Long, itemId: Long) = throw NotImplementedError()
+    override suspend fun deleteCourseItem(
+        courseId: Long,
+        itemId: Long
+    ): BaseResponse<CourseResponse> = throw NotImplementedError()
+
     override suspend fun patchCourseName(courseId: Long, courseNameRequest: CourseNameRequest) =
         throw NotImplementedError()
 
