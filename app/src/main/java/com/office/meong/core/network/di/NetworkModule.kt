@@ -3,6 +3,7 @@ package com.office.meong.core.network.di
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.office.meong.BuildConfig
 import com.office.meong.core.network.auth.AuthInterceptor
+import com.office.meong.core.network.auth.ForbiddenRetryInterceptor
 import com.office.meong.core.network.auth.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
@@ -86,12 +87,14 @@ object NetworkModule {
     fun providesAuthOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
+        forbiddenRetryInterceptor: ForbiddenRetryInterceptor,
         tokenAuthenticator: TokenAuthenticator
     ): OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
+        .addInterceptor(forbiddenRetryInterceptor)
         .authenticator(tokenAuthenticator)
         .build()
 
@@ -106,4 +109,35 @@ object NetworkModule {
         .addConverterFactory(converterFactory)
         .client(client)
         .build()
+
+    @Provides
+    @Singleton
+    @KakaoLocalNetwork
+    fun providesKakaoLocalOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor
+    ): OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .addInterceptor(loggingInterceptor)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("Authorization", "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}")
+                .build()
+            chain.proceed(request)
+        }
+        .build()
+
+    @Provides
+    @Singleton
+    @KakaoLocalNetwork
+    fun providesKakaoLocalRetrofit(
+        @KakaoLocalNetwork client: OkHttpClient,
+        converterFactory: Converter.Factory,
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl(KAKAO_LOCAL_BASE_URL)
+        .addConverterFactory(converterFactory)
+        .client(client)
+        .build()
+
+    private const val KAKAO_LOCAL_BASE_URL = "https://dapi.kakao.com/"
 }
