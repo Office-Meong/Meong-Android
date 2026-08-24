@@ -2,6 +2,7 @@ package com.office.meong.core.common.util
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
 
@@ -38,3 +39,10 @@ private fun LocalDate.toTripDisplayShortFormat(): String = "$monthNumber.$dayOfM
 
 // 거리(km)를 소수점 1자리 문자열로 변환
 fun formatDistanceKm(distanceKm: Double): String = "%.1f".format(distanceKm)
+
+// startTime/endTime("HH:mm" 또는 "HH:mm:ss")을 "업무 HH:mm-HH:mm" 형태로 변환
+fun formatWorkTimeRange(startTime: String, endTime: String): String {
+    val start = LocalTime.parse(startTime)
+    val end = LocalTime.parse(endTime)
+    return "업무 %02d:%02d-%02d:%02d".format(start.hour, start.minute, end.hour, end.minute)
+}

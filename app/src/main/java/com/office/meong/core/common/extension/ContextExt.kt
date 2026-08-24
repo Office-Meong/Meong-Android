@@ -38,7 +38,7 @@ fun Context.openKakaoMapRoute(
     destinationName: String,
     destinationLatitude: Double,
     destinationLongitude: Double,
-    type: String? = "CAR"
+    type: String? = "car"
 ) {
     val encodedOrigin = Uri.encode(originName)
     val encodedDestination = Uri.encode(destinationName)

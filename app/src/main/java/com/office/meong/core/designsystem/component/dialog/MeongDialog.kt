@@ -94,6 +94,8 @@ private fun MeongDialogContent(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
             }
 
             Text(
@@ -139,7 +141,7 @@ private fun MeongDialogPreview() {
                 onClick = {}
             ),
             confirmAction = MeongConfirmAction(
-                text = "확인",
+                text = "로그아웃",
                 onClick = {},
                 backgroundColor = MeongTheme.colors.primary
             ),
