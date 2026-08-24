@@ -411,7 +411,7 @@ private fun DetailCourseScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MeongTheme.colors.gray50)
-                .statusBarColor(backgroundColor = MeongTheme.colors.white)
+                .statusBarColor(backgroundColor = MeongTheme.colors.gray50)
                 .padding(paddingValues)
         ) {
             MeongTopbar(
