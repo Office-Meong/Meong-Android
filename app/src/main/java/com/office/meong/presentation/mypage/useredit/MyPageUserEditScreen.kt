@@ -144,7 +144,7 @@ private fun MyPageUserEditScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "몽에서 사용할\n프로필을 수정해주세요.",
+                    text = "사용할\n프로필을 수정해주세요.",
                     style = MeongTheme.typography.title.title20Sb,
                     color = MeongTheme.colors.gray900
                 )

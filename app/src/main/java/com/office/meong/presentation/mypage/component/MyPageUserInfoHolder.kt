@@ -139,7 +139,7 @@ private fun MyPageUserInfoItem(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                if (infoType == MyPageInfoType.USER) {
+                if (infoType == MyPageInfoType.USER && infoContent.isNotBlank()) {
                     Text(
                         text = infoContent,
                         style = MeongTheme.typography.body.body12M,
@@ -192,7 +192,7 @@ private fun MyPageUserInfoHolderPreview() {
     MeongTheme {
         MyPageUserInfoHolder(
             userNickname = "홍길동",
-            userEmail = "길동@gmail.com",
+            userEmail = "",
             petName = "몽몽이",
             petTags = persistentListOf("소형견", "활동량 보통", "사회성")
         )

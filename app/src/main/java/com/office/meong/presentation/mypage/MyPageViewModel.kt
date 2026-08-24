@@ -56,10 +56,16 @@ class MyPageViewModel @Inject constructor(
 
     private fun fetchUserInfo() {
         viewModelScope.launch {
-            userRepository.getUserInfo()
-                .onSuccess { user ->
-                    _state.update { it.copy(userInfo = UiState.Success(user)) }
+            userRepository.observeUserInfo()
+                .collect { user ->
+                    if (user != null) {
+                        _state.update { it.copy(userInfo = UiState.Success(user)) }
+                    }
                 }
+        }
+
+        viewModelScope.launch {
+            userRepository.getUserInfo()
                 .onFailure {
                     _state.update { it.copy(userInfo = UiState.Failure(LoadErrorHandleAction.Retry)) }
                 }
@@ -68,13 +74,19 @@ class MyPageViewModel @Inject constructor(
 
     private fun fetchPetInfo() {
         viewModelScope.launch {
-            petRepository.getDogs()
-                .onSuccess { dogs ->
-                    val pet = dogs.firstOrNull()?.toInfo()
-                    _state.update {
-                        it.copy(petInfo = pet?.let { info -> UiState.Success(info) } ?: UiState.Empty)
+            petRepository.observeDogs()
+                .collect { dogs ->
+                    if (dogs != null) {
+                        val pet = dogs.firstOrNull()?.toInfo()
+                        _state.update {
+                            it.copy(petInfo = pet?.let { info -> UiState.Success(info) } ?: UiState.Empty)
+                        }
                     }
                 }
+        }
+
+        viewModelScope.launch {
+            petRepository.getDogs()
                 .onFailure {
                     _state.update { it.copy(petInfo = UiState.Failure(LoadErrorHandleAction.Retry)) }
                 }

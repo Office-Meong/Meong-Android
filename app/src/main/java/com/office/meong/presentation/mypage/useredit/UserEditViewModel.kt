@@ -55,7 +55,7 @@ class UserEditViewModel @Inject constructor(
 
     private fun applyUser(user: UserInfoModel) {
         _state.value.nicknameTextFieldState.setTextAndPlaceCursorAtEnd(user.nickname)
-        _state.update { it.copy(imageUrl = user.profileImageUrl.ifBlank { null }) }
+        _state.update { it.copy(imageUrl = user.profileImageUrl?.ifBlank { null }) }
     }
 
     fun onImageSelected(uriString: String) {
