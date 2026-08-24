@@ -30,7 +30,7 @@ android {
 
         buildConfigField("String", "BASE_URL", properties["base.url"].toString())
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${properties["kakao.native.app.key"]}\"")
-정        buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties["kakao.rest.api.key"]}\"")
+        buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties["kakao.rest.api.key"]}\"")
         manifestPlaceholders["kakaonativeappkey"] = properties["kakao.native.app.key"].toString()
     }
 

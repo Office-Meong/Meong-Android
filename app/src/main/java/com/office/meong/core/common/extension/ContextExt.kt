@@ -23,6 +23,14 @@ fun Context.openKakaoMap(placeName: String) {
     )
 }
 
+fun Context.openKakaoMap(placeName: String, latitude: Double, longitude: Double) {
+    val encodedName = Uri.encode(placeName)
+    openKakaoMapUri(
+        appUri = "kakaomap://look?p=$latitude,$longitude",
+        webUri = "https://map.kakao.com/link/map/$encodedName,$latitude,$longitude"
+    )
+}
+
 fun Context.openKakaoMapRoute(
     originName: String,
     originLatitude: Double,
