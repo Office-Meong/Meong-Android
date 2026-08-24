@@ -115,7 +115,12 @@ class ExploreViewModel @Inject constructor(
                 _state.update { current ->
                     val incoming = page.content.map { it.toUiModel() }
                     val merged = (
-                        if (page.page == 0) incoming else current.places.successData.orEmpty() + incoming
+                        if (page.page == 0) {
+                            incoming
+                        } else {
+                            (current.places.successData.orEmpty() + incoming)
+                                .distinctBy { it.placeId }
+                        }
                         ).toImmutableList()
 
                     current.copy(

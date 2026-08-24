@@ -1,6 +1,9 @@
 package com.office.meong.presentation.explore.detail.model
 
 import androidx.compose.runtime.Immutable
+import com.office.meong.core.model.place.AcmpyType
+import com.office.meong.core.model.place.CongestionLevel
+import com.office.meong.core.model.place.IndoorOutdoorType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.data.place.model.PlaceDetail
 import kotlinx.collections.immutable.ImmutableList
@@ -9,6 +12,14 @@ import kotlinx.collections.immutable.toImmutableList
 
 private const val DEFAULT_CONGESTION_TOOLTIP = "한국관광공사 정보를 바탕으로 하루 한 번 초기화돼요"
 private const val NO_INFO = "정보 없음"
+
+private val BULLET_DELIMITER_REGEX = Regex("[-*]")
+
+private fun String.toBulletLines(): List<String> = split(BULLET_DELIMITER_REGEX)
+    .map { it.trim() }
+    .filter { it.isNotBlank() }
+
+private fun String?.orNoInfo(): String = this.orEmpty().ifBlank { NO_INFO }
 
 @Immutable
 data class ExploreDetailUiModel(
@@ -69,19 +80,29 @@ fun PlaceDetail.toUiModel(): ExploreDetailUiModel = ExploreDetailUiModel(
     imageUrl = imageUrls.firstOrNull(),
     isFavorite = favorite,
     grade = score.grade,
-    isAllowed = petCondition.acmpyType,
-    condition = petCondition.companionConditions ?: NO_INFO,
-    allowedSpace = operation.indoorOutdoorType ?: NO_INFO,
-    notice = petCondition.cautions ?: NO_INFO,
-    todayHours = operation.operatingHours ?: NO_INFO,
+    isAllowed = AcmpyType.from(petCondition.acmpyType).label,
+    condition = petCondition.companionConditions?.toBulletLines()?.joinToString("\n").orNoInfo(),
+    allowedSpace = (
+        listOf(IndoorOutdoorType.from(operation.indoorOutdoorType).label) +
+            (petCondition.availableFacilities?.toBulletLines() ?: emptyList())
+        ).joinToString("\n"),
+    notice = petCondition.cautions?.toBulletLines()?.joinToString("\n").orNoInfo(),
+    todayHours = operation.operatingHours.orNoInfo(),
     weeklyHours = persistentListOf(),
-    closedDays = operation.closedDays ?: NO_INFO,
-    parkingInfo = if (operation.parkingAvailable) "가능" else "불가능",
-    phoneNumber = tel ?: NO_INFO,
-    congestionLevel = score.congestionLevel,
+    closedDays = operation.closedDays.orNoInfo(),
+    parkingInfo = when (operation.parkingAvailable) {
+        true -> "가능"
+        false -> "불가능"
+        null -> NO_INFO
+    },
+    phoneNumber = tel.orNoInfo(),
+    congestionLevel = CongestionLevel.from(score.congestionLevel).label,
     tooltipText = DEFAULT_CONGESTION_TOOLTIP,
     accessibilityTags = buildList {
-        if (accessibility.hasRamp) add("경사로 있음")
-        if (accessibility.strollerAccessible) add("유모차 이동 가능")
+        if (accessibility.dataAvailable) {
+            if (accessibility.hasRamp) add("경사로 있음")
+            if (accessibility.strollerAccessible) add("유모차 이동 가능")
+            if (accessibility.hasParking) add("주차 가능")
+        }
     }.toImmutableList()
 )

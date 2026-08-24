@@ -9,6 +9,8 @@ data class ExploreWalkCourseUiModel(
     val courseName: String,
     val distanceKm: Double,
     val distanceFromPlaceKm: Double,
+    val latitude: Double,
+    val longitude: Double,
 )
 
 fun PlaceWalkCourse.toUiModel() = ExploreWalkCourseUiModel(
@@ -16,4 +18,6 @@ fun PlaceWalkCourse.toUiModel() = ExploreWalkCourseUiModel(
     courseName = courseName,
     distanceKm = distanceKm,
     distanceFromPlaceKm = distanceFromPlaceKm,
+    latitude = startLatitude,
+    longitude = startLongitude,
 )

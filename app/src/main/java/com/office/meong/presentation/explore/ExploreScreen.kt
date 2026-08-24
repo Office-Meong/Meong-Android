@@ -23,6 +23,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,12 +40,14 @@ import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.region.Region
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
+import com.office.meong.presentation.explore.component.ExploreEmptyContent
 import com.office.meong.presentation.explore.component.ExploreSearchBar
 import com.office.meong.presentation.explore.model.ExplorePlaceUiModel
 import com.office.meong.presentation.favorite.component.FavoriteChipArea
 import com.office.meong.presentation.sharedcomponent.CourseEmptyContent
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -148,14 +151,7 @@ private fun ExploreScreen(
             }
 
             is UiState.Empty -> {
-                CourseEmptyContent(
-                    onClickPillButton = {},
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .background(color = MeongTheme.colors.gray50)
-                        .padding(20.dp)
-                )
+                ExploreEmptyContent()
             }
 
             is UiState.Success -> {
@@ -245,7 +241,31 @@ private fun ExploreScreenPreview() {
     MeongTheme {
         ExploreScreen(
             paddingValues = PaddingValues(),
-            state = ExploreState(),
+            state = ExploreState(
+                places = UiState.Success(
+                    persistentListOf(
+                        ExplorePlaceUiModel(
+                            placeId = 1,
+                            placeName = "몽멍이 카페",
+                            address = "서울시 강남구",
+                            placeType = PlaceType.RESTAURANT,
+                            grade = "A",
+                            thumbnailUrl = null,
+                            isFavorite = true
+                        ),
+                        ExplorePlaceUiModel(
+                            placeId = 2,
+                            placeName = "몽멍이 카페",
+                            address = "서울시 강남구",
+                            placeType = PlaceType.RESTAURANT,
+                            grade = "A",
+                            thumbnailUrl = "",
+                            isFavorite = true
+                        ),
+
+                    )
+                )
+            ),
             searchState = rememberTextFieldState(),
             onRegionSelected = {},
             onTypeSelected = {},

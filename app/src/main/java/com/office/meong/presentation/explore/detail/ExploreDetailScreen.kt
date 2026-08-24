@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -86,8 +88,11 @@ fun ExploreDetailRoute(
                 uiState = place.data,
                 walkCourses = state.walkCourses.successData.orEmpty().toImmutableList(),
                 onBackClick = onBackClick,
-                onKakaoMapClick = { context.openKakaoMap(place.data.title) },
-                onFavoriteClick = viewModel::onFavoriteClick
+                onKakaoMapClick = { context.openKakaoMap(place.data.address.ifBlank { place.data.title }) },
+                onFavoriteClick = viewModel::onFavoriteClick,
+                onWalkCourseClick = { course ->
+                    context.openKakaoMap(course.courseName, course.latitude, course.longitude)
+                }
             )
         }
     }
@@ -101,63 +106,72 @@ private fun ExploreDetailScreen(
     onBackClick: () -> Unit,
     onKakaoMapClick: () -> Unit,
     onFavoriteClick: () -> Unit,
+    onWalkCourseClick: (ExploreWalkCourseUiModel) -> Unit,
 ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = MeongTheme.colors.white)
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp),
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             MeongTopbar(onBackClick = onBackClick)
 
-            ExploreDetailHeader(
-                placeType = uiState.placeType,
-                title = uiState.title,
-                address = uiState.address,
-                imageUrl = uiState.imageUrl
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                ExploreDetailHeader(
+                    placeType = uiState.placeType,
+                    title = uiState.title,
+                    address = uiState.address,
+                    imageUrl = uiState.imageUrl
+                )
 
-            ExploreDetailActionRow(
-                onKakaoMapClick = onKakaoMapClick,
-                onFavoriteClick = onFavoriteClick,
-                isFavorite = uiState.isFavorite
-            )
+                ExploreDetailActionRow(
+                    onKakaoMapClick = onKakaoMapClick,
+                    onFavoriteClick = onFavoriteClick,
+                    isFavorite = uiState.isFavorite
+                )
 
-            ExploreDetailPetWorkIndex(
-                grade = uiState.grade
-            )
+                ExploreDetailPetWorkIndex(
+                    grade = uiState.grade
+                )
 
-            ExploreDetailPetCompanionInfo(
-                isAllowed = uiState.isAllowed,
-                condition = uiState.condition,
-                allowedSpace = uiState.allowedSpace,
-                notice = uiState.notice
-            )
+                ExploreDetailPetCompanionInfo(
+                    isAllowed = uiState.isAllowed,
+                    condition = uiState.condition,
+                    allowedSpace = uiState.allowedSpace,
+                    notice = uiState.notice
+                )
 
-            ExploreDetailOperationInfo(
-                todayHours = uiState.todayHours,
-                weeklyHours = uiState.weeklyHours,
-                closedDays = uiState.closedDays,
-                parkingInfo = uiState.parkingInfo,
-                phoneNumber = uiState.phoneNumber
-            )
+                ExploreDetailOperationInfo(
+                    todayHours = uiState.todayHours,
+                    weeklyHours = uiState.weeklyHours,
+                    closedDays = uiState.closedDays,
+                    parkingInfo = uiState.parkingInfo,
+                    phoneNumber = uiState.phoneNumber
+                )
 
-            ExploreDetailCongestionInfo(
-                congestionLevel = uiState.congestionLevel,
-                tooltipText = uiState.tooltipText
-            )
+                ExploreDetailCongestionInfo(
+                    congestionLevel = uiState.congestionLevel,
+                    tooltipText = uiState.tooltipText
+                )
 
-            ExploreDetailAccessibilityInfo(
-                accessibilityTags = uiState.accessibilityTags
-            )
+                ExploreDetailAccessibilityInfo(
+                    accessibilityTags = uiState.accessibilityTags
+                )
 
-            ExploreDetailWalkCourseSection(
-                courses = walkCourses
-            )
+                ExploreDetailWalkCourseSection(
+                    courses = walkCourses,
+                    onCourseClick = onWalkCourseClick
+                )
 
-            Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
 
 }
@@ -172,7 +186,8 @@ private fun ExploreDetailScreenPreview() {
             walkCourses = persistentListOf(),
             onBackClick = {},
             onKakaoMapClick = {},
-            onFavoriteClick = {}
+            onFavoriteClick = {},
+            onWalkCourseClick = {}
         )
     }
 }

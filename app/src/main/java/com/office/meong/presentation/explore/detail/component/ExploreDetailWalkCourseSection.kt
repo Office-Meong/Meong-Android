@@ -22,6 +22,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
+import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.presentation.explore.detail.model.ExploreWalkCourseUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -30,6 +31,7 @@ import kotlinx.collections.immutable.toImmutableList
 @Composable
 fun ExploreDetailWalkCourseSection(
     courses: ImmutableList<ExploreWalkCourseUiModel>,
+    onCourseClick: (ExploreWalkCourseUiModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (courses.isEmpty()) return
@@ -37,7 +39,7 @@ fun ExploreDetailWalkCourseSection(
     ExploreDetailSectionContainer(title = "주변 산책 코스", modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             courses.forEach { course ->
-                ExploreDetailWalkCourseItem(course = course)
+                ExploreDetailWalkCourseItem(course = course, onClick = { onCourseClick(course) })
             }
         }
     }
@@ -46,12 +48,14 @@ fun ExploreDetailWalkCourseSection(
 @Composable
 private fun ExploreDetailWalkCourseItem(
     course: ExploreWalkCourseUiModel,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .border(1.dp, MeongTheme.colors.gray100, RoundedCornerShape(12.dp))
+            .noRippleClickable(onClick)
             .padding(16.dp)
     ) {
         Text(
@@ -91,14 +95,19 @@ private fun ExploreDetailWalkCourseSectionPreview() {
                     courseName = "경포호 둘레길",
                     distanceKm = 4.2,
                     distanceFromPlaceKm = 0.8,
+                    latitude = 37.795,
+                    longitude = 128.907,
                 ),
                 ExploreWalkCourseUiModel(
                     id = 2L,
                     courseName = "안목해변 산책로",
                     distanceKm = 2.5,
                     distanceFromPlaceKm = 1.5,
+                    latitude = 37.772,
+                    longitude = 128.947,
                 ),
             ).toImmutableList(),
+            onCourseClick = {},
             modifier = Modifier.padding(20.dp)
         )
     }

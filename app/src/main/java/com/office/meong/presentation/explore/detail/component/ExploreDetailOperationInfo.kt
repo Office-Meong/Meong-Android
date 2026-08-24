@@ -2,7 +2,6 @@ package com.office.meong.presentation.explore.detail.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +27,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
+import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -61,7 +61,7 @@ fun ExploreDetailOperationInfo(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { isTimeExpanded = !isTimeExpanded },
+                        .noRippleClickable { isTimeExpanded = !isTimeExpanded },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(

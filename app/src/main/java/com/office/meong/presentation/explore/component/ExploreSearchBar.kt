@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Icon
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
@@ -39,6 +41,9 @@ fun ExploreSearchBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         textStyle = MeongTheme.typography.body.body14M.copy(
             color = MeongTheme.colors.gray500
+        ),
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done
         ),
         cursorBrush = SolidColor(MeongTheme.colors.gray500),
         decorator = { innerTextField ->
