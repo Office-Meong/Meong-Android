@@ -3,6 +3,7 @@ package com.office.meong.core.designsystem.component.topbar
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -67,6 +68,8 @@ fun MeongTopbar(
                         onClick = onBackClick
                     )
             )
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         Spacer(modifier = Modifier.weight(1f))
