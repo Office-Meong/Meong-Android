@@ -15,11 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.designsystem.component.button.MeongPillButton
+import com.office.meong.core.designsystem.component.button.MeongPillButtonStyle
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
 fun FavoriteEmptyView (
-    onSearchClick: () -> Unit,
+    navigateToExplore: () -> Unit,
     modifier : Modifier = Modifier
 ){
     Column (
@@ -29,7 +30,7 @@ fun FavoriteEmptyView (
                 color = MeongTheme.colors.gray50
             ),
     ){
-        Spacer(modifier = Modifier.height(133.dp))
+        Spacer(modifier = Modifier.weight(133f))
 
         Column(
             modifier = Modifier
@@ -52,10 +53,13 @@ fun FavoriteEmptyView (
             Spacer(modifier = Modifier.padding(12.dp))
 
             MeongPillButton(
-                text = "검색어",
-                onClick = onSearchClick
+                text = "장소 탐색하기",
+                style = MeongPillButtonStyle.PrimaryStrong,
+                onClick = navigateToExplore
             )
         }
+
+        Spacer(modifier = Modifier.weight(287f))
     }
 }
 
@@ -68,6 +72,6 @@ private fun FavoriteSearchChipPreview() {
     }
 
         FavoriteEmptyView(
-            onSearchClick = {}
+            navigateToExplore = {}
         )
     }

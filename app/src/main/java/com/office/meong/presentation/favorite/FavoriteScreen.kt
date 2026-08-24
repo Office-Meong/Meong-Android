@@ -32,14 +32,15 @@ import com.office.meong.core.model.region.Region
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.favorite.component.FavoriteChipArea
+import com.office.meong.presentation.favorite.component.FavoriteEmptyView
 import com.office.meong.presentation.favorite.model.FavoriteUiModel
-import com.office.meong.presentation.sharedcomponent.CourseEmptyContent
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun FavoriteRoute(
     paddingValues: PaddingValues,
+    navigateToExplore: () -> Unit,
     viewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -59,7 +60,8 @@ fun FavoriteRoute(
         onRegionSelected = viewModel::onRegionSelected,
         onTypeSelected = viewModel::onTypeSelected,
         onFavoriteClick = viewModel::onFavoriteClick,
-        onRetry = viewModel::retryFavorites
+        onRetry = viewModel::retryFavorites,
+        navigateToExplore = navigateToExplore
     )
 }
 
@@ -70,7 +72,8 @@ private fun FavoriteScreen(
     onRegionSelected: (Region?) -> Unit,
     onTypeSelected: (PlaceType?) -> Unit,
     onFavoriteClick: (Long) -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    navigateToExplore: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -122,13 +125,11 @@ private fun FavoriteScreen(
             }
 
             is UiState.Empty -> {
-                CourseEmptyContent(
-                    onClickPillButton = {},
+                FavoriteEmptyView(
+                    navigateToExplore = navigateToExplore,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .background(color = MeongTheme.colors.gray50)
-                        .padding(20.dp)
                 )
             }
 
@@ -193,7 +194,8 @@ private fun FavoriteScreenPreview() {
             onRegionSelected = {},
             onTypeSelected = {},
             onFavoriteClick = {},
-            onRetry = {}
+            onRetry = {},
+            navigateToExplore = {}
         )
     }
 }
