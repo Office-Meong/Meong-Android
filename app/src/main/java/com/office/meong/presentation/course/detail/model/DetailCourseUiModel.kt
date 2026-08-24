@@ -20,6 +20,7 @@ data class DetailCourseUiModel(
     val endDate: String,
     val totalDays: Int,
     val dayItems: ImmutableMap<Int, ImmutableList<ScheduleUiModel>>,
+    val dayReturnToAccommKm: ImmutableMap<Int, Double>,
 ) {
     val tripPeriod: String
         get() = formatTripPeriod(startDate, endDate)
@@ -38,4 +39,5 @@ fun CourseDetail.toUiModel(): DetailCourseUiModel = DetailCourseUiModel(
     dayItems = dayItems.mapKeys { (day, _) -> day.toInt() }
         .mapValues { (_, items) -> items.map { it.toUiModel() }.toImmutableList() }
         .toImmutableMap(),
+    dayReturnToAccommKm = dayReturnToAccommKm.mapKeys { (day, _) -> day.toInt() }.toImmutableMap(),
 )

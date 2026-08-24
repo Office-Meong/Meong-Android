@@ -51,6 +51,7 @@ data class CourseDetail(
     val workFocusLevel: String,
     val totalDays: Int,
     val dayItems: Map<String, List<CourseItem>>,
+    val dayReturnToAccommKm: Map<String, Double>,
     val createdAt: String,
 )
 
@@ -65,5 +66,6 @@ fun CourseResponse.toModel(): CourseDetail = CourseDetail(
     workFocusLevel = workFocusLevel,
     totalDays = totalDays,
     dayItems = dayItems.mapValues { (_, items) -> items.map { it.toModel() }.sortedBy { it.visitOrder } },
+    dayReturnToAccommKm = dayReturnToAccommKm,
     createdAt = createdAt,
 )

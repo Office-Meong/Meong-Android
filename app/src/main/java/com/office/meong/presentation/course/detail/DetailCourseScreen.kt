@@ -632,9 +632,8 @@ private fun DetailCourseScreen(
                     if (accommodation != null) {
                         Spacer(Modifier.height(10.dp))
 
-                        // TODO: 마찬가지로 조회 후 숙소 인거로 연결 - 보통 맨 처음 아이템
                         DetailCourseRouteIndicator(
-                            routeLength = "1.2",
+                            routeLength = formatDistanceKm(course.dayReturnToAccommKm[dayNumber] ?: 0.0),
                             onRouteClick = {},
                             routeIndicatorType = DetailCourseRouteIndicatorType.END,
                             modifier = Modifier.padding(horizontal = 20.dp)
@@ -1074,7 +1073,8 @@ private fun DetailCourseScreenPreview() {
                     2 to persistentListOf(
                         ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "강원 강릉시 하남길 117-4")
                     )
-                )
+                ),
+                dayReturnToAccommKm = persistentMapOf(2 to 1.2)
             ),
             dayNumber = 2,
             favoritePlaceIds = persistentSetOf(),

@@ -26,6 +26,8 @@ data class CourseResponse(
     val totalDays: Int,
     @SerialName("dayItems")
     val dayItems: Map<String, List<CourseItemResponse>>,
+    @SerialName("dayReturnToAccommKm")
+    val dayReturnToAccommKm: Map<String, Double> = emptyMap(),
     @SerialName("createdAt")
     val createdAt: String,
 )

@@ -602,9 +602,8 @@ private fun ResultCourseScreen(
                 if (accommodation != null) {
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // TODO: 장소 조회 시 맨 처음은 숙소 그래서 이것을 숙소로 생각해서 세팅하기
                     RouteIndicator(
-                        routeLength = "1.2",
+                        routeLength = formatDistanceKm(course.dayReturnToAccommKm[dayNumber] ?: 0.0),
                         onRouteClick = {},
                         routeIndicatorType = RouteIndicatorType.END,
                         modifier = Modifier
@@ -1000,7 +999,8 @@ private fun ResultCourseScreenPreview() {
                     2 to persistentListOf(
                         ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "서울시 강남구")
                     )
-                )
+                ),
+                dayReturnToAccommKm = persistentMapOf(2 to 1.2)
             ),
             petInfo = UiState.Success(
                 PetInfo(
