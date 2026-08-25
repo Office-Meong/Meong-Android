@@ -32,7 +32,7 @@ class SplashViewModel @Inject constructor(
             delay(2.seconds)
             val refreshToken = tokenManager.getRefreshToken()
             if (refreshToken.isNullOrBlank()) {
-                _sideEffect.send(SplashSideEffect.NavigateToLogin)
+                _sideEffect.send(SplashSideEffect.NavigateToLogin())
                 return@launch
             }
 
@@ -44,8 +44,9 @@ class SplashViewModel @Inject constructor(
                 }
                 .onFailure { throwable ->
                     if (throwable.isHttpUnauthorized()) {
+                        // 리프레시 토큰 만료(세션 만료) — 이미 약관 동의를 마친 회원이므로 재로그인 시 바텀시트는 건너뛴다.
                         tokenManager.clearTokens()
-                        _sideEffect.send(SplashSideEffect.NavigateToLogin)
+                        _sideEffect.send(SplashSideEffect.NavigateToLogin(skipTermsBottomSheet = true))
                     } else {
                         // 네트워크 등 일시적 오류 — 토큰은 유지하고 일단 진입시킨다.
                         // 이후 실제 API 호출에서 TokenAuthenticator가 재발급을 다시 시도한다.

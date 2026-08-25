@@ -30,9 +30,10 @@ fun NavGraphBuilder.splashNavGraph(
                     navOptions { popUpTo(Splash) { inclusive = true } }
                 )
             },
-            navigateToLogin = {
+            navigateToLogin = { skipTermsBottomSheet ->
                 navController.navigateToLogin(
-                    navOptions { popUpTo(Splash) { inclusive = true } }
+                    navOptions = navOptions { popUpTo(Splash) { inclusive = true } },
+                    skipTermsBottomSheet = skipTermsBottomSheet
                 )
             }
         )

@@ -12,10 +12,10 @@ import com.office.meong.presentation.home.navigation.navigateToHome
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object Login: Route
+data class Login(val skipTermsBottomSheet: Boolean = false) : Route
 
-fun NavController.navigateToLogin(navOptions: NavOptions? = null) =
-    navigate(Login, navOptions)
+fun NavController.navigateToLogin(navOptions: NavOptions? = null, skipTermsBottomSheet: Boolean = false) =
+    navigate(Login(skipTermsBottomSheet), navOptions)
 
 fun NavGraphBuilder.loginNavGraph(
     navController: NavController,

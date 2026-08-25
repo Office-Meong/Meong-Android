@@ -25,14 +25,14 @@ import com.valentinilk.shimmer.shimmer
 fun SplashRoute(
     navigateToHome: () -> Unit = {},
     navigateToSignup: () -> Unit = {},
-    navigateToLogin: () -> Unit = {},
+    navigateToLogin: (skipTermsBottomSheet: Boolean) -> Unit = {},
     viewModel: SplashViewModel = hiltViewModel()
 ) {
     viewModel.sideEffect.collectSideEffect {
         when (it) {
             is SplashSideEffect.NavigateToHome -> navigateToHome()
             is SplashSideEffect.NavigateToSignup -> navigateToSignup()
-            is SplashSideEffect.NavigateToLogin -> navigateToLogin()
+            is SplashSideEffect.NavigateToLogin -> navigateToLogin(it.skipTermsBottomSheet)
         }
     }
 

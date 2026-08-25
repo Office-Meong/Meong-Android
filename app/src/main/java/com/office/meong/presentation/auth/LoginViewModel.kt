@@ -1,14 +1,17 @@
 package com.office.meong.presentation.auth
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.office.meong.core.localstorage.token.TokenManager
 import com.office.meong.data.auth.repository.AuthRepository
 import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.data.policy.repository.PolicyRepository
 import com.office.meong.presentation.auth.model.LoginSideEffect
 import com.office.meong.presentation.auth.model.LoginUiState
+import com.office.meong.presentation.auth.navigation.Login
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +24,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val authRepository: AuthRepository,
     private val policyRepository: PolicyRepository,
     private val petRepository: PetRepository,
     private val tokenManager: TokenManager,
 ) : ViewModel() {
+    // 세션 만료로 인한 재로그인일 때 true — 이미 약관에 동의한 기존 회원이므로 동의 바텀시트를 다시 띄우지 않는다.
+    private val skipTermsBottomSheet = savedStateHandle.toRoute<Login>().skipTermsBottomSheet
+
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
@@ -41,7 +48,11 @@ class LoginViewModel @Inject constructor(
             authRepository.getKakaoAuthorizationCode(context)
                 .onSuccess { code ->
                     kakaoAuthCode = code
-                    _state.update { it.copy(isLoading = false, isTermsBottomSheetVisible = true) }
+                    if (skipTermsBottomSheet) {
+                        completeLogin(code, termsAgreed = true, privacyAgreed = true)
+                    } else {
+                        _state.update { it.copy(isLoading = false, isTermsBottomSheetVisible = true) }
+                    }
                 }
                 .onFailure {
                     _state.update { it.copy(isLoading = false) }
@@ -92,22 +103,30 @@ class LoginViewModel @Inject constructor(
         if (!currentState.isSignUpEnabled) return
 
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-
-            authRepository.loginWithKakao(
+            completeLogin(
                 code = code,
                 termsAgreed = currentState.isServiceTermAgreed,
                 privacyAgreed = currentState.isPrivacyTermAgreed,
-            ).onSuccess { token ->
-                tokenManager.saveTokens(token.accessToken, token.refreshToken)
-                _state.update { it.copy(isLoading = false, isTermsBottomSheetVisible = false) }
+            )
+        }
+    }
 
-                val hasNoDogs = petRepository.getDogs().getOrDefault(emptyList()).isEmpty()
-                _sideEffect.send(if (hasNoDogs) LoginSideEffect.NavigateToSignup else LoginSideEffect.NavigateToHome)
-            }.onFailure {
-                _state.update { it.copy(isLoading = false) }
-                _sideEffect.send(LoginSideEffect.ShowToast("회원가입에 실패했어요"))
-            }
+    private suspend fun completeLogin(code: String, termsAgreed: Boolean, privacyAgreed: Boolean) {
+        _state.update { it.copy(isLoading = true) }
+
+        authRepository.loginWithKakao(
+            code = code,
+            termsAgreed = termsAgreed,
+            privacyAgreed = privacyAgreed,
+        ).onSuccess { token ->
+            tokenManager.saveTokens(token.accessToken, token.refreshToken)
+            _state.update { it.copy(isLoading = false, isTermsBottomSheetVisible = false) }
+
+            val hasNoDogs = petRepository.getDogs().getOrDefault(emptyList()).isEmpty()
+            _sideEffect.send(if (hasNoDogs) LoginSideEffect.NavigateToSignup else LoginSideEffect.NavigateToHome)
+        }.onFailure {
+            _state.update { it.copy(isLoading = false) }
+            _sideEffect.send(LoginSideEffect.ShowToast("로그인에 실패했어요"))
         }
     }
 }
