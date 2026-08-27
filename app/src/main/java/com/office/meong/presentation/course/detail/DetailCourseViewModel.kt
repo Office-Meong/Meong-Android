@@ -27,11 +27,14 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -55,7 +58,12 @@ class DetailCourseViewModel @Inject constructor(
     private val _sideEffect = Channel<DetailCourseSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
 
-    private val placeSearchQueries = MutableStateFlow(PlaceSearchQuery())
+    // 같은 검색어를 다시 입력해도 그대로 방출되도록 StateFlow 대신 SharedFlow 를 쓴다.
+    private val placeSearchQueries = MutableSharedFlow<PlaceSearchQuery>(
+        replay = 1,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     init {
         fetchCourseDetail()
@@ -63,7 +71,9 @@ class DetailCourseViewModel @Inject constructor(
         fetchFavoritePlaces()
 
         viewModelScope.launch {
-            placeSearchUseCase.search(placeSearchQueries).collect(::handlePlaceSearchResult)
+            // 실제 검색어가 입력됐을 때만 조회한다(상세 화면 진입 시 빈 검색 요청 방지)
+            placeSearchUseCase.search(placeSearchQueries.filter { !it.keyword.isNullOrBlank() })
+                .collect(::handlePlaceSearchResult)
         }
     }
 
@@ -159,13 +169,13 @@ class DetailCourseViewModel @Inject constructor(
         }
 
         _state.update { it.copy(placeSearchResults = UiState.Loading) }
-        placeSearchQueries.update {
-            it.copy(
+        placeSearchQueries.tryEmit(
+            PlaceSearchQuery(
                 keyword = keyword,
                 region = _state.value.course.successData?.region,
-                page = 0
+                page = 0,
             )
-        }
+        )
     }
 
     private fun handlePlaceSearchResult(result: Result<PlacePage>) {
@@ -295,7 +305,14 @@ class DetailCourseViewModel @Inject constructor(
                 endTime = null,
                 newPlaceId = placeId
             )
-                .onSuccess { course -> _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) } }
+                .onSuccess { course ->
+                    _state.update {
+                        it.copy(
+                            course = UiState.Success(mapCourseToUiModel(course)),
+                            editingScheduleItemId = null,
+                        )
+                    }
+                }
                 .onFailure { _sideEffect.send(DetailCourseSideEffect.ShowToast("장소 변경에 실패했어요")) }
         }
     }
