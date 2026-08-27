@@ -1,6 +1,6 @@
 package com.office.meong.data.place.di
 
-import com.office.meong.core.network.di.NoAuthNetwork
+import com.office.meong.core.network.di.AuthNetwork
 import com.office.meong.data.place.remote.api.PlaceService
 import dagger.Module
 import dagger.Provides
@@ -15,6 +15,6 @@ import javax.inject.Singleton
 object PlaceServiceModule {
     @Provides
     @Singleton
-    fun providePlaceService(@NoAuthNetwork retrofit: Retrofit): PlaceService =
+    fun providePlaceService(@AuthNetwork retrofit: Retrofit): PlaceService =
         retrofit.create()
 }
