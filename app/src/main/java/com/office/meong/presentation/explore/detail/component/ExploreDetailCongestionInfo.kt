@@ -14,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,6 +57,8 @@ private object ExploreDetailTooltipDefaults {
 fun ExploreDetailCongestionInfo(
     congestionLevel: String,
     tooltipText: String,
+    tooltipVisible: Boolean,
+    onTooltipVisibleChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -70,7 +71,11 @@ fun ExploreDetailCongestionInfo(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            InfoIconWithTooltip(message = tooltipText)
+            InfoIconWithTooltip(
+                message = tooltipText,
+                visible = tooltipVisible,
+                onVisibleChange = onTooltipVisibleChange,
+            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -89,8 +94,11 @@ fun ExploreDetailCongestionInfo(
 }
 
 @Composable
-private fun InfoIconWithTooltip(message: String) {
-    var showTooltip by remember { mutableStateOf(false) }
+private fun InfoIconWithTooltip(
+    message: String,
+    visible: Boolean,
+    onVisibleChange: (Boolean) -> Unit,
+) {
     var anchorCenterXInWindow by remember { mutableFloatStateOf(0f) }
     var popupXInWindow by remember { mutableFloatStateOf(0f) }
 
@@ -137,20 +145,20 @@ private fun InfoIconWithTooltip(message: String) {
             contentDescription = "혼잡도 정보",
             modifier = Modifier
                 .size(16.dp)
-                .noRippleClickable { showTooltip = !showTooltip },
+                .noRippleClickable { onVisibleChange(!visible) },
             tint = MeongTheme.colors.gray500
         )
 
-        if (showTooltip) {
+        if (visible) {
             Popup(
                 popupPositionProvider = positionProvider,
-                onDismissRequest = { showTooltip = false },
-                properties = PopupProperties(focusable = true, dismissOnBackPress = false),
+                onDismissRequest = { onVisibleChange(false) },
+                properties = PopupProperties(focusable = false),
             ) {
                 TooltipBubble(
                     message = message,
                     arrowOffsetPx = arrowOffsetPx,
-                    onDismiss = { showTooltip = false },
+                    onDismiss = { onVisibleChange(false) },
                 )
             }
         }
@@ -231,6 +239,8 @@ private fun ExploreDetailCongestionInfoPreview() {
         ExploreDetailCongestionInfo(
             congestionLevel = "보통",
             tooltipText = "한국관광공사 정보를 바탕으로 하루 한 번 초기화돼요",
+            tooltipVisible = false,
+            onTooltipVisibleChange = {},
             modifier = Modifier.padding(20.dp)
         )
     }

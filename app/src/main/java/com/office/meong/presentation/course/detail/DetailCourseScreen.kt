@@ -1,5 +1,6 @@
 package com.office.meong.presentation.course.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
@@ -384,6 +385,11 @@ private fun DetailCourseScreen(
     val latestMoreButtonCoordinates = remember { arrayOfNulls<LayoutCoordinates>(1) }
     var moreButtonCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
+    BackHandler(enabled = uiState.isTopActionVisible) {
+        uiState.hideTopAction()
+        onBackClick()
+    }
+
     val dragDropState = rememberDragDropState(
         lazyListState = lazyListState,
         items = scheduleUiModels,
@@ -686,7 +692,7 @@ private fun DetailCourseScreen(
             Popup(
                 popupPositionProvider = positionProvider,
                 onDismissRequest = { uiState.hideTopAction() },
-                properties = PopupProperties(focusable = false, dismissOnBackPress = false)
+                properties = PopupProperties(focusable = false)
             ) {
                 DetailCourseTopAction(
                     onClick = {

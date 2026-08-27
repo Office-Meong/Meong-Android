@@ -102,7 +102,7 @@ private fun InfoIconWithTooltip(message: String) {
             Popup(
                 popupPositionProvider = positionProvider,
                 onDismissRequest = { showTooltip = false },
-                properties = PopupProperties(focusable = true, dismissOnBackPress = false),
+                properties = PopupProperties(focusable = false),
             ) {
                 TooltipBubble(
                     message = message,

@@ -1,5 +1,6 @@
 package com.office.meong.presentation.explore.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,11 +34,11 @@ import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
-import com.office.meong.presentation.explore.detail.component.ExploreDetailCongestionInfo
-import com.office.meong.presentation.explore.detail.component.ExploreDetailOperationInfo
 import com.office.meong.presentation.explore.detail.component.ExploreDetailAccessibilityInfo
 import com.office.meong.presentation.explore.detail.component.ExploreDetailActionRow
+import com.office.meong.presentation.explore.detail.component.ExploreDetailCongestionInfo
 import com.office.meong.presentation.explore.detail.component.ExploreDetailHeader
+import com.office.meong.presentation.explore.detail.component.ExploreDetailOperationInfo
 import com.office.meong.presentation.explore.detail.component.ExploreDetailPetCompanionInfo
 import com.office.meong.presentation.explore.detail.component.ExploreDetailPetWorkIndex
 import com.office.meong.presentation.explore.detail.component.ExploreDetailWalkCourseSection
@@ -48,7 +52,7 @@ import kotlinx.collections.immutable.toImmutableList
 fun ExploreDetailRoute(
     onBackClick: () -> Unit,
     paddingValues: PaddingValues,
-    viewModel: ExploreDetailViewModel = hiltViewModel()
+    viewModel: ExploreDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -64,18 +68,26 @@ fun ExploreDetailRoute(
 
     when (val place = state.place) {
         is UiState.Loading -> {
-            Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)) {
                 MeongTopbar(onBackClick = onBackClick)
-                MeongLoadingIndicator(modifier = Modifier.weight(1f).fillMaxWidth())
+                MeongLoadingIndicator(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth())
             }
         }
 
         is UiState.Failure -> {
-            Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)) {
                 MeongTopbar(onBackClick = onBackClick)
                 MeongLoadErrorView(
                     action = LoadErrorViewAction.Retry(onRetryClick = viewModel::retry),
-                    modifier = Modifier.weight(1f).fillMaxWidth()
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 )
             }
         }
@@ -108,71 +120,80 @@ private fun ExploreDetailScreen(
     onFavoriteClick: () -> Unit,
     onWalkCourseClick: (ExploreWalkCourseUiModel) -> Unit,
 ) {
+    var congestionTooltipVisible by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = congestionTooltipVisible) {
+        congestionTooltipVisible = false
+        onBackClick()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MeongTheme.colors.white)
+            .padding(paddingValues)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        MeongTopbar(onBackClick = onBackClick)
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(color = MeongTheme.colors.white)
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            MeongTopbar(onBackClick = onBackClick)
+            ExploreDetailHeader(
+                placeType = uiState.placeType,
+                title = uiState.title,
+                address = uiState.address,
+                imageUrl = uiState.imageUrl
+            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                ExploreDetailHeader(
-                    placeType = uiState.placeType,
-                    title = uiState.title,
-                    address = uiState.address,
-                    imageUrl = uiState.imageUrl
-                )
+            ExploreDetailActionRow(
+                onKakaoMapClick = onKakaoMapClick,
+                onFavoriteClick = onFavoriteClick,
+                isFavorite = uiState.isFavorite
+            )
 
-                ExploreDetailActionRow(
-                    onKakaoMapClick = onKakaoMapClick,
-                    onFavoriteClick = onFavoriteClick,
-                    isFavorite = uiState.isFavorite
-                )
+            ExploreDetailPetWorkIndex(
+                grade = uiState.grade
+            )
 
-                ExploreDetailPetWorkIndex(
-                    grade = uiState.grade
-                )
+            ExploreDetailPetCompanionInfo(
+                isAllowed = uiState.isAllowed,
+                condition = uiState.condition,
+                allowedSpace = uiState.allowedSpace,
+                notice = uiState.notice
+            )
 
-                ExploreDetailPetCompanionInfo(
-                    isAllowed = uiState.isAllowed,
-                    condition = uiState.condition,
-                    allowedSpace = uiState.allowedSpace,
-                    notice = uiState.notice
-                )
+            ExploreDetailOperationInfo(
+                todayHours = uiState.todayHours,
+                weeklyHours = uiState.weeklyHours,
+                closedDays = uiState.closedDays,
+                parkingInfo = uiState.parkingInfo,
+                phoneNumber = uiState.phoneNumber
+            )
 
-                ExploreDetailOperationInfo(
-                    todayHours = uiState.todayHours,
-                    weeklyHours = uiState.weeklyHours,
-                    closedDays = uiState.closedDays,
-                    parkingInfo = uiState.parkingInfo,
-                    phoneNumber = uiState.phoneNumber
-                )
+            ExploreDetailCongestionInfo(
+                congestionLevel = uiState.congestionLevel,
+                tooltipText = uiState.tooltipText,
+                tooltipVisible = congestionTooltipVisible,
+                onTooltipVisibleChange = { congestionTooltipVisible = it }
+            )
 
-                ExploreDetailCongestionInfo(
-                    congestionLevel = uiState.congestionLevel,
-                    tooltipText = uiState.tooltipText
-                )
+            ExploreDetailAccessibilityInfo(
+                accessibilityTags = uiState.accessibilityTags
+            )
 
-                ExploreDetailAccessibilityInfo(
-                    accessibilityTags = uiState.accessibilityTags
-                )
+            ExploreDetailWalkCourseSection(
+                courses = walkCourses,
+                onCourseClick = onWalkCourseClick
+            )
 
-                ExploreDetailWalkCourseSection(
-                    courses = walkCourses,
-                    onCourseClick = onWalkCourseClick
-                )
-
-                Spacer(modifier = Modifier.height(40.dp))
-            }
+            Spacer(modifier = Modifier.height(40.dp))
         }
+    }
 
 }
 
