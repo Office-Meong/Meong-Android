@@ -15,6 +15,7 @@ import com.office.meong.presentation.auth.navigation.signupNavGraph
 import com.office.meong.presentation.course.create.navigation.navigateToCreateCourse
 import com.office.meong.presentation.course.detail.navigation.navigateToDetailCourse
 import com.office.meong.presentation.course.navigation.courseNavGraph
+import com.office.meong.presentation.explore.detail.navigation.navigateToExploreDetail
 import com.office.meong.presentation.explore.navigation.exploreNavGraph
 import com.office.meong.presentation.favorite.navigation.favoriteNavGraph
 import com.office.meong.presentation.home.navigation.homeNavGraph
@@ -89,7 +90,8 @@ fun MeongNavHost(
 
         favoriteNavGraph(
             paddingValues = paddingValues,
-            navigateToExplore = { appState.navigateToTab(MainTab.EXPLORE) }
+            navigateToExplore = { appState.navigateToTab(MainTab.EXPLORE) },
+            navigateToDetail = { placeId -> appState.navController.navigateToExploreDetail(placeId) }
         )
 
         myPageNavGraph(

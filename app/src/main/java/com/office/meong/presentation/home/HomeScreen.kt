@@ -63,7 +63,7 @@ fun HomeRoute(
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        viewModel.retryLoad()
+        viewModel.refresh()
     }
 
     viewModel.sideEffect.collectSideEffect {
@@ -255,6 +255,7 @@ private fun HomeScreen(
                                 title = item.name,
                                 grade = item.averageGrade,
                                 places = item.places,
+                                totalPlaceCount = item.totalPlaceCount,
                                 onClickCourseItem = { navigateToDetailCourse(item.id) }
                             )
                         }

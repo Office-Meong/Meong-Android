@@ -12,6 +12,7 @@ data class FavoriteState(
     val favorites: UiState<ImmutableList<FavoriteUiModel>> = UiState.Loading,
     val selectedRegion: Region? = null,
     val selectedType: PlaceType? = null,
+    val isRefreshing: Boolean = false,
 )
 
 sealed interface FavoriteSideEffect {

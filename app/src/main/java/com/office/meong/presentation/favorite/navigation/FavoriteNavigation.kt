@@ -18,12 +18,14 @@ fun NavController.navigateToFavorite(navOptions: NavOptions? = null) =
 
 fun NavGraphBuilder.favoriteNavGraph(
     paddingValues: PaddingValues,
-    navigateToExplore: () -> Unit
+    navigateToExplore: () -> Unit,
+    navigateToDetail: (Long) -> Unit
 ) {
     composable<Favorite> {
         FavoriteRoute(
             paddingValues = paddingValues,
-            navigateToExplore = navigateToExplore
+            navigateToExplore = navigateToExplore,
+            navigateToDetail = navigateToDetail
         )
     }
 }

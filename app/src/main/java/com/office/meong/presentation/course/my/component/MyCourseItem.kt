@@ -44,6 +44,7 @@ fun MyCourseItem(
     title: String,
     grade: String,
     places: ImmutableList<MyCoursePlaceCategory>,
+    totalPlaceCount: Int,
     onClickCourseItem: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -94,7 +95,7 @@ fun MyCourseItem(
         Spacer(modifier = Modifier.height(14.dp))
 
         MyCourseBottomSection(
-            totalCount = places.size,
+            totalCount = totalPlaceCount,
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -324,6 +325,7 @@ private fun MyCourseItemPreview() {
                     count = 1
                 )
             ),
+            totalPlaceCount = 12,
             onClickCourseItem = {}
         )
     }

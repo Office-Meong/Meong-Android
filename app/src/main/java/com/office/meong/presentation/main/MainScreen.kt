@@ -33,7 +33,6 @@ import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAc
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.trigger.DialogTrigger
 import com.office.meong.core.model.trigger.GlobalUiEventHolder
-import com.office.meong.core.model.trigger.RefreshState
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.core.trigger.LocalRefreshState
@@ -72,7 +71,6 @@ fun MainScreen(
     var currentSnackbarState by remember { mutableStateOf<SnackbarState?>(null) }
 
     val dialogState = rememberDialogStateHolder()
-    val refreshState = remember { RefreshState() }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val onShowToast: (String) -> Unit = remember {
@@ -132,7 +130,7 @@ fun MainScreen(
 
     CompositionLocalProvider(
         LocalGlobalUiEventTrigger provides eventHolder,
-        LocalRefreshState provides refreshState
+        LocalRefreshState provides appState.refreshState
     ) {
         Scaffold(
             containerColor = MeongTheme.colors.white,

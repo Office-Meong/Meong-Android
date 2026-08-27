@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.awaitMinDuration
 import com.office.meong.data.course.repository.CourseRepository
 import com.office.meong.presentation.course.my.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,30 +28,48 @@ class MyCourseViewModel @Inject constructor(
     private val _sideEffect = Channel<MyCourseSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
 
-    init {
-        fetchMyCourses()
-    }
-
     fun retryMyCourses() {
-        fetchMyCourses()
+        fetchMyCourses(userInitiated = true)
     }
 
-    private fun fetchMyCourses() {
-        viewModelScope.launch {
-            _state.update { it.copy(myCoursesSummaries = UiState.Loading) }
+    /**
+     * @param userInitiated 당겨서 새로고침 / 탭 재탭이면 true — 인디케이터를 노출하고 서버 캐시를 우회한다.
+     *   false(화면 복귀)면 조용히 갱신한다.
+     */
+    fun refresh(userInitiated: Boolean = false) {
+        fetchMyCourses(userInitiated = userInitiated)
+    }
 
-            courseRepository.getCourses()
+    private fun fetchMyCourses(userInitiated: Boolean) {
+        viewModelScope.launch {
+            // 이미 결과를 들고 있으면 배경 새로고침으로 간주해 로딩·실패 화면을 띄우지 않는다.
+            val current = _state.value.myCoursesSummaries
+            val isBackgroundRefresh = current !is UiState.Loading && current !is UiState.Failure
+            if (!isBackgroundRefresh) _state.update { it.copy(myCoursesSummaries = UiState.Loading) }
+            if (userInitiated) _state.update { it.copy(isRefreshing = true) }
+            val startedAtMs = System.currentTimeMillis()
+
+            val result = courseRepository.getCourses(forceRefresh = userInitiated)
+            if (userInitiated) awaitMinDuration(startedAtMs)
+
+            result
                 .onSuccess { courses ->
-                    _state.update { currentState ->
-                        currentState.copy(
-                            myCoursesSummaries = UiState.Success(courses.map { it.toUiModel() }.toImmutableList())
+                    _state.update {
+                        it.copy(
+                            myCoursesSummaries = UiState.Success(courses.map { c -> c.toUiModel() }.toImmutableList()),
+                            isRefreshing = false,
                         )
                     }
                 }
                 .onFailure {
-                    _state.update { currentState ->
-                        currentState.copy(
-                            myCoursesSummaries = UiState.Failure(LoadErrorHandleAction.Retry)
+                    _state.update {
+                        it.copy(
+                            myCoursesSummaries = if (!isBackgroundRefresh) {
+                                UiState.Failure(LoadErrorHandleAction.Retry)
+                            } else {
+                                it.myCoursesSummaries
+                            },
+                            isRefreshing = false,
                         )
                     }
                 }

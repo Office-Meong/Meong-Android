@@ -24,9 +24,11 @@ class CourseRepositoryImpl @Inject constructor(
 
     // 코스 생성 응답이 이미 AI가 만든 완성된 CourseDetail을 담고 있어서, 생성 직후 결과 화면 진입 시
     // 같은 코스를 다시 GET하는 걸 한 번 건너뛰기 위한 1회용 캐시.
+    @Volatile
     private var justCreatedCourse: CourseDetail? = null
 
-    override suspend fun getCourses(): Result<List<CourseSummary>> = suspendRunCatching {
+    override suspend fun getCourses(forceRefresh: Boolean): Result<List<CourseSummary>> = suspendRunCatching {
+        if (forceRefresh) coursesCache.invalidate()
         coursesCache.getOrFetch { courseDataSource.getCourses().map { it.toModel() } }
     }
 

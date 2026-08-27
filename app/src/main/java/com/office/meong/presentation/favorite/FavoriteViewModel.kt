@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
+import com.office.meong.core.common.util.awaitMinDuration
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.region.Region
 import com.office.meong.data.favorite.repository.FavoriteRepository
@@ -29,22 +30,28 @@ class FavoriteViewModel @Inject constructor(
     private val _sideEffect = Channel<FavoriteSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
 
-    init {
-        fetchFavorites()
-    }
+    // 최초 로드는 화면의 onResume 에서 refresh() 로 트리거한다(init 조회 + onResume 조회로 두 번 나가는 것을 방지).
 
     fun retryFavorites() {
-        fetchFavorites()
+        fetchFavorites(userInitiated = true)
+    }
+
+    /**
+     * @param userInitiated 당겨서 새로고침 / 탭 재탭이면 true — 인디케이터를 노출한다.
+     *   false(화면 복귀)면 조용히 갱신한다.
+     */
+    fun refresh(userInitiated: Boolean = false) {
+        fetchFavorites(userInitiated = userInitiated)
     }
 
     fun onRegionSelected(region: Region?) {
-        _state.update { it.copy(selectedRegion = region) }
-        fetchFavorites()
+        _state.update { it.copy(selectedRegion = region, favorites = UiState.Loading) }
+        fetchFavorites(userInitiated = false)
     }
 
     fun onTypeSelected(type: PlaceType?) {
-        _state.update { it.copy(selectedType = type) }
-        fetchFavorites()
+        _state.update { it.copy(selectedType = type, favorites = UiState.Loading) }
+        fetchFavorites(userInitiated = false)
     }
 
     fun onFavoriteClick(placeId: Long) {
@@ -67,14 +74,22 @@ class FavoriteViewModel @Inject constructor(
         }
     }
 
-    private fun fetchFavorites() {
+    private fun fetchFavorites(userInitiated: Boolean) {
         viewModelScope.launch {
-            _state.update { it.copy(favorites = UiState.Loading) }
+            // 이미 결과(목록 또는 빈 상태)를 들고 있으면 배경 새로고침으로 간주해 로딩·실패 화면을 띄우지 않는다.
+            val current = _state.value.favorites
+            val isBackgroundRefresh = current !is UiState.Loading && current !is UiState.Failure
+            if (!isBackgroundRefresh) _state.update { it.copy(favorites = UiState.Loading) }
+            if (userInitiated) _state.update { it.copy(isRefreshing = true) }
+            val startedAtMs = System.currentTimeMillis()
 
             val region = _state.value.selectedRegion
             val placeType = _state.value.selectedType?.apiValue
 
-            favoriteRepository.getFavorites(region = region, placeType = placeType)
+            val result = favoriteRepository.getFavorites(region = region, placeType = placeType)
+            if (userInitiated) awaitMinDuration(startedAtMs)
+
+            result
                 .onSuccess { favorites ->
                     _state.update {
                         it.copy(
@@ -82,12 +97,22 @@ class FavoriteViewModel @Inject constructor(
                                 UiState.Empty
                             } else {
                                 UiState.Success(favorites.map { favorite -> favorite.toUiModel() }.toImmutableList())
-                            }
+                            },
+                            isRefreshing = false,
                         )
                     }
                 }
                 .onFailure {
-                    _state.update { it.copy(favorites = UiState.Failure(LoadErrorHandleAction.Retry)) }
+                    _state.update {
+                        it.copy(
+                            favorites = if (!isBackgroundRefresh) {
+                                UiState.Failure(LoadErrorHandleAction.Retry)
+                            } else {
+                                it.favorites
+                            },
+                            isRefreshing = false,
+                        )
+                    }
                 }
         }
     }

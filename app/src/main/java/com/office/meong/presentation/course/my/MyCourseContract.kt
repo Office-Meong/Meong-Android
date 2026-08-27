@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Immutable
 data class MyCourseState(
     val myCoursesSummaries: UiState<ImmutableList<MyCourseSummaryUiModel>> = UiState.Loading,
+    val isRefreshing: Boolean = false,
 )
 
 sealed interface MyCourseSideEffect {
