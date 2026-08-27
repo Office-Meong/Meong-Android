@@ -47,8 +47,14 @@ fun CourseDetail.toUiModel(): ResultCourseUiModel = ResultCourseUiModel(
     workStartTime = workStartTime,
     workEndTime = workEndTime,
     workFocusLevel = WorkFocusLevel.from(workFocusLevel),
-    dayItems = dayItems.mapKeys { (day, _) -> day.toInt() }
-        .mapValues { (_, items) -> items.map { it.toUiModel() }.toImmutableList() }
+    dayItems = dayItems
+        .mapNotNull { (day, items) ->
+            day.toIntOrNull()?.let { it to items.map { item -> item.toUiModel() }.toImmutableList() }
+        }
+        .toMap()
         .toImmutableMap(),
-    dayReturnToAccommKm = dayReturnToAccommKm.mapKeys { (day, _) -> day.toInt() }.toImmutableMap(),
+    dayReturnToAccommKm = dayReturnToAccommKm
+        .mapNotNull { (day, km) -> day.toIntOrNull()?.let { it to km } }
+        .toMap()
+        .toImmutableMap(),
 )
