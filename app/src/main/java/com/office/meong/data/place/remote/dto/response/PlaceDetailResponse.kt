@@ -11,7 +11,7 @@ data class PlaceDetailResponse(
     @SerialName("name")
     val name: String,
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("placeType")
     val placeType: String,
     @SerialName("address")

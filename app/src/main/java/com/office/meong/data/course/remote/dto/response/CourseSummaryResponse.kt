@@ -11,7 +11,7 @@ data class CourseSummaryResponse(
     @SerialName("name")
     val name: String,
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("startDate")
     val startDate: String,
     @SerialName("endDate")

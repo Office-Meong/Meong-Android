@@ -37,7 +37,7 @@ fun FavoriteChipArea(
     onTypeSelected: (PlaceType?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val regionItems = (listOf(null) + Region.entries).toImmutableList()
+    val regionItems = (listOf(null) + Region.selectable).toImmutableList()
     val typeItems = (listOf(null) + FAVORITE_PLACE_TYPES).toImmutableList()
 
     Column(

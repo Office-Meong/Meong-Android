@@ -13,7 +13,8 @@ class FavoriteRepositoryImpl @Inject constructor(
 ) : FavoriteRepository {
     override suspend fun getFavorites(region: Region?, placeType: String?): Result<List<FavoriteModel>> =
         suspendRunCatching {
-            favoriteDataSource.getFavorites(region?.name, placeType).map { it.toModel() }
+            val regionParam = region?.takeIf { it != Region.UNKNOWN }?.name
+            favoriteDataSource.getFavorites(regionParam, placeType).map { it.toModel() }
         }
 
     override suspend fun addFavorite(placeId: Long): Result<FavoriteModel> = suspendRunCatching {

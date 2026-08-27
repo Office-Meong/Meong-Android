@@ -11,7 +11,7 @@ data class PlaceRecommendationResponse(
     @SerialName("placeName")
     val placeName: String,
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("placeType")
     val placeType: String,
     @SerialName("address")

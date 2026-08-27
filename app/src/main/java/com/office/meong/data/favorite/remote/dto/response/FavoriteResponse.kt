@@ -13,7 +13,7 @@ data class FavoriteResponse(
     @SerialName("placeType")
     val placeType: String,
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("address")
     val address: String,
     @SerialName("thumbnailUrl")
