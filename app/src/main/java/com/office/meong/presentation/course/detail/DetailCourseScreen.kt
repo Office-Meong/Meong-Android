@@ -51,6 +51,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
@@ -68,6 +70,9 @@ import com.office.meong.core.designsystem.component.button.MeongButton
 import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
+import com.office.meong.core.designsystem.component.dialog.MeongDialog
+import com.office.meong.core.designsystem.component.dialog.action.MeongCancelAction
+import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAction
 import com.office.meong.core.designsystem.component.indicator.MeongLoadingIndicator
 import com.office.meong.core.designsystem.component.textfield.MeongTextField
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
@@ -122,10 +127,16 @@ import kotlinx.collections.immutable.toPersistentList
 fun DetailCourseRoute(
     paddingValues: PaddingValues,
     navigateUp: () -> Unit = {},
+    navigateToExploreDetail: (Long) -> Unit = {},
     viewModel: DetailCourseViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    // ExploreDetail 등 다른 화면에서 즐겨찾기를 바꾸고 돌아온 경우를 반영하기 위해 복귀 시 다시 조회한다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.fetchFavoritePlaces()
+    }
 
     viewModel.sideEffect.collectSideEffect {
         when (it) {
@@ -170,7 +181,7 @@ fun DetailCourseRoute(
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
                 onBackClick = navigateUp,
-                onReorderComplete = viewModel::reorderCourseItems,
+                onCompleteScheduleEdit = viewModel::completeScheduleEdit,
                 onAddCourseItem = viewModel::addCourseItem,
                 onRetryPetInfo = viewModel::retryPetInfo,
                 onDeleteClick = viewModel::removeCourse,
@@ -181,7 +192,7 @@ fun DetailCourseRoute(
                 onFavoriteToggle = viewModel::onFavoriteToggle,
                 onEditScheduleItemClick = viewModel::fetchScheduleItemAlternatives,
                 onSelectScheduleItemAlternative = viewModel::selectScheduleItemAlternative,
-                onDeleteScheduleItemClick = viewModel::deleteScheduleItem
+                navigateToExploreDetail = navigateToExploreDetail
             )
         }
     }
@@ -201,7 +212,7 @@ private fun DetailCourseContent(
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
-    onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    onCompleteScheduleEdit: (dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>) -> Unit,
     onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
     onDeleteClick: () -> Unit,
     onUpdateCourseName: (String) -> Unit,
@@ -212,7 +223,7 @@ private fun DetailCourseContent(
     onFavoriteToggle: (ScheduleUiModel) -> Unit,
     onEditScheduleItemClick: (itemId: Long) -> Unit,
     onSelectScheduleItemAlternative: (ScheduleUiModel) -> Unit,
-    onDeleteScheduleItemClick: (itemId: Long) -> Unit
+    navigateToExploreDetail: (Long) -> Unit
 ) {
     val uiState = rememberDetailCourseUiState()
 
@@ -223,6 +234,11 @@ private fun DetailCourseContent(
                 .toTypedArray()
         )
     }
+
+    // 편집 중 삭제한 아이템 ID. 삭제는 즉시 서버로 보내지 않고 로컬에서만 반영해두었다가
+    // "편집 완료" 시점에 순서 변경과 함께 한 번에 처리한다(비동기 삭제와 순서 변경 요청이
+    // 동시에 날아가면 서버가 보는 아이템 구성과 어긋나 실패할 수 있어서).
+    val deletedItemIds = remember(course, selectedDayNumber) { mutableStateListOf<Long>() }
 
     val editActions = remember(uiState, scheduleUiModels, selectedDayNumber) {
         object : DetailCourseEditActions {
@@ -255,7 +271,7 @@ private fun DetailCourseContent(
                     val accommodationId = course.dayItems[selectedDayNumber].orEmpty()
                         .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLong()
                     val itemIds = listOfNotNull(accommodationId) + scheduleUiModels.map { it.id.toLong() }
-                    onReorderComplete(selectedDayNumber, itemIds)
+                    onCompleteScheduleEdit(selectedDayNumber, deletedItemIds.toList(), itemIds)
                 }
             }
         }
@@ -266,6 +282,7 @@ private fun DetailCourseContent(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
+        deletedItemIds = deletedItemIds,
         course = course,
         dayNumber = selectedDayNumber,
         petInfo = petInfo,
@@ -279,7 +296,7 @@ private fun DetailCourseContent(
             uiState.showEditScheduleItem()
             onEditScheduleItemClick(itemId)
         },
-        onDeleteScheduleItemClick = onDeleteScheduleItemClick
+        navigateToExploreDetail = navigateToExploreDetail
     )
 
     if (uiState.isEditTitleVisible) {
@@ -359,6 +376,7 @@ private fun DetailCourseScreen(
     uiState: DetailCourseUiState,
     editActions: DetailCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
+    deletedItemIds: SnapshotStateList<Long>,
     course: DetailCourseUiModel,
     dayNumber: Int,
     petInfo: UiState<PetInfo>,
@@ -369,7 +387,7 @@ private fun DetailCourseScreen(
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
     onChangeScheduleItemClick: (itemId: Long) -> Unit,
-    onDeleteScheduleItemClick: (itemId: Long) -> Unit
+    navigateToExploreDetail: (Long) -> Unit
 ) {
     val title = course.name
     val location = course.region.label
@@ -503,7 +521,7 @@ private fun DetailCourseScreen(
                         }
                     }
 
-                    if (accommodation != null) {
+                    if (accommodation != null && !uiState.isEditSchedule) {
                         Spacer(Modifier.height(24.dp))
 
                         DetailCourseAccommodationSection(
@@ -515,6 +533,7 @@ private fun DetailCourseScreen(
                             isFavorite = accommodation.placeId in favoritePlaceIds,
                             onChangeAccommodationClick = editActions.accommodation::onClickEdit,
                             onFavoriteClick = { onFavoriteToggle(accommodation) },
+                            onClick = { accommodation.placeId?.let(navigateToExploreDetail) },
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
                     }
@@ -590,7 +609,7 @@ private fun DetailCourseScreen(
                             onDrag = { dragDropState.onDrag(it) },
                             onDragEnd = { dragDropState.onDragEnd() },
                             onChangePlaceClick = { onChangeScheduleItemClick(item.id.toLong()) },
-                            onDeleteClick = { onDeleteScheduleItemClick(item.id.toLong()) },
+                            onDeleteClick = { uiState.showDeleteScheduleItemDialog(item.id.toLong()) },
                             modifier = Modifier
                                 .let { if (isDragging) it else it.animateItem() }
                                 .zIndex(if (isDragging) 1f else 0f)
@@ -627,6 +646,7 @@ private fun DetailCourseScreen(
                                     )
                                 }
                             },
+                            onClick = { item.placeId?.let(navigateToExploreDetail) },
                             modifier = Modifier
                                 .padding(horizontal = 20.dp)
                                 .animateItem()
@@ -635,7 +655,7 @@ private fun DetailCourseScreen(
                 }
 
                 item {
-                    if (accommodation != null) {
+                    if (accommodation != null && !uiState.isEditSchedule) {
                         Spacer(Modifier.height(10.dp))
 
                         DetailCourseRouteIndicator(
@@ -652,20 +672,29 @@ private fun DetailCourseScreen(
                             placeName = accommodation.placeName,
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
-                    }
 
-                    Spacer(Modifier.height(40.dp))
+                        Spacer(Modifier.height(40.dp))
+                    }
                 }
 
                 item {
                     if (uiState.isEditSchedule) {
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        MeongPillButton(
-                            text = "장소 추가",
-                            onClick = uiState::showAddPlace,
-                            prefixIcon = R.drawable.ic_plus
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            MeongPillButton(
+                                text = "장소 추가",
+                                onClick = uiState::showAddPlace,
+                                prefixIcon = R.drawable.ic_plus
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(50.dp))
                     }
                 }
             }
@@ -701,6 +730,27 @@ private fun DetailCourseScreen(
                     }
                 )
             }
+        }
+
+        val scheduleItemIdPendingDelete = uiState.scheduleItemIdPendingDelete
+        if (scheduleItemIdPendingDelete != null) {
+            MeongDialog(
+                title = "이 장소를 삭제할까요?",
+                onDismiss = uiState::hideDeleteScheduleItemDialog,
+                cancelAction = MeongCancelAction(
+                    text = "취소",
+                    onClick = uiState::hideDeleteScheduleItemDialog
+                ),
+                confirmAction = MeongConfirmAction(
+                    text = "삭제",
+                    backgroundColor = MeongTheme.colors.red,
+                    onClick = {
+                        scheduleUiModels.removeAll { it.id.toLong() == scheduleItemIdPendingDelete }
+                        deletedItemIds.add(scheduleItemIdPendingDelete)
+                        uiState.hideDeleteScheduleItemDialog()
+                    }
+                )
+            )
         }
     }
 }
@@ -1069,6 +1119,7 @@ private fun DetailCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.SIGHTSEEING, placeName = "멍멍이 산책길", grade = "A"),
                 )
             },
+            deletedItemIds = remember { mutableStateListOf() },
             course = DetailCourseUiModel(
                 name = "강릉 2박 3일 워케이션",
                 region = Region.GANGNEUNG,
@@ -1105,7 +1156,7 @@ private fun DetailCourseScreenPreview() {
             onNextDayClick = {},
             onBackClick = {},
             onChangeScheduleItemClick = {},
-            onDeleteScheduleItemClick = {}
+            navigateToExploreDetail = {}
         )
     }
 }

@@ -17,14 +17,15 @@ data class DetailCourseState(
     val selectedDayNumber: Int = 1,
     val accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
     val favoritePlaces: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
+    val favoritePlaceIds: ImmutableSet<Long> = persistentSetOf(),
     val placeSearchResults: UiState<ImmutableList<ScheduleUiModel>> = UiState.Empty,
     val scheduleItemAlternatives: UiState<ImmutableList<ScheduleUiModel>> = UiState.Loading,
     val editingScheduleItemId: Long? = null,
-) {
-    val favoritePlaceIds: ImmutableSet<Long>
-        get() = (favoritePlaces as? UiState.Success)?.data?.mapNotNull { it.placeId }?.toImmutableSet()
-            ?: persistentSetOf()
-}
+)
+
+/** [favoritePlaces]가 로딩에 성공했을 때의 데이터에서 즐겨찾기한 장소 ID 집합을 뽑아낸다. */
+fun UiState<ImmutableList<ScheduleUiModel>>.toFavoritePlaceIds(): ImmutableSet<Long> =
+    (this as? UiState.Success)?.data?.mapNotNull { it.placeId }?.toImmutableSet() ?: persistentSetOf()
 
 sealed interface DetailCourseSideEffect {
     data class ShowToast(val message: String) : DetailCourseSideEffect

@@ -29,7 +29,8 @@ fun DetailCourseAccommodationSection(
     modifier: Modifier = Modifier,
     grade: String? = null,
     thumbnailUrl: String? = null,
-    lodgingType: LodgingType? = null
+    lodgingType: LodgingType? = null,
+    onClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
@@ -65,7 +66,8 @@ fun DetailCourseAccommodationSection(
             onFavoriteClick = onFavoriteClick,
             placeType = PlaceType.ACCOMMODATION,
             thumbnailUrl = thumbnailUrl,
-            lodgingType = lodgingType
+            lodgingType = lodgingType,
+            modifier = Modifier.noRippleClickable(onClick = onClick)
         )
     }
 }

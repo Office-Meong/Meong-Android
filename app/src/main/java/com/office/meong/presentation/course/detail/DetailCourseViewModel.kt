@@ -99,8 +99,10 @@ class DetailCourseViewModel @Inject constructor(
                             places + place
                         }.toImmutableList()
 
+                        val favoritePlaces = if (updated.isEmpty()) UiState.Empty else UiState.Success(updated)
                         current.copy(
-                            favoritePlaces = if (updated.isEmpty()) UiState.Empty else UiState.Success(updated)
+                            favoritePlaces = favoritePlaces,
+                            favoritePlaceIds = favoritePlaces.toFavoritePlaceIds()
                         )
                     }
                 }
@@ -110,21 +112,24 @@ class DetailCourseViewModel @Inject constructor(
         }
     }
 
-    private fun fetchFavoritePlaces() {
+    fun fetchFavoritePlaces() {
         viewModelScope.launch {
             favoriteRepository.getFavorites()
                 .onSuccess { favorites ->
                     _state.update {
+                        val favoritePlaces = if (favorites.isEmpty()) {
+                            UiState.Empty
+                        } else {
+                            UiState.Success(favorites.map { favorite -> favorite.toScheduleUiModel() }.toImmutableList())
+                        }
                         it.copy(
-                            favoritePlaces = if (favorites.isEmpty()) {
-                                UiState.Empty
-                            } else {
-                                UiState.Success(favorites.map { favorite -> favorite.toScheduleUiModel() }.toImmutableList())
-                            }
+                            favoritePlaces = favoritePlaces,
+                            favoritePlaceIds = favoritePlaces.toFavoritePlaceIds()
                         )
                     }
                 }
                 .onFailure {
+                    // 실패 시 이전에 캐싱된 favoritePlaceIds는 그대로 유지한다.
                     _state.update { it.copy(favoritePlaces = UiState.Failure(LoadErrorHandleAction.Retry)) }
                 }
         }
@@ -317,14 +322,6 @@ class DetailCourseViewModel @Inject constructor(
         }
     }
 
-    fun deleteScheduleItem(itemId: Long) {
-        viewModelScope.launch {
-            courseRepository.deleteCourseItem(courseId, itemId)
-                .onSuccess { course -> _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) } }
-                .onFailure { _sideEffect.send(DetailCourseSideEffect.ShowToast("장소 삭제에 실패했어요")) }
-        }
-    }
-
     fun updateCourseName(name: String) {
         viewModelScope.launch {
             courseRepository.updateCourseName(courseId, name)
@@ -337,8 +334,21 @@ class DetailCourseViewModel @Inject constructor(
         }
     }
 
-    fun reorderCourseItems(dayNumber: Int, itemIds: List<Long>) {
+    /**
+     * 일정 편집을 완료할 때 호출한다. 편집 중 삭제된 아이템은 로컬에서만 제거해두고
+     * 여기서 한 번에 서버 삭제 → 순서 반영을 순차 처리해, 삭제 응답과 순서 변경 요청이
+     * 동시에 날아가 서버의 아이템 구성과 불일치하는 경합을 막는다.
+     */
+    fun completeScheduleEdit(dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>) {
         viewModelScope.launch {
+            for (itemId in deletedItemIds) {
+                val result = courseRepository.deleteCourseItem(courseId, itemId)
+                if (result.isFailure) {
+                    _sideEffect.send(DetailCourseSideEffect.ShowToast("장소 삭제에 실패했어요"))
+                    return@launch
+                }
+            }
+
             courseRepository.reorderCourseItems(courseId, dayNumber, itemIds)
                 .onSuccess { course ->
                     _state.update { it.copy(course = UiState.Success(mapCourseToUiModel(course))) }

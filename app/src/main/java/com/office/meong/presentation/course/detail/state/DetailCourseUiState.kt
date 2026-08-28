@@ -35,6 +35,9 @@ class DetailCourseUiState private constructor() {
     var isDeleteDialogVisible by mutableStateOf(false)
         private set
 
+    var scheduleItemIdPendingDelete by mutableStateOf<Long?>(null)
+        private set
+
     var editPlaceChipType by mutableStateOf(PlaceEditChipType.SEARCH)
         private set
 
@@ -99,6 +102,14 @@ class DetailCourseUiState private constructor() {
 
     fun hideDeleteDialog() {
         isDeleteDialogVisible = false
+    }
+
+    fun showDeleteScheduleItemDialog(itemId: Long) {
+        scheduleItemIdPendingDelete = itemId
+    }
+
+    fun hideDeleteScheduleItemDialog() {
+        scheduleItemIdPendingDelete = null
     }
 
     companion object {
