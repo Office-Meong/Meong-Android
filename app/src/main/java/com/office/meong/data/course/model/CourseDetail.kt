@@ -5,7 +5,7 @@ import com.office.meong.data.course.remote.dto.response.CourseResponse
 import com.office.meong.data.course.remote.dto.response.CourseItemResponse
 
 data class CourseItem(
-    val id: Long,
+    val id: Long?,
     val dayNumber: Int,
     val visitOrder: Int,
     val slotLabel: String?,
