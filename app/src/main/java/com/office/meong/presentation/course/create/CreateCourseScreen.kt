@@ -219,12 +219,12 @@ private fun CreateCourseScreen(
 
         CreateCourseChipSelector(
             title = "지역 선택",
-            chips = Region.entries.map { it.label }.toImmutableList(),
+            chips = Region.selectable.map { it.label }.toImmutableList(),
             selectedChips = state.selectedRegion?.label
                 ?.let { persistentListOf(it) }
                 ?: persistentListOf(),
             onChipClick = { label ->
-                Region.entries.firstOrNull { it.label == label }?.let(onSelectRegion)
+                Region.selectable.firstOrNull { it.label == label }?.let(onSelectRegion)
             }
         )
 
