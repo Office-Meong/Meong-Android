@@ -23,10 +23,12 @@ data class ScheduleUiModel(
     val placeId: Long? = null
 )
 
+/** id가 아직 서버에서 채워지지 않은 경우(방금 추가된 아이템) 다음 조회 전까지 임시 id를 사용한다. */
 fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
-    id = id.toString(),
+    id = id?.toString() ?: "pending-$placeId-$visitOrder",
     placeType = PlaceType.from(placeType),
     placeName = placeName,
+    // TODO: CourseItemResponse에 실제 grade 필드가 내려오면 채우기(백엔드 확인 필요) — 현재는 항상 빈 값이라 펫-워크 칩이 뜨지 않음
     grade = "",
     location = address.orEmpty(),
     latitude = latitude,

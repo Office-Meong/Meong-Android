@@ -42,7 +42,7 @@ import com.valentinilk.shimmer.rememberShimmer
 fun ResultCourseScheduleItem(
     count: Int,
     placeName: String,
-    grade: String,
+    grade: String?,
     isLastItem: Boolean,
     placeType: PlaceType,
     isFavorite: Boolean,

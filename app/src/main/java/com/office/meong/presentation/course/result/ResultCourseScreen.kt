@@ -279,8 +279,8 @@ private fun ResultCourseContent(
                 override fun onClickComplete() {
                     uiState.hideEditSchedule()
                     val accommodationId = course.dayItems[selectedDayNumber].orEmpty()
-                        .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLong()
-                    val itemIds = listOfNotNull(accommodationId) + scheduleUiModels.map { it.id.toLong() }
+                        .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLongOrNull()
+                    val itemIds = listOfNotNull(accommodationId) + scheduleUiModels.mapNotNull { it.id.toLongOrNull() }
                     onCompleteScheduleEdit(selectedDayNumber, deletedItemIds.toList(), itemIds)
                 }
             }
@@ -512,7 +512,6 @@ private fun ResultCourseScreen(
                         location = accommodation.location,
                         grade = accommodation.grade.ifBlank { null },
                         thumbnailUrl = accommodation.thumbnailUrl,
-                        lodgingType = accommodation.lodgingType,
                         isFavorite = accommodation.placeId in favoritePlaceIds,
                         onEditAccommodationClick = editActions.accommodation::onClickEdit,
                         onFavoriteClick = { onFavoriteToggle(accommodation) },
@@ -593,8 +592,8 @@ private fun ResultCourseScreen(
                         },
                         onDrag = { dragDropState.onDrag(it) },
                         onDragEnd = { dragDropState.onDragEnd() },
-                        onChangePlaceClick = { onChangeScheduleItemClick(item.id.toLong()) },
-                        onDeleteClick = { uiState.showDeleteScheduleItemDialog(item.id.toLong()) },
+                        onChangePlaceClick = { item.id.toLongOrNull()?.let(onChangeScheduleItemClick) },
+                        onDeleteClick = { item.id.toLongOrNull()?.let(uiState::showDeleteScheduleItemDialog) },
                         modifier = Modifier
                             .let { if (isDragging) it else it.animateItem() }
                             .zIndex(if (isDragging) 1f else 0f)
@@ -609,7 +608,7 @@ private fun ResultCourseScreen(
                     ResultCourseScheduleItem(
                         count = index + 1,
                         placeName = item.placeName,
-                        grade = item.grade,
+                        grade = item.grade.ifBlank { null },
                         location = item.location,
                         placeType = item.placeType,
                         isLastItem = index == scheduleUiModels.lastIndex,
@@ -721,7 +720,7 @@ private fun ResultCourseScreen(
                 text = "삭제",
                 backgroundColor = MeongTheme.colors.red,
                 onClick = {
-                    scheduleUiModels.removeAll { it.id.toLong() == scheduleItemIdPendingDelete }
+                    scheduleUiModels.removeAll { it.id.toLongOrNull() == scheduleItemIdPendingDelete }
                     deletedItemIds.add(scheduleItemIdPendingDelete)
                     uiState.hideDeleteScheduleItemDialog()
                 }
