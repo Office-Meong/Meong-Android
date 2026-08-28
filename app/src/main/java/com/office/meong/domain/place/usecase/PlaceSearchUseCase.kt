@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.mapLatest
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 class PlaceSearchUseCase @Inject constructor(
     private val placeRepository: PlaceRepository,
 ) {
     /**
      * [queries] 가 방출될 때마다 장소를 조회한다.
-     * - [debounce] 로 빠른 타이핑을 합치고, [mapLatest] 로 이전 조회는 취소한다.
+     * - 첫 페이지(검색어·필터 변경)만 [debounce] 로 합치고, 다음 페이지 요청은 즉시 보낸다.
+     * - [mapLatest] 로 이전 조회는 취소한다.
      * - 같은 조건으로 다시 방출되면(재시도·당겨서 새로고침) 그대로 다시 조회한다.
      *   따라서 이 흐름에 중복 제거([distinctUntilChanged])를 넣지 않는다.
      * - [PlaceRepository.getPlaces] 는 내부에서 취소 예외를 다시 던지므로 여기서 별도로
@@ -26,7 +26,7 @@ class PlaceSearchUseCase @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     fun search(queries: Flow<PlaceSearchQuery>): Flow<Result<PlacePage>> =
         queries
-            .debounce(DEBOUNCE_MILLIS.milliseconds)
+            .debounce { query -> if (query.page == 0) DEBOUNCE_MILLIS else 0L }
             .mapLatest { query ->
                 placeRepository.getPlaces(
                     region = query.region,

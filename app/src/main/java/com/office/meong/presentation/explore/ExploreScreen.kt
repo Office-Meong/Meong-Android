@@ -218,10 +218,8 @@ private fun ExploreList(
     onRetryLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 마지막에서 3칸 안쪽이 보이면 다음 페이지를 요청한다.
-    // 스크롤뿐 아니라 페이지가 붙어 totalItemsCount 가 바뀔 때도 다시 확인해야
-    // 끝에 머문 채로도 남은 페이지가 이어서 로드된다. onLoadMore 는 로딩 중·마지막
-    // 페이지면 스스로 무시하므로 중복 호출은 안전하다.
+    // 스크롤 위치와 항목 수 둘 다를 보고, 어느 쪽이 바뀌든 임계값을 다시 확인한다.
+    // 끝에 머문 채로 새 페이지가 붙어도 다음 페이지가 이어서 로드되도록. (onLoadMore 는 자체 가드로 중복을 무시)
     LaunchedEffect(listState) {
         snapshotFlow {
             val layoutInfo = listState.layoutInfo

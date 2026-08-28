@@ -69,8 +69,7 @@ class ExploreViewModel @Inject constructor(
     }
 
     fun retryPlaces() {
-        lastLoadMorePage = 0
-        _state.update { it.copy(places = UiState.Loading, isLoadMoreError = false) }
+        _state.update { it.copy(places = UiState.Loading) }
         submitQuery(page = 0)
     }
 
@@ -80,9 +79,8 @@ class ExploreViewModel @Inject constructor(
     fun refresh() {
         if (_state.value.isRefreshing) return
         snapshots.clear()
-        lastLoadMorePage = 0
         refreshStartedAtMs = System.currentTimeMillis()
-        _state.update { it.copy(isRefreshing = true, isLoadMoreError = false) }
+        _state.update { it.copy(isRefreshing = true) }
         submitQuery(page = 0)
     }
 
@@ -105,10 +103,10 @@ class ExploreViewModel @Inject constructor(
     }
 
     private fun applyFilterChange() {
-        lastLoadMorePage = 0
         val snapshot = snapshots[currentSnapshotKey()]
         if (snapshot != null) {
             // 캐시된 결과를 스피너 없이 즉시 반영한다(백그라운드 재조회 없음).
+            lastLoadMorePage = 0
             _state.update {
                 it.copy(
                     places = if (snapshot.places.isEmpty()) UiState.Empty else UiState.Success(snapshot.places),
@@ -120,20 +118,20 @@ class ExploreViewModel @Inject constructor(
                 )
             }
         } else {
-            _state.update { it.copy(places = UiState.Loading, page = 0, isLoadMoreError = false) }
+            _state.update { it.copy(places = UiState.Loading) }
             submitQuery(page = 0)
         }
     }
 
     // onLoadMore 로 이미 요청한 가장 큰 페이지. 스크롤 위치 변화와 페이지 도착이 각각
-    // 트리거를 울려 같은 페이지를 두 번 요청하는 것을 막는다. page=0 계열(필터·새로고침·재시도)에서 0으로 되돌린다.
+    // 트리거를 울려도 같은 페이지를 두 번 요청하지 않도록 막는다.
     private var lastLoadMorePage = 0
 
     fun onLoadMore() {
         val current = _state.value
         val nextPage = current.page + 1
-        if (current.isLoadingMore || current.isLoadMoreError || !current.hasNext ||
-            current.places !is UiState.Success || nextPage <= lastLoadMorePage
+        if (current.isLoadingMore || current.isLoadMoreError || current.isRefreshing ||
+            !current.hasNext || current.places !is UiState.Success || nextPage <= lastLoadMorePage
         ) {
             return
         }
@@ -152,6 +150,12 @@ class ExploreViewModel @Inject constructor(
         lastLoadMorePage = nextPage
         _state.update { it.copy(isLoadingMore = true, isLoadMoreError = false) }
         submitQuery(page = nextPage)
+    }
+
+    /** 0페이지부터 다시 받는 흐름(초기·필터·새로고침·재시도)에서 페이징 상태를 초기화한다. */
+    private fun resetPaging() {
+        lastLoadMorePage = 0
+        _state.update { it.copy(isLoadingMore = false, isLoadMoreError = false) }
     }
 
     /**
@@ -212,6 +216,7 @@ class ExploreViewModel @Inject constructor(
     }
 
     private fun submitQuery(page: Int) {
+        if (page == 0) resetPaging()
         val current = _state.value
         queries.tryEmit(
             PlaceSearchQuery(
@@ -267,7 +272,7 @@ class ExploreViewModel @Inject constructor(
                         isRefreshing = false,
                         // 다음 페이지 로딩 실패는 목록 하단에 재시도로 노출하고,
                         // 스크롤할 때마다 자동으로 다시 요청하지 않도록 막는다.
-                        isLoadMoreError = it.isLoadMoreError || wasLoadingMore,
+                        isLoadMoreError = wasLoadingMore,
                     )
                 }
 
