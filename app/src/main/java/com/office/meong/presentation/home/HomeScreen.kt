@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -103,6 +103,7 @@ private fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MeongTheme.colors.gray50)
+            .verticalScroll(rememberScrollState())
             .padding(paddingValues = paddingValues)
     ) {
         Image(
@@ -229,7 +230,9 @@ private fun HomeScreen(
             }
 
             is UiState.Success -> {
-                if (homeCourseSummaries.data.isEmpty()) {
+                val latestCourse = homeCourseSummaries.data.firstOrNull()
+
+                if (latestCourse == null) {
                     CourseEmptyContent(
                         onClickPillButton = navigateToCreateCourse,
                         modifier = Modifier
@@ -237,38 +240,31 @@ private fun HomeScreen(
                             .padding(horizontal = 20.dp)
                     )
                 } else {
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
-                            .weight(1f)
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        items(
-                            items = homeCourseSummaries.data,
-                            key = { item -> item.id }
-                        ) { item ->
-                            HomeCourseItem(
-                                region = item.region.label,
-                                tripPeriod = item.tripPeriod,
-                                title = item.name,
-                                grade = item.averageGrade,
-                                places = item.places,
-                                totalPlaceCount = item.totalPlaceCount,
-                                onClickCourseItem = { navigateToDetailCourse(item.id) }
-                            )
-                        }
+                        HomeCourseItem(
+                            region = latestCourse.region.label,
+                            tripPeriod = latestCourse.tripPeriod,
+                            title = latestCourse.name,
+                            grade = latestCourse.averageGrade,
+                            places = latestCourse.places,
+                            totalPlaceCount = latestCourse.totalPlaceCount,
+                            onClickCourseItem = { navigateToDetailCourse(latestCourse.id) }
+                        )
 
-                        item {
-                            MeongPillButton(
-                                text = "새 코스 만들기",
-                                prefixIcon = R.drawable.ic_plus,
-                                onClick = navigateToCreateCourse
-                            )
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                            Spacer(modifier = Modifier.height(15.dp))
-                        }
+                        MeongPillButton(
+                            text = "새 코스 만들기",
+                            prefixIcon = R.drawable.ic_plus,
+                            onClick = navigateToCreateCourse
+                        )
+
+                        Spacer(modifier = Modifier.height(15.dp))
                     }
                 }
             }

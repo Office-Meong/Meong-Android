@@ -85,10 +85,12 @@ private fun TermsBottomSheetContent(
             .fillMaxWidth()
             .disableUpWardEvent()
             .background(color = MeongTheme.colors.white)
-            .padding(horizontal = 20.dp, vertical = 24.dp)
+            .padding(vertical = 24.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -111,7 +113,8 @@ private fun TermsBottomSheetContent(
         Text(
             text = "아래 약관에 동의 후 서비스 이용이 가능해요.",
             style = MeongTheme.typography.body.body14M,
-            color = MeongTheme.colors.gray900
+            color = MeongTheme.colors.gray900,
+            modifier = Modifier.padding(horizontal = 20.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -139,6 +142,7 @@ private fun TermsBottomSheetContent(
             enabled = isSignUpEnabled,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 20.dp)
                 .height(52.dp),
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(
@@ -167,7 +171,7 @@ private fun TermItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
