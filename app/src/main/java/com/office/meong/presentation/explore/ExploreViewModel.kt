@@ -69,7 +69,8 @@ class ExploreViewModel @Inject constructor(
     }
 
     fun retryPlaces() {
-        _state.update { it.copy(places = UiState.Loading) }
+        lastLoadMorePage = 0
+        _state.update { it.copy(places = UiState.Loading, isLoadMoreError = false) }
         submitQuery(page = 0)
     }
 
@@ -79,8 +80,9 @@ class ExploreViewModel @Inject constructor(
     fun refresh() {
         if (_state.value.isRefreshing) return
         snapshots.clear()
+        lastLoadMorePage = 0
         refreshStartedAtMs = System.currentTimeMillis()
-        _state.update { it.copy(isRefreshing = true) }
+        _state.update { it.copy(isRefreshing = true, isLoadMoreError = false) }
         submitQuery(page = 0)
     }
 
@@ -103,6 +105,7 @@ class ExploreViewModel @Inject constructor(
     }
 
     private fun applyFilterChange() {
+        lastLoadMorePage = 0
         val snapshot = snapshots[currentSnapshotKey()]
         if (snapshot != null) {
             // 캐시된 결과를 스피너 없이 즉시 반영한다(백그라운드 재조회 없음).
@@ -113,20 +116,42 @@ class ExploreViewModel @Inject constructor(
                     page = 0,
                     hasNext = snapshot.hasNext,
                     isLoadingMore = false,
+                    isLoadMoreError = false,
                 )
             }
         } else {
-            _state.update { it.copy(places = UiState.Loading, page = 0) }
+            _state.update { it.copy(places = UiState.Loading, page = 0, isLoadMoreError = false) }
             submitQuery(page = 0)
         }
     }
 
+    // onLoadMore 로 이미 요청한 가장 큰 페이지. 스크롤 위치 변화와 페이지 도착이 각각
+    // 트리거를 울려 같은 페이지를 두 번 요청하는 것을 막는다. page=0 계열(필터·새로고침·재시도)에서 0으로 되돌린다.
+    private var lastLoadMorePage = 0
+
     fun onLoadMore() {
         val current = _state.value
-        if (current.isLoadingMore || !current.hasNext || current.places !is UiState.Success) return
+        val nextPage = current.page + 1
+        if (current.isLoadingMore || current.isLoadMoreError || !current.hasNext ||
+            current.places !is UiState.Success || nextPage <= lastLoadMorePage
+        ) {
+            return
+        }
 
+        lastLoadMorePage = nextPage
         _state.update { it.copy(isLoadingMore = true) }
-        submitQuery(page = current.page + 1)
+        submitQuery(page = nextPage)
+    }
+
+    /** 다음 페이지 로딩에 실패한 뒤 사용자가 직접 다시 시도할 때. */
+    fun retryLoadMore() {
+        val current = _state.value
+        if (current.isLoadingMore || !current.isLoadMoreError) return
+
+        val nextPage = current.page + 1
+        lastLoadMorePage = nextPage
+        _state.update { it.copy(isLoadingMore = true, isLoadMoreError = false) }
+        submitQuery(page = nextPage)
     }
 
     /**
@@ -229,19 +254,26 @@ class ExploreViewModel @Inject constructor(
                         page = page.page,
                         hasNext = page.hasNext,
                         isLoadingMore = false,
+                        isLoadMoreError = false,
                         isRefreshing = false,
                     )
                 }
             }
             .onFailure {
                 val wasLoadingMore = _state.value.isLoadingMore
-                _state.update { it.copy(isLoadingMore = false, isRefreshing = false) }
+                _state.update {
+                    it.copy(
+                        isLoadingMore = false,
+                        isRefreshing = false,
+                        // 다음 페이지 로딩 실패는 목록 하단에 재시도로 노출하고,
+                        // 스크롤할 때마다 자동으로 다시 요청하지 않도록 막는다.
+                        isLoadMoreError = it.isLoadMoreError || wasLoadingMore,
+                    )
+                }
 
-                if (wasLoadingMore) {
-                    _sideEffect.send(ExploreSideEffect.ShowSnackBar("장소를 더 불러오지 못했어요"))
-                } else if (wasRefreshing) {
+                if (wasRefreshing) {
                     _sideEffect.send(ExploreSideEffect.ShowSnackBar("새로고침에 실패했어요"))
-                } else {
+                } else if (!wasLoadingMore) {
                     _state.update { it.copy(places = UiState.Failure(LoadErrorHandleAction.Retry)) }
                 }
             }

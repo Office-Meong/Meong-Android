@@ -19,11 +19,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -51,6 +50,8 @@ import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.distinctUntilChanged
+
+private const val LOAD_MORE_THRESHOLD = 3
 
 @Composable
 fun ExploreRoute(
@@ -105,7 +106,8 @@ fun ExploreRoute(
         onPlaceClick = navigateToDetail,
         onRetry = viewModel::retryPlaces,
         onRefresh = viewModel::refresh,
-        onLoadMore = viewModel::onLoadMore
+        onLoadMore = viewModel::onLoadMore,
+        onRetryLoadMore = viewModel::retryLoadMore
     )
 }
 
@@ -121,7 +123,8 @@ private fun ExploreScreen(
     onPlaceClick: (Long) -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onRetryLoadMore: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -186,10 +189,13 @@ private fun ExploreScreen(
                         places = places.data,
                         totalCount = state.totalCount,
                         isLoadingMore = state.isLoadingMore,
+                        isLoadMoreError = state.isLoadMoreError,
+                        hasNext = state.hasNext,
                         listState = listState,
                         onFavoriteClick = onFavoriteClick,
                         onPlaceClick = onPlaceClick,
                         onLoadMore = onLoadMore,
+                        onRetryLoadMore = onRetryLoadMore,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -203,21 +209,29 @@ private fun ExploreList(
     places: ImmutableList<ExplorePlaceUiModel>,
     totalCount: Int,
     isLoadingMore: Boolean,
+    isLoadMoreError: Boolean,
+    hasNext: Boolean,
     listState: LazyListState,
     onFavoriteClick: (Long) -> Unit,
     onPlaceClick: (Long) -> Unit,
     onLoadMore: () -> Unit,
+    onRetryLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisibleIndex >= listState.layoutInfo.totalItemsCount - 3
+    // 마지막에서 3칸 안쪽이 보이면 다음 페이지를 요청한다.
+    // 스크롤뿐 아니라 페이지가 붙어 totalItemsCount 가 바뀔 때도 다시 확인해야
+    // 끝에 머문 채로도 남은 페이지가 이어서 로드된다. onLoadMore 는 로딩 중·마지막
+    // 페이지면 스스로 무시하므로 중복 호출은 안전하다.
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisibleIndex to layoutInfo.totalItemsCount
+        }.collect { (lastVisibleIndex, totalItemsCount) ->
+            if (totalItemsCount > 0 && lastVisibleIndex >= totalItemsCount - LOAD_MORE_THRESHOLD) {
+                onLoadMore()
+            }
         }
-    }
-
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) onLoadMore()
     }
 
     LazyColumn(
@@ -250,12 +264,37 @@ private fun ExploreList(
             )
         }
 
-        if (isLoadingMore) {
-            item {
+        when {
+            isLoadingMore -> item {
                 MeongLoadingIndicator(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
+                )
+            }
+
+            isLoadMoreError -> item {
+                Text(
+                    text = "장소를 더 불러오지 못했어요. 다시 시도",
+                    color = MeongTheme.colors.gray700,
+                    style = MeongTheme.typography.body.body12M,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .noRippleClickable { onRetryLoadMore() }
+                        .padding(vertical = 16.dp)
+                )
+            }
+
+            !hasNext -> item {
+                Text(
+                    text = "모든 장소를 불러왔어요",
+                    color = MeongTheme.colors.gray500,
+                    style = MeongTheme.typography.body.body12M,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
                 )
             }
         }
@@ -301,7 +340,8 @@ private fun ExploreScreenPreview() {
             onPlaceClick = {},
             onRetry = {},
             onRefresh = {},
-            onLoadMore = {}
+            onLoadMore = {},
+            onRetryLoadMore = {}
         )
     }
 }

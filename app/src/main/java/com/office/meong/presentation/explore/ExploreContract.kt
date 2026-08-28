@@ -17,6 +17,7 @@ data class ExploreState(
     val page: Int = 0,
     val hasNext: Boolean = false,
     val isLoadingMore: Boolean = false,
+    val isLoadMoreError: Boolean = false,
     val isRefreshing: Boolean = false,
 )
 
