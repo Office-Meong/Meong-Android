@@ -12,7 +12,7 @@ data class CourseItemResponse(
     @SerialName("visitOrder")
     val visitOrder: Int,
     @SerialName("slotLabel")
-    val slotLabel: String,
+    val slotLabel: String?,
     @SerialName("placeId")
     val placeId: Long,
     @SerialName("placeName")
@@ -26,9 +26,9 @@ data class CourseItemResponse(
     @SerialName("longitude")
     val longitude: Double,
     @SerialName("startTime")
-    val startTime: String,
+    val startTime: String?,
     @SerialName("endTime")
-    val endTime: String,
+    val endTime: String?,
     @SerialName("distanceFromPrevKm")
     val distanceFromPrevKm: Double?,
     @SerialName("thumbnailUrl")
