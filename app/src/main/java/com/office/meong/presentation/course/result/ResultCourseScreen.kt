@@ -42,6 +42,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
@@ -56,6 +58,7 @@ import com.office.meong.core.common.util.formatDistanceKm
 import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
+import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.component.dialog.MeongDialog
@@ -119,10 +122,16 @@ fun ResultCourseRoute(
     navigateToEntryScreen: () -> Unit,
     navigateToDetailCourse: (Long) -> Unit,
     navigateToHome: () -> Unit,
+    navigateToExploreDetail: (Long) -> Unit,
     viewModel: ResultCourseViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    // ExploreDetail 등 다른 화면에서 즐겨찾기를 바꾸고 돌아온 경우를 반영하기 위해 복귀 시 다시 조회한다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.fetchFavoritePlaces()
+    }
 
     viewModel.sideEffect.collectSideEffect {
         when (it) {
@@ -165,9 +174,10 @@ fun ResultCourseRoute(
                 favoritePlaces = state.favoritePlaces,
                 favoritePlaceIds = state.favoritePlaceIds,
                 scheduleItemAlternatives = state.scheduleItemAlternatives,
+                placeSearchResults = state.placeSearchResults,
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
-                onReorderComplete = viewModel::reorderCourseItems,
+                onCompleteScheduleEdit = viewModel::completeScheduleEdit,
                 onUpdateCourseName = viewModel::updateCourseName,
                 onEditAccommodationClick = viewModel::fetchAccommodationAlternatives,
                 onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative,
@@ -176,9 +186,11 @@ fun ResultCourseRoute(
                 onDiscardAndExit = viewModel::discardCourseAndExit,
                 onEditScheduleItemClick = viewModel::fetchScheduleItemAlternatives,
                 onSelectScheduleItemAlternative = viewModel::selectScheduleItemAlternative,
-                onDeleteScheduleItemClick = viewModel::deleteScheduleItem,
+                onPlaceSearchQueryChanged = viewModel::onPlaceSearchQueryChanged,
+                onAddCourseItem = viewModel::addCourseItem,
                 navigateToDetailCourse = { navigateToDetailCourse(state.courseId) },
-                navigateToHome = navigateToHome
+                navigateToHome = navigateToHome,
+                navigateToExploreDetail = navigateToExploreDetail
             )
         }
     }
@@ -194,9 +206,10 @@ private fun ResultCourseContent(
     favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
     favoritePlaceIds: ImmutableSet<Long>,
     scheduleItemAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
+    placeSearchResults: UiState<ImmutableList<ScheduleUiModel>>,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
-    onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    onCompleteScheduleEdit: (dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>) -> Unit,
     onUpdateCourseName: (String) -> Unit,
     onEditAccommodationClick: () -> Unit,
     onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit,
@@ -205,9 +218,11 @@ private fun ResultCourseContent(
     onDiscardAndExit: () -> Unit,
     onEditScheduleItemClick: (itemId: Long) -> Unit,
     onSelectScheduleItemAlternative: (ScheduleUiModel) -> Unit,
-    onDeleteScheduleItemClick: (itemId: Long) -> Unit,
+    onPlaceSearchQueryChanged: (String) -> Unit,
+    onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
     navigateToDetailCourse: () -> Unit,
-    navigateToHome: () -> Unit
+    navigateToHome: () -> Unit,
+    navigateToExploreDetail: (Long) -> Unit
 ) {
     val uiState = rememberResultCourseUiState()
 
@@ -229,6 +244,11 @@ private fun ResultCourseContent(
                 .toTypedArray()
         )
     }
+
+    // 편집 중 삭제한 아이템 ID. 삭제는 즉시 서버로 보내지 않고 로컬에서만 반영해두었다가
+    // "편집 완료" 시점에 순서 변경과 함께 한 번에 처리한다(비동기 삭제와 순서 변경 요청이
+    // 동시에 날아가면 서버가 보는 아이템 구성과 어긋나 실패할 수 있어서).
+    val deletedItemIds = remember(course, selectedDayNumber) { mutableStateListOf<Long>() }
 
     val editActions = remember(uiState, scheduleUiModels, selectedDayNumber) {
         object : ResultCourseEditActions {
@@ -261,7 +281,7 @@ private fun ResultCourseContent(
                     val accommodationId = course.dayItems[selectedDayNumber].orEmpty()
                         .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLong()
                     val itemIds = listOfNotNull(accommodationId) + scheduleUiModels.map { it.id.toLong() }
-                    onReorderComplete(selectedDayNumber, itemIds)
+                    onCompleteScheduleEdit(selectedDayNumber, deletedItemIds.toList(), itemIds)
                 }
             }
         }
@@ -276,6 +296,7 @@ private fun ResultCourseContent(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
+        deletedItemIds = deletedItemIds,
         course = course,
         petInfo = petInfo,
         dayNumber = selectedDayNumber,
@@ -288,7 +309,7 @@ private fun ResultCourseContent(
             uiState.showEditScheduleItem()
             onEditScheduleItemClick(itemId)
         },
-        onDeleteScheduleItemClick = onDeleteScheduleItemClick
+        navigateToExploreDetail = navigateToExploreDetail
     )
 
     if (uiState.currentDialogType != null) {
@@ -356,6 +377,25 @@ private fun ResultCourseContent(
             }
         )
     }
+
+    if (uiState.isAddPlaceVisible) {
+        EditPlaceBottomSheet(
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideAddPlace,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
+            placeSearchResults = placeSearchResults,
+            onPlaceSearchQueryChanged = onPlaceSearchQueryChanged,
+            onPlaceSelected = { place ->
+                place.placeId?.let { placeId ->
+                    onAddCourseItem(selectedDayNumber, placeId)
+                    uiState.hideAddPlace()
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -364,6 +404,7 @@ private fun ResultCourseScreen(
     uiState: ResultCourseUiState,
     editActions: ResultCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
+    deletedItemIds: SnapshotStateList<Long>,
     course: ResultCourseUiModel,
     petInfo: UiState<PetInfo>,
     dayNumber: Int,
@@ -373,7 +414,7 @@ private fun ResultCourseScreen(
     onNextDayClick: () -> Unit,
     onSaveClick: () -> Unit,
     onChangeScheduleItemClick: (itemId: Long) -> Unit,
-    onDeleteScheduleItemClick: (itemId: Long) -> Unit
+    navigateToExploreDetail: (Long) -> Unit
 ) {
     val title = course.name
     val dayDate = formatDayDate(course.startDate, dayNumber)
@@ -465,7 +506,7 @@ private fun ResultCourseScreen(
             }
 
             item {
-                if (accommodation != null) {
+                if (accommodation != null && !uiState.isEditSchedule) {
                     ResultCourseAccommodationSection(
                         placeName = accommodation.placeName,
                         location = accommodation.location,
@@ -475,6 +516,7 @@ private fun ResultCourseScreen(
                         isFavorite = accommodation.placeId in favoritePlaceIds,
                         onEditAccommodationClick = editActions.accommodation::onClickEdit,
                         onFavoriteClick = { onFavoriteToggle(accommodation) },
+                        onClick = { accommodation.placeId?.let(navigateToExploreDetail) },
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                     )
@@ -552,7 +594,7 @@ private fun ResultCourseScreen(
                         onDrag = { dragDropState.onDrag(it) },
                         onDragEnd = { dragDropState.onDragEnd() },
                         onChangePlaceClick = { onChangeScheduleItemClick(item.id.toLong()) },
-                        onDeleteClick = { onDeleteScheduleItemClick(item.id.toLong()) },
+                        onDeleteClick = { uiState.showDeleteScheduleItemDialog(item.id.toLong()) },
                         modifier = Modifier
                             .let { if (isDragging) it else it.animateItem() }
                             .zIndex(if (isDragging) 1f else 0f)
@@ -591,6 +633,7 @@ private fun ResultCourseScreen(
                                 )
                             }
                         },
+                        onClick = { item.placeId?.let(navigateToExploreDetail) },
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                             .animateItem()
@@ -599,7 +642,7 @@ private fun ResultCourseScreen(
             }
 
             item {
-                if (accommodation != null) {
+                if (accommodation != null && !uiState.isEditSchedule) {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     RouteIndicator(
@@ -619,9 +662,30 @@ private fun ResultCourseScreen(
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                     )
-                }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
+            }
+
+            item {
+                if (uiState.isEditSchedule) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MeongPillButton(
+                            text = "장소 추가",
+                            onClick = uiState::showAddPlace,
+                            prefixIcon = R.drawable.ic_plus
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(50.dp))
+                }
             }
         }
 
@@ -642,6 +706,27 @@ private fun ResultCourseScreen(
                     .fillMaxWidth()
             )
         }
+    }
+
+    val scheduleItemIdPendingDelete = uiState.scheduleItemIdPendingDelete
+    if (scheduleItemIdPendingDelete != null) {
+        MeongDialog(
+            title = "이 장소를 삭제할까요?",
+            onDismiss = uiState::hideDeleteScheduleItemDialog,
+            cancelAction = MeongCancelAction(
+                text = "취소",
+                onClick = uiState::hideDeleteScheduleItemDialog
+            ),
+            confirmAction = MeongConfirmAction(
+                text = "삭제",
+                backgroundColor = MeongTheme.colors.red,
+                onClick = {
+                    scheduleUiModels.removeAll { it.id.toLong() == scheduleItemIdPendingDelete }
+                    deletedItemIds.add(scheduleItemIdPendingDelete)
+                    uiState.hideDeleteScheduleItemDialog()
+                }
+            )
+        )
     }
 }
 
@@ -727,6 +812,8 @@ private fun EditPlaceBottomSheet(
     modifier: Modifier = Modifier,
     title: String = "장소 추가",
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
+    placeSearchResults: UiState<ImmutableList<ScheduleUiModel>> = UiState.Empty,
+    onPlaceSearchQueryChanged: (String) -> Unit = {},
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
     val placeShimmer = rememberShimmer(
@@ -814,6 +901,23 @@ private fun EditPlaceBottomSheet(
                                 onPlaceClick = { selectedPlace = it },
                                 modifier = Modifier.weight(1f)
                             )
+                        } else {
+                            LaunchedEffect(query) {
+                                onPlaceSearchQueryChanged(query)
+                            }
+
+                            if (query.isNotBlank()) {
+                                PlaceEditResultList(
+                                    isLoading = placeSearchResults is UiState.Loading,
+                                    places = placeSearchResults.successData ?: persistentListOf(),
+                                    shimmer = placeShimmer,
+                                    emptyTitle = "검색 결과가 없어요",
+                                    emptyDescription = "다른 검색어를 입력해주세요",
+                                    onFavoriteClick = {},
+                                    onPlaceClick = onPlaceSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
 
@@ -826,8 +930,12 @@ private fun EditPlaceBottomSheet(
                             emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
                             favoritePlaceIds = favoritePlaceIds,
                             onFavoriteClick = onFavoriteToggle,
-                            selectedPlaceId = selectedPlace?.id,
-                            onPlaceClick = { selectedPlace = it },
+                            selectedPlaceId = if (alternatives != null) selectedPlace?.id else null,
+                            onPlaceClick = if (alternatives != null) {
+                                { selectedPlace = it }
+                            } else {
+                                onPlaceSelected
+                            },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -986,6 +1094,7 @@ private fun ResultCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
                 )
             },
+            deletedItemIds = remember { mutableStateListOf() },
             course = ResultCourseUiModel(
                 name = "강릉 2박 3일 워케이션",
                 region = Region.GANGNEUNG,
@@ -1024,7 +1133,7 @@ private fun ResultCourseScreenPreview() {
             onNextDayClick = {},
             onSaveClick = {},
             onChangeScheduleItemClick = {},
-            onDeleteScheduleItemClick = {}
+            navigateToExploreDetail = {}
         )
     }
 }

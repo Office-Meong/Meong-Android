@@ -122,7 +122,7 @@ fun ResultCourseEditScheduleItem(
                                 isExpanded = false
                                 onChangePlaceClick()
                             }
-                            .padding(vertical = 14.dp)
+                            .padding(vertical = 14.dp, horizontal = 61.dp)
                     )
 
                     VerticalDivider(
@@ -142,7 +142,7 @@ fun ResultCourseEditScheduleItem(
                                 isExpanded = false
                                 onDeleteClick()
                             }
-                            .padding(vertical = 14.dp)
+                            .padding(vertical = 14.dp, horizontal = 38.dp)
                     )
                 }
             }

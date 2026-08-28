@@ -21,6 +21,9 @@ class ResultCourseUiState private constructor() {
     var isEditAccommodationVisible by mutableStateOf(false)
         private set
 
+    var isAddPlaceVisible by mutableStateOf(false)
+        private set
+
     var isEditSchedule by mutableStateOf(false)
         private set
 
@@ -28,6 +31,9 @@ class ResultCourseUiState private constructor() {
         private set
 
     var isSaved by mutableStateOf(false)
+        private set
+
+    var scheduleItemIdPendingDelete by mutableStateOf<Long?>(null)
         private set
 
     var currentDialogType by mutableStateOf<CurrentDialogType?>(null)
@@ -57,6 +63,15 @@ class ResultCourseUiState private constructor() {
         editPlaceChipType = chipType
     }
 
+    fun showAddPlace() {
+        isAddPlaceVisible = true
+    }
+
+    fun hideAddPlace() {
+        isAddPlaceVisible = false
+        editPlaceChipType = PlaceEditChipType.SEARCH
+    }
+
     fun showEditSchedule() {
         isEditSchedule = true
     }
@@ -84,6 +99,14 @@ class ResultCourseUiState private constructor() {
 
     fun markSaved() {
         isSaved = true
+    }
+
+    fun showDeleteScheduleItemDialog(itemId: Long) {
+        scheduleItemIdPendingDelete = itemId
+    }
+
+    fun hideDeleteScheduleItemDialog() {
+        scheduleItemIdPendingDelete = null
     }
 
     companion object {

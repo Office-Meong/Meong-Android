@@ -18,6 +18,7 @@ import com.office.meong.presentation.course.my.navigation.MyCourse
 import com.office.meong.presentation.course.result.ResultCourseRoute
 import com.office.meong.presentation.course.result.navigation.ResultCourse
 import com.office.meong.presentation.course.result.navigation.navigateToResultCourse
+import com.office.meong.presentation.explore.detail.navigation.navigateToExploreDetail
 import com.office.meong.presentation.home.navigation.navigateToHome
 import kotlinx.serialization.Serializable
 
@@ -54,7 +55,8 @@ fun NavGraphBuilder.courseNavGraph(
         composable<DetailCourse> {
             DetailCourseRoute(
                 paddingValues = paddingValues,
-                navigateUp = navController::navigateUp
+                navigateUp = navController::navigateUp,
+                navigateToExploreDetail = { placeId -> navController.navigateToExploreDetail(placeId) }
             )
         }
 
@@ -75,7 +77,8 @@ fun NavGraphBuilder.courseNavGraph(
                     navController.navigateToHome(
                         navOptions { popUpTo(0) { inclusive = true } }
                     )
-                }
+                },
+                navigateToExploreDetail = { placeId -> navController.navigateToExploreDetail(placeId) }
             )
         }
     }
