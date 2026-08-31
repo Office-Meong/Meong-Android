@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.successData
+import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.data.course.repository.CourseRepository
 import com.office.meong.data.favorite.repository.FavoriteRepository
 import com.office.meong.data.pet.model.toInfo
@@ -16,6 +17,7 @@ import com.office.meong.domain.favorite.usecase.ToggleFavoriteUseCase
 import com.office.meong.domain.place.model.PlaceSearchQuery
 import com.office.meong.domain.place.usecase.PlaceSearchUseCase
 import com.office.meong.presentation.course.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.accommodationForDay
 import com.office.meong.presentation.course.model.toScheduleUiModel
 import com.office.meong.presentation.course.result.model.toUiModel
 import com.office.meong.presentation.course.result.navigation.ResultCourse
@@ -258,8 +260,10 @@ class ResultCourseViewModel @Inject constructor(
         }
     }
 
-    private fun accommodationItemId(): Long? =
-        _state.value.course.successData?.accommodation?.id?.toLongOrNull()
+    private fun accommodationItemId(): Long? {
+        val state = _state.value
+        return state.course.successData?.dayItems?.accommodationForDay(state.selectedDayNumber)?.id?.toLongOrNull()
+    }
 
     fun fetchScheduleItemAlternatives(itemId: Long) {
         viewModelScope.launch {
@@ -316,26 +320,36 @@ class ResultCourseViewModel @Inject constructor(
 
     /**
      * 일정 편집을 완료할 때 호출한다. 편집 중 삭제된 아이템은 로컬에서만 제거해두고
-     * 여기서 한 번에 서버 삭제 → 순서 반영을 순차 처리해, 삭제 응답과 순서 변경 요청이
-     * 동시에 날아가 서버의 아이템 구성과 불일치하는 경합을 막는다.
+     * 여기서 한 번에 서버 삭제를 처리한다. 삭제/추가 API는 서버에서 이미 재정렬까지
+     * 마치므로, 사용자가 드래그로 순서를 직접 바꾼 경우(reorderNeeded)에만 순서 변경
+     * API를 추가로 호출한다 — 아니면 방금 추가/삭제만 한 아이템 구성과 어긋나 순서
+     * 변경 요청이 불필요하게 실패할 수 있다.
      */
-    fun completeScheduleEdit(dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>) {
+    fun completeScheduleEdit(dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>, reorderNeeded: Boolean) {
         viewModelScope.launch {
+            var latestCourse: CourseDetail? = null
             for (itemId in deletedItemIds) {
                 val result = courseRepository.deleteCourseItem(courseId, itemId)
                 if (result.isFailure) {
                     _sideEffect.send(ResultCourseSideEffect.ShowToast("장소 삭제에 실패했어요"))
                     return@launch
                 }
+                latestCourse = result.getOrNull()
             }
 
-            courseRepository.reorderCourseItems(courseId, dayNumber, itemIds)
-                .onSuccess { course ->
+            if (reorderNeeded) {
+                courseRepository.reorderCourseItems(courseId, dayNumber, itemIds)
+                    .onSuccess { course ->
+                        _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
+                    }
+                    .onFailure {
+                        _sideEffect.send(ResultCourseSideEffect.ShowToast("일정 순서 변경에 실패했어요"))
+                    }
+            } else {
+                latestCourse?.let { course ->
                     _state.update { it.copy(course = UiState.Success(course.toUiModel())) }
                 }
-                .onFailure {
-                    _sideEffect.send(ResultCourseSideEffect.ShowToast("일정 순서 변경에 실패했어요"))
-                }
+            }
         }
     }
 

@@ -7,6 +7,8 @@ import com.office.meong.data.course.model.AlternativePlace
 import com.office.meong.data.course.model.CourseItem
 import com.office.meong.data.favorite.model.FavoriteModel
 import com.office.meong.data.place.model.PlaceSummary
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 
 @Immutable
 data class ScheduleUiModel(
@@ -28,8 +30,7 @@ fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
     id = id?.toString() ?: "pending-$placeId-$visitOrder",
     placeType = PlaceType.from(placeType),
     placeName = placeName,
-    // TODO: CourseItemResponse에 실제 grade 필드가 내려오면 채우기(백엔드 확인 필요) — 현재는 항상 빈 값이라 펫-워크 칩이 뜨지 않음
-    grade = "",
+    grade = grade.orEmpty(),
     location = address.orEmpty(),
     latitude = latitude,
     longitude = longitude,
@@ -69,3 +70,8 @@ fun PlaceSummary.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
     thumbnailUrl = thumbnailUrl,
     placeId = id,
 )
+
+/** 해당 날짜에 숙소 항목이 없는 코스(예: 1일차에만 숙소가 들어있는 경우)를 대비해, 없으면 코스 전체에서 찾은 숙소로 대체한다. */
+fun ImmutableMap<Int, ImmutableList<ScheduleUiModel>>.accommodationForDay(dayNumber: Int): ScheduleUiModel? =
+    this[dayNumber]?.firstOrNull { it.placeType == PlaceType.ACCOMMODATION }
+        ?: values.flatten().firstOrNull { it.placeType == PlaceType.ACCOMMODATION }

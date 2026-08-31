@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -38,7 +41,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -106,6 +111,7 @@ import com.office.meong.presentation.course.detail.model.DetailCourseRouteIndica
 import com.office.meong.presentation.course.detail.model.DetailCourseUiModel
 import com.office.meong.presentation.course.detail.model.PlaceEditChipType
 import com.office.meong.presentation.course.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.accommodationForDay
 import com.office.meong.presentation.course.detail.state.DetailCourseUiState
 import com.office.meong.presentation.course.detail.state.rememberDetailCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -121,6 +127,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -212,7 +221,7 @@ private fun DetailCourseContent(
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
     onBackClick: () -> Unit,
-    onCompleteScheduleEdit: (dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>) -> Unit,
+    onCompleteScheduleEdit: (dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>, reorderNeeded: Boolean) -> Unit,
     onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
     onDeleteClick: () -> Unit,
     onUpdateCourseName: (String) -> Unit,
@@ -233,6 +242,13 @@ private fun DetailCourseContent(
                 .filterNot { it.placeType == PlaceType.ACCOMMODATION }
                 .toTypedArray()
         )
+    }
+
+    // 편집 진입 시점(= 서버가 확정한 순서)의 스냅샷. 완료 시 이 목록과 비교해 실제로
+    // 드래그로 순서를 바꾼 경우에만 순서 변경 API를 호출한다. 추가/삭제는 각 API가
+    // 서버에서 이미 재정렬까지 마치므로, 순서를 안 건드렸다면 재호출이 불필요하다.
+    val originalScheduleItemIds = remember(course, selectedDayNumber) {
+        scheduleUiModels.mapNotNull { it.id.toLongOrNull() }
     }
 
     // 편집 중 삭제한 아이템 ID. 삭제는 즉시 서버로 보내지 않고 로컬에서만 반영해두었다가
@@ -270,8 +286,11 @@ private fun DetailCourseContent(
                     uiState.hideEditSchedule()
                     val accommodationId = course.dayItems[selectedDayNumber].orEmpty()
                         .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLongOrNull()
-                    val itemIds = listOfNotNull(accommodationId) + scheduleUiModels.mapNotNull { it.id.toLongOrNull() }
-                    onCompleteScheduleEdit(selectedDayNumber, deletedItemIds.toList(), itemIds)
+                    val currentScheduleItemIds = scheduleUiModels.mapNotNull { it.id.toLongOrNull() }
+                    val expectedIdsWithoutReorder = originalScheduleItemIds.filterNot { it in deletedItemIds }
+                    val reorderNeeded = currentScheduleItemIds != expectedIdsWithoutReorder
+                    val itemIds = listOfNotNull(accommodationId) + currentScheduleItemIds
+                    onCompleteScheduleEdit(selectedDayNumber, deletedItemIds.toList(), itemIds, reorderNeeded)
                 }
             }
         }
@@ -394,7 +413,7 @@ private fun DetailCourseScreen(
     val tripPeriod = course.tripPeriod
     val totalDays = course.totalDays
     val dayDate = formatDayDate(course.startDate, dayNumber)
-    val accommodation = course.accommodation
+    val accommodation = course.dayItems.accommodationForDay(dayNumber)
 
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
@@ -819,6 +838,7 @@ private fun DetailCourseEditTitleBottomSheet(
 /**
  * `alternatives`가 주어지면(숙소 변경 플로우) 코스 아이템의 실제 대안 장소를 검색어로 필터링해 보여준다.
  * `alternatives`가 없으면(장소 추가 플로우) `placeSearchResults`를 통해 실제 장소 검색 API 결과를 보여준다.
+ * 두 플로우 모두 카드를 선택하면 테두리로 표시만 되고, 하단 버튼을 눌러야 실제로 반영된다.
  * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -841,147 +861,180 @@ private fun DetailCourseEditPlaceBottomSheet(
         theme = meongShimmerTheme()
     )
     var selectedPlace by remember(selectedChipType) { mutableStateOf<ScheduleUiModel?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    var footerHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+
+    // 장소 추가 플로우(alternatives == null)에서만 숙소 선택을 막는다.
+    // 숙소 변경/일정 아이템 변경 플로우는 alternatives 자체가 숙소 후보 목록이라 막으면 안 된다.
+    val isAddPlaceFlow = alternatives == null
+    val onConfirmClick: () -> Unit = {
+        val place = selectedPlace
+        if (isAddPlaceFlow && place?.placeType == PlaceType.ACCOMMODATION) {
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+
+                val job = launch {
+                    snackbarHostState.showSnackbar("숙소는 일정에 추가할 수 없어요")
+                }
+                delay(2000L.milliseconds)
+                job.cancel()
+            }
+        } else {
+            place?.let(onPlaceSelected)
+        }
+    }
 
     MeongBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier
             .imePadding()
     ) {
-        Column(
+        Box(
             modifier = Modifier.fillMaxHeight(0.7f)
         ) {
-            MeongTopbar(
-                title = title,
-                isBackVisible = false,
-                actionType = TopbarAction.CLOSE,
-                onActionClick = { onDismiss() },
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                PlaceEditChipType.entries.forEach { chipType ->
-                    MeongChip(
-                        chipText = chipType.label,
-                        chipType = ChipType.LARGE,
-                        isSelected = chipType == selectedChipType,
-                        modifier = Modifier
-                            .noRippleClickable {
-                                onChipClick(chipType)
-                            }
-                    )
-                }
-            }
-
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .animateContentSize(),
+                modifier = Modifier.fillMaxSize()
             ) {
-                when (selectedChipType) {
-                    PlaceEditChipType.SEARCH -> {
-                        val searchFieldState = rememberTextFieldState()
-                        val query = searchFieldState.text.toString()
+                MeongTopbar(
+                    title = title,
+                    isBackVisible = false,
+                    actionType = TopbarAction.CLOSE,
+                    onActionClick = { onDismiss() },
+                )
 
-                        MeongTextField(
-                            state = searchFieldState,
-                            placeholder = "장소를 검색해주세요",
-                            leadingIcon = R.drawable.ic_search,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PlaceEditChipType.entries.forEach { chipType ->
+                        MeongChip(
+                            chipText = chipType.label,
+                            chipType = ChipType.LARGE,
+                            isSelected = chipType == selectedChipType,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp)
+                                .noRippleClickable {
+                                    onChipClick(chipType)
+                                }
                         )
+                    }
+                }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                ) {
+                    when (selectedChipType) {
+                        PlaceEditChipType.SEARCH -> {
+                            val searchFieldState = rememberTextFieldState()
+                            val query = searchFieldState.text.toString()
 
-                        if (alternatives != null) {
-                            val allPlaces = (alternatives as? UiState.Success)?.data ?: persistentListOf()
-                            val filteredPlaces = remember(query, allPlaces) {
-                                if (query.isBlank()) {
-                                    allPlaces
-                                } else {
-                                    allPlaces.filter { it.placeName.contains(query, ignoreCase = true) }.toPersistentList()
+                            MeongTextField(
+                                state = searchFieldState,
+                                placeholder = "장소를 검색해주세요",
+                                leadingIcon = R.drawable.ic_search,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            if (alternatives != null) {
+                                val allPlaces = (alternatives as? UiState.Success)?.data ?: persistentListOf()
+                                val filteredPlaces = remember(query, allPlaces) {
+                                    if (query.isBlank()) {
+                                        allPlaces
+                                    } else {
+                                        allPlaces.filter { it.placeName.contains(query, ignoreCase = true) }.toPersistentList()
+                                    }
+                                }
+
+                                DetailCoursePlaceEditResultList(
+                                    isLoading = alternatives is UiState.Loading,
+                                    places = filteredPlaces,
+                                    shimmer = placeShimmer,
+                                    emptyTitle = "변경 가능한 숙소가 없어요",
+                                    emptyDescription = "다른 검색어를 입력해보세요",
+                                    favoritePlaceIds = favoritePlaceIds,
+                                    onFavoriteClick = onFavoriteToggle,
+                                    selectedPlaceId = selectedPlace?.id,
+                                    onPlaceClick = { selectedPlace = it },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                LaunchedEffect(query) {
+                                    onPlaceSearchQueryChanged(query)
+                                }
+
+                                if (query.isNotBlank()) {
+                                    DetailCoursePlaceEditResultList(
+                                        isLoading = placeSearchResults is UiState.Loading,
+                                        places = placeSearchResults.successData ?: persistentListOf(),
+                                        shimmer = placeShimmer,
+                                        emptyTitle = "검색 결과가 없어요",
+                                        emptyDescription = "다른 검색어를 입력해주세요",
+                                        onFavoriteClick = {},
+                                        selectedPlaceId = selectedPlace?.id,
+                                        onPlaceClick = { selectedPlace = it },
+                                        modifier = Modifier.weight(1f)
+                                    )
                                 }
                             }
+                        }
 
+                        PlaceEditChipType.FAVORITE -> {
                             DetailCoursePlaceEditResultList(
-                                isLoading = alternatives is UiState.Loading,
-                                places = filteredPlaces,
+                                isLoading = favoritePlaces is UiState.Loading,
+                                places = favoritePlaces.successData ?: persistentListOf(),
                                 shimmer = placeShimmer,
-                                emptyTitle = "변경 가능한 숙소가 없어요",
-                                emptyDescription = "다른 검색어를 입력해보세요",
+                                emptyTitle = "저장된 관심 장소가 없어요",
+                                emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
                                 favoritePlaceIds = favoritePlaceIds,
                                 onFavoriteClick = onFavoriteToggle,
                                 selectedPlaceId = selectedPlace?.id,
                                 onPlaceClick = { selectedPlace = it },
                                 modifier = Modifier.weight(1f)
                             )
-                        } else {
-                            LaunchedEffect(query) {
-                                onPlaceSearchQueryChanged(query)
-                            }
-
-                            if (query.isNotBlank()) {
-                                DetailCoursePlaceEditResultList(
-                                    isLoading = placeSearchResults is UiState.Loading,
-                                    places = placeSearchResults.successData ?: persistentListOf(),
-                                    shimmer = placeShimmer,
-                                    emptyTitle = "검색 결과가 없어요",
-                                    emptyDescription = "다른 검색어를 입력해주세요",
-                                    onFavoriteClick = {},
-                                    onPlaceClick = onPlaceSelected,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
                         }
                     }
-
-                    PlaceEditChipType.FAVORITE -> {
-                        DetailCoursePlaceEditResultList(
-                            isLoading = favoritePlaces is UiState.Loading,
-                            places = favoritePlaces.successData ?: persistentListOf(),
-                            shimmer = placeShimmer,
-                            emptyTitle = "저장된 관심 장소가 없어요",
-                            emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
-                            favoritePlaceIds = favoritePlaceIds,
-                            onFavoriteClick = onFavoriteToggle,
-                            selectedPlaceId = if (alternatives != null) selectedPlace?.id else null,
-                            onPlaceClick = if (alternatives != null) {
-                                { selectedPlace = it }
-                            } else {
-                                onPlaceSelected
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
                 }
-            }
 
-            if (alternatives != null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             color = MeongTheme.colors.white
                         )
-                        .padding(20.dp),
+                        .padding(20.dp)
+                        .onGloballyPositioned { coordinates ->
+                            footerHeight = with(density) { coordinates.size.height.toDp() }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     MeongButton(
-                        text = "이 장소로 변경",
+                        text = if (isAddPlaceFlow) "코스에 추가" else "이 장소로 변경",
                         isEnabled = selectedPlace != null,
-                        onClick = { selectedPlace?.let(onPlaceSelected) },
+                        onClick = onConfirmClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                     )
                 }
             }
+
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = footerHeight)
+            )
         }
     }
 }

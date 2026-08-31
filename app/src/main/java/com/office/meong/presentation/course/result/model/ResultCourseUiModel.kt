@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import com.office.meong.core.common.util.formatTripPeriod
 import com.office.meong.core.common.util.formatWorkTimeRange
 import com.office.meong.core.model.course.WorkFocusLevel
-import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.region.Region
 import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.presentation.course.model.ScheduleUiModel
@@ -32,10 +31,6 @@ data class ResultCourseUiModel(
 
     val workTimeRange: String
         get() = formatWorkTimeRange(workStartTime, workEndTime)
-
-    /** 코스 전체 일정 중 숙소(STAY)로 취급되는 아이템. dayItems에서 매번 다시 계산되므로 항상 최신 상태 */
-    val accommodation: ScheduleUiModel?
-        get() = dayItems.values.flatten().firstOrNull { it.placeType == PlaceType.ACCOMMODATION }
 }
 
 fun CourseDetail.toUiModel(): ResultCourseUiModel = ResultCourseUiModel(

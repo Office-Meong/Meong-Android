@@ -39,4 +39,6 @@ data class CourseItemResponse(
     val thumbnailUrl: String? = null,
     @SerialName("lodgingType")
     val lodgingType: String? = null,
+    @SerialName("grade")
+    val grade: String? = null,
 )
