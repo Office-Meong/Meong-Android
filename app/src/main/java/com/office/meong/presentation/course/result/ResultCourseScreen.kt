@@ -56,9 +56,9 @@ import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.extension.disableNestedScroll
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.common.extension.openKakaoMapRoute
+import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.formatDayDate
-import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.common.util.formatDistanceKm
 import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
@@ -86,6 +86,8 @@ import com.office.meong.core.model.place.PlaceType
 import com.office.meong.core.model.region.Region
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
+import com.office.meong.presentation.course.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.accommodationForDay
 import com.office.meong.presentation.course.result.action.AccommodationEditActions
 import com.office.meong.presentation.course.result.action.ResultCourseEditActions
 import com.office.meong.presentation.course.result.action.ScheduleEditActions
@@ -103,8 +105,6 @@ import com.office.meong.presentation.course.result.model.CurrentDialogType
 import com.office.meong.presentation.course.result.model.PlaceEditChipType
 import com.office.meong.presentation.course.result.model.ResultCourseUiModel
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
-import com.office.meong.presentation.course.model.ScheduleUiModel
-import com.office.meong.presentation.course.model.accommodationForDay
 import com.office.meong.presentation.course.result.state.ResultCourseUiState
 import com.office.meong.presentation.course.result.state.rememberResultCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -373,6 +373,7 @@ private fun ResultCourseContent(
             favoritePlaces = favoritePlaces,
             favoritePlaceIds = favoritePlaceIds,
             onFavoriteToggle = onFavoriteToggle,
+            allowAccommodationSelection = true,
             onPlaceSelected = { place ->
                 onSelectAccommodationAlternative(place)
                 editActions.accommodation.onClickComplete()
@@ -830,6 +831,7 @@ private fun EditPlaceBottomSheet(
     title: String = "장소 추가",
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
     placeSearchResults: UiState<ImmutableList<ScheduleUiModel>> = UiState.Empty,
+    allowAccommodationSelection: Boolean = false,
     onPlaceSearchQueryChanged: (String) -> Unit = {},
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
@@ -842,13 +844,13 @@ private fun EditPlaceBottomSheet(
     val coroutineScope = rememberCoroutineScope()
     var footerHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
-
-    // 장소 추가 플로우(alternatives == null)에서만 숙소 선택을 막는다.
-    // 숙소 변경/일정 아이템 변경 플로우는 alternatives 자체가 숙소 후보 목록이라 막으면 안 된다.
     val isAddPlaceFlow = alternatives == null
+
+    // 숙소 변경 플로우(allowAccommodationSelection = true)만 숙소 선택을 허용한다.
+    // 장소 추가/일정 아이템 변경 플로우는 관심 탭 등에서 숙소가 노출될 수 있으므로 항상 막는다.
     val onConfirmClick: () -> Unit = {
         val place = selectedPlace
-        if (isAddPlaceFlow && place?.placeType == PlaceType.ACCOMMODATION) {
+        if (!allowAccommodationSelection && place?.placeType == PlaceType.ACCOMMODATION) {
             coroutineScope.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
 

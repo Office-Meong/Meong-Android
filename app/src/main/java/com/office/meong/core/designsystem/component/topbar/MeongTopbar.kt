@@ -1,9 +1,10 @@
 package com.office.meong.core.designsystem.component.topbar
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -58,18 +59,18 @@ fun MeongTopbar(
                 contentPadding(vertical = 12.dp, horizontal = 20.dp)
             }
     ) {
-        if (isBackVisible) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_left),
-                contentDescription = null,
-                tint = MeongTheme.colors.gray900,
-                modifier = Modifier
-                    .noRippleClickable(
-                        onClick = onBackClick
-                    )
-            )
-        } else {
-            Spacer(modifier = Modifier.height(24.dp))
+        Box(modifier = Modifier.size(24.dp)) {
+            if (isBackVisible) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_left),
+                    contentDescription = null,
+                    tint = MeongTheme.colors.gray900,
+                    modifier = Modifier
+                        .noRippleClickable(
+                            onClick = onBackClick
+                        )
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -84,17 +85,19 @@ fun MeongTopbar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        if (actionType != null) {
-            Icon(
-                imageVector = ImageVector.vectorResource(actionType.iconRes),
-                contentDescription = null,
-                tint = MeongTheme.colors.gray900,
-                modifier = Modifier
-                    .onGloballyPositioned(onActionPositioned)
-                    .noRippleClickable(onClick = {
-                        onActionClick(actionType)
-                    })
-            )
+        Box(modifier = Modifier.size(24.dp)) {
+            if (actionType != null) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(actionType.iconRes),
+                    contentDescription = null,
+                    tint = MeongTheme.colors.gray900,
+                    modifier = Modifier
+                        .onGloballyPositioned(onActionPositioned)
+                        .noRippleClickable(onClick = {
+                            onActionClick(actionType)
+                        })
+                )
+            }
         }
     }
 }
@@ -105,7 +108,7 @@ private fun MeongTopbarPreview() {
     MeongTheme {
         MeongTopbar(
             title = "코스 상세",
-            isBackVisible = true,
+            isBackVisible = false,
             actionType = TopbarAction.MORE
         )
     }

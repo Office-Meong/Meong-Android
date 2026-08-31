@@ -338,6 +338,7 @@ private fun DetailCourseContent(
             favoritePlaces = favoritePlaces,
             favoritePlaceIds = favoritePlaceIds,
             onFavoriteToggle = onFavoriteToggle,
+            allowAccommodationSelection = true,
             onPlaceSelected = { place ->
                 onSelectAccommodationAlternative(place)
                 editActions.accommodation.onClickComplete()
@@ -853,6 +854,7 @@ private fun DetailCourseEditPlaceBottomSheet(
     title: String = "장소 추가",
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
     placeSearchResults: UiState<ImmutableList<ScheduleUiModel>> = UiState.Empty,
+    allowAccommodationSelection: Boolean = false,
     onPlaceSearchQueryChanged: (String) -> Unit = {},
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
@@ -865,13 +867,13 @@ private fun DetailCourseEditPlaceBottomSheet(
     val coroutineScope = rememberCoroutineScope()
     var footerHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
-
-    // 장소 추가 플로우(alternatives == null)에서만 숙소 선택을 막는다.
-    // 숙소 변경/일정 아이템 변경 플로우는 alternatives 자체가 숙소 후보 목록이라 막으면 안 된다.
     val isAddPlaceFlow = alternatives == null
+
+    // 숙소 변경 플로우(allowAccommodationSelection = true)만 숙소 선택을 허용한다.
+    // 장소 추가/일정 아이템 변경 플로우는 관심 탭 등에서 숙소가 노출될 수 있으므로 항상 막는다.
     val onConfirmClick: () -> Unit = {
         val place = selectedPlace
-        if (isAddPlaceFlow && place?.placeType == PlaceType.ACCOMMODATION) {
+        if (!allowAccommodationSelection && place?.placeType == PlaceType.ACCOMMODATION) {
             coroutineScope.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
 
