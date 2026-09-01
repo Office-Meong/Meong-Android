@@ -113,16 +113,16 @@ fun ResultCourseEditScheduleItem(
                 ) {
                     Text(
                         text = "다른 장소로 변경",
-                        style = MeongTheme.typography.label.label14Sb,
-                        color = MeongTheme.colors.gray700,
+                        style = MeongTheme.typography.label.label12Sb,
+                        color = MeongTheme.colors.gray900,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(2f)
                             .noRippleClickable {
                                 isExpanded = false
                                 onChangePlaceClick()
                             }
-                            .padding(vertical = 14.dp, horizontal = 61.dp)
+                            .padding(vertical = 14.dp)
                     )
 
                     VerticalDivider(
@@ -133,7 +133,7 @@ fun ResultCourseEditScheduleItem(
 
                     Text(
                         text = "삭제",
-                        style = MeongTheme.typography.label.label14Sb,
+                        style = MeongTheme.typography.label.label12Sb,
                         color = MeongTheme.colors.red,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -142,7 +142,7 @@ fun ResultCourseEditScheduleItem(
                                 isExpanded = false
                                 onDeleteClick()
                             }
-                            .padding(vertical = 14.dp, horizontal = 38.dp)
+                            .padding(vertical = 14.dp)
                     )
                 }
             }

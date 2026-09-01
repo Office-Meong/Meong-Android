@@ -25,8 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -194,18 +192,18 @@ private fun AgreementRow(
             .noRippleClickable { onCheckedChange(!isChecked) },
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val checkboxShape = RoundedCornerShape(4.dp)
         Box(
             modifier = Modifier
                 .size(20.dp)
-                .clip(RoundedCornerShape(4.dp))
                 .background(
                     color = if (isChecked) MeongTheme.colors.primary else MeongTheme.colors.white,
-                    shape = RectangleShape
+                    shape = checkboxShape
                 )
                 .border(
                     width = 1.dp,
                     color = if (isChecked) MeongTheme.colors.primary else MeongTheme.colors.gray300,
-                    shape = RectangleShape
+                    shape = checkboxShape
                 ),
             contentAlignment = Alignment.Center
         ) {

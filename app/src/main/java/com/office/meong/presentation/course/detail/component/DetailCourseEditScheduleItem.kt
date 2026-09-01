@@ -116,11 +116,12 @@ fun DetailCourseEditScheduleItem(
                         color = MeongTheme.colors.gray900,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
+                            .weight(2f)
                             .noRippleClickable {
                                 isExpanded = false
                                 onChangePlaceClick()
                             }
-                            .padding(vertical = 14.dp, horizontal = 61.dp)
+                            .padding(vertical = 14.dp)
                     )
 
                     VerticalDivider(
@@ -140,7 +141,7 @@ fun DetailCourseEditScheduleItem(
                                 isExpanded = false
                                 onDeleteClick()
                             }
-                            .padding(vertical = 14.dp, horizontal = 38.dp)
+                            .padding(vertical = 14.dp)
                     )
                 }
             }
