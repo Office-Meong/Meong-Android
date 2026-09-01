@@ -109,35 +109,4 @@ object NetworkModule {
         .addConverterFactory(converterFactory)
         .client(client)
         .build()
-
-    @Provides
-    @Singleton
-    @KakaoLocalNetwork
-    fun providesKakaoLocalOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
-    ): OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
-        .addInterceptor(loggingInterceptor)
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .header("Authorization", "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}")
-                .build()
-            chain.proceed(request)
-        }
-        .build()
-
-    @Provides
-    @Singleton
-    @KakaoLocalNetwork
-    fun providesKakaoLocalRetrofit(
-        @KakaoLocalNetwork client: OkHttpClient,
-        converterFactory: Converter.Factory,
-    ): Retrofit = Retrofit.Builder()
-        .baseUrl(KAKAO_LOCAL_BASE_URL)
-        .addConverterFactory(converterFactory)
-        .client(client)
-        .build()
-
-    private const val KAKAO_LOCAL_BASE_URL = "https://dapi.kakao.com/"
 }

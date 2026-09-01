@@ -1,0 +1,121 @@
+# =============================================================================
+# OfficeMeong - R8 keep rules (release)
+# AGP auto-combines every *.keep under src/main/keepRules/ and passes them to R8.
+# The Android platform defaults still come from
+#   proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+# in app/build.gradle.kts (required until AGP 9.3's optimization{} DSL),
+# so only project-specific and library-gap rules live here.
+# =============================================================================
+
+# ---- Global attributes -------------------------------------------------------
+-keepattributes Signature,Exceptions,InnerClasses,EnclosingMethod,*Annotation*,
+                RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,
+                RuntimeVisibleTypeAnnotations,AnnotationDefault
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+
+# =============================================================================
+# kotlinx.serialization  (Retrofit converter + type-safe Navigation routes)
+# =============================================================================
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# Canonical kotlinx.serialization rules (R8 full-mode safe)
+-if @kotlinx.serialization.Serializable class **
+-keepclassmembers class <1> {
+    static <1>$Companion Companion;
+}
+-if @kotlinx.serialization.Serializable class ** {
+    static **$* *;
+}
+-keepclassmembers class <2>$<3> {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-if @kotlinx.serialization.Serializable class ** {
+    public static ** INSTANCE;
+}
+-keepclassmembers class <1> {
+    public static <1> INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Every @Serializable model in our namespace + its generated $$serializer
+-keep @kotlinx.serialization.Serializable class com.office.meong.** { *; }
+-keepclassmembers class com.office.meong.** {
+    *** Companion;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class com.office.meong.**$$serializer { *; }
+
+# Belt-and-braces on the network DTO packages (request/response bodies)
+-keep,includedescriptorclasses class com.office.meong.**.remote.dto.** { *; }
+-keep,includedescriptorclasses class com.office.meong.core.network.model.** { *; }
+
+
+# =============================================================================
+# Navigation Compose - type-safe routes
+# =============================================================================
+-keep class com.office.meong.core.navigation.Route
+-keep,includedescriptorclasses class * implements com.office.meong.core.navigation.Route { *; }
+-keep,includedescriptorclasses class com.office.meong.**.navigation.** { *; }
+
+
+# =============================================================================
+# Retrofit / OkHttp / Okio
+#   (both ship their own consumer rules; these only cover project surface + warns)
+# =============================================================================
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+# Our Retrofit service interfaces (annotations must survive)
+-keep,allowobfuscation interface com.office.meong.**.remote.api.**
+-keepclassmembers,allowobfuscation interface com.office.meong.**.remote.api.** {
+    @retrofit2.http.* <methods>;
+}
+
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+
+
+# =============================================================================
+# Google Tink (com.google.crypto.tink) - keyset / AEAD crypto
+# =============================================================================
+-keep class com.google.crypto.tink.** { *; }
+-keep class com.google.crypto.tink.shaded.protobuf.** { *; }
+-keepclassmembers class * extends com.google.crypto.tink.shaded.protobuf.GeneratedMessageLite {
+    <fields>;
+}
+-dontwarn com.google.crypto.tink.**
+-dontwarn com.google.api.client.**
+-dontwarn org.joda.time.**
+-dontwarn javax.annotation.**
+-dontwarn com.google.errorprone.annotations.**
+
+
+# =============================================================================
+# Kakao SDK (com.kakao.sdk) - Gson-backed models
+#   (SDK ships consumer rules; keep @SerializedName fields + silence warnings)
+# =============================================================================
+-keep class com.kakao.sdk.**.model.** { *; }
+-keepclassmembers,allowobfuscation class com.kakao.sdk.** {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+-keepclassmembers enum com.kakao.sdk.** { *; }
+-dontwarn com.kakao.sdk.**
+
+
+# =============================================================================
+# AboutLibraries - deserializes generated aboutlibraries.json via kotlinx.serialization
+# =============================================================================
+-keep class com.mikepenz.aboutlibraries.entity.** { *; }
+
+
+# =============================================================================
+# Misc third-party (all ship consumer rules - warns only, just in case)
+# =============================================================================
+-dontwarn com.airbnb.lottie.**
+-dontwarn kotlinx.coroutines.**

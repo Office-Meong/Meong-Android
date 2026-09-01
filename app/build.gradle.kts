@@ -30,7 +30,6 @@ android {
 
         buildConfigField("String", "BASE_URL", properties["base.url"].toString())
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${properties["kakao.native.app.key"]}\"")
-        buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties["kakao.rest.api.key"]}\"")
         manifestPlaceholders["kakaonativeappkey"] = properties["kakao.native.app.key"].toString()
     }
     signingConfigs {
@@ -40,13 +39,25 @@ android {
             storeFile = File("${project.rootDir.absolutePath}/keystore/debug.keystore")
             storePassword = "android"
         }
+        create("release") {
+            // Credentials come from local.properties (git-ignored):
+            //   release.store.password / release.key.alias / release.key.password
+            storeFile = File("${project.rootDir.absolutePath}/keystore/office_meong_releaseKey.jks")
+            storePassword = properties["release.store.password"].toString()
+            keyAlias = properties["release.key.alias"].toString()
+            keyPassword = properties["release.key.password"].toString()
+        }
     }
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // Android platform default rules. Project/library rules live in
+            // src/main/keepRules/*.keep (auto-combined by AGP).
+            // Switch to `optimization { enable = true }` after upgrading to AGP 9.3+.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

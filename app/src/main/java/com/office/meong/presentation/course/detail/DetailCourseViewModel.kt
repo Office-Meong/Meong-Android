@@ -10,7 +10,6 @@ import com.office.meong.core.common.util.successData
 import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.data.course.repository.CourseRepository
 import com.office.meong.data.favorite.repository.FavoriteRepository
-import com.office.meong.data.geocoding.repository.GeocodingRepository
 import com.office.meong.data.pet.model.toInfo
 import com.office.meong.data.pet.repository.PetRepository
 import com.office.meong.data.place.model.PlacePage
@@ -26,11 +25,8 @@ import com.office.meong.presentation.course.detail.navigation.DetailCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableMap
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +45,6 @@ class DetailCourseViewModel @Inject constructor(
     private val favoriteRepository: FavoriteRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val placeSearchUseCase: PlaceSearchUseCase,
-    private val geocodingRepository: GeocodingRepository,
 ) : ViewModel() {
     private val courseId = savedStateHandle.toRoute<DetailCourse>().courseId
 
@@ -256,25 +251,11 @@ class DetailCourseViewModel @Inject constructor(
         }
     }
 
-    /** 백엔드가 주소를 안 준 항목(주로 도보 코스형)은 좌표 기준으로 카카오 로컬 API를 통해 채워넣는다 */
-    private suspend fun mapCourseToUiModel(course: CourseDetail): DetailCourseUiModel {
-        val uiModel = course.toUiModel()
-        val itemsMissingAddress = uiModel.dayItems.values.flatten().filter { it.location.isBlank() }
-        if (itemsMissingAddress.isEmpty()) return uiModel
-
-        val resolvedAddresses = coroutineScope {
-            itemsMissingAddress
-                .associate { item -> item.id to async { geocodingRepository.getAddress(item.latitude, item.longitude).getOrNull() } }
-                .mapValues { it.value.await() }
-        }
-
-        return uiModel.copy(
-            dayItems = uiModel.dayItems.mapValues { (_, items) ->
-                items.map { item -> resolvedAddresses[item.id]?.let { address -> item.copy(location = address) } ?: item }
-                    .toImmutableList()
-            }.toImmutableMap()
-        )
-    }
+    /**
+     * 백엔드가 주소를 안 준 항목(주로 도보 코스형)은 location 이 빈 값으로 남는다.
+     * UI 에서 "카카오맵으로 확인해요" 안내로 대체 노출한다.
+     */
+    private fun mapCourseToUiModel(course: CourseDetail): DetailCourseUiModel = course.toUiModel()
 
     private fun accommodationItemId(): Long? {
         val state = _state.value
