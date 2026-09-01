@@ -20,6 +20,9 @@ import com.office.meong.presentation.mypage.petedit.navigation.navigateToMyPageP
 import com.office.meong.presentation.mypage.useredit.MyPageUserEditRoute
 import com.office.meong.presentation.mypage.useredit.navigation.MyPageUserEdit
 import com.office.meong.presentation.mypage.useredit.navigation.navigateToMyPageUserEdit
+import com.office.meong.presentation.mypage.withdraw.MyPageWithdrawRoute
+import com.office.meong.presentation.mypage.withdraw.navigation.MyPageWithdraw
+import com.office.meong.presentation.mypage.withdraw.navigation.navigateToMyPageWithdraw
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -45,6 +48,19 @@ fun NavGraphBuilder.myPageNavGraph(
                 navigateToOpenSourceLicense = navController::navigateToOssLicenses,
                 navigateToPetEdit = navController::navigateToMyPagePetEdit,
                 navigateToUserEdit = navController::navigateToMyPageUserEdit,
+                navigateToWithdraw = navController::navigateToMyPageWithdraw,
+                navigateToLogin = {
+                    navController.navigateToLogin(
+                        navOptions { popUpTo(0) { inclusive = true } }
+                    )
+                }
+            )
+        }
+
+        composable<MyPageWithdraw> {
+            MyPageWithdrawRoute(
+                paddingValues = paddingValues,
+                onBackClick = navigateUp,
                 navigateToLogin = {
                     navController.navigateToLogin(
                         navOptions { popUpTo(0) { inclusive = true } }

@@ -11,7 +11,6 @@ data class MyPageState(
     val userInfo: UiState<UserInfoModel> = UiState.Loading,
     val petInfo: UiState<PetInfo> = UiState.Loading,
     val policy: UiState<PolicyModel> = UiState.Loading,
-    val isWithdrawing: Boolean = false,
 )
 
 sealed interface MyPageSideEffect {

@@ -51,6 +51,7 @@ fun MyPageRoute(
     navigateToOpenSourceLicense: () -> Unit = {},
     navigateToPetEdit: () -> Unit = {},
     navigateToUserEdit: () -> Unit = {},
+    navigateToWithdraw: () -> Unit = {},
     navigateToLogin: () -> Unit = {},
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
@@ -59,7 +60,6 @@ fun MyPageRoute(
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
 
     var isLogoutDialogVisible by remember { mutableStateOf(false) }
-    var isWithdrawDialogVisible by remember { mutableStateOf(false) }
 
     viewModel.sideEffect.collectSideEffect {
         when (it) {
@@ -91,7 +91,7 @@ fun MyPageRoute(
                     isLogoutDialogVisible = true
                 }
                 override fun onClickWithdraw() {
-                    isWithdrawDialogVisible = true
+                    navigateToWithdraw()
                 }
             }
         }
@@ -116,23 +116,6 @@ fun MyPageRoute(
                 onClick = {
                     isLogoutDialogVisible = false
                     viewModel.onLogoutClick()
-                }
-            )
-        )
-    }
-
-    if (isWithdrawDialogVisible) {
-        MeongDialog(
-            onDismiss = { isWithdrawDialogVisible = false },
-            title = "정말 탈퇴하시겠어요?",
-            subDescription = "탈퇴하면 저장된 정보를 모두 잃게 돼요",
-            cancelAction = MeongCancelAction(onClick = { isWithdrawDialogVisible = false }),
-            confirmAction = MeongConfirmAction(
-                text = "탈퇴",
-                backgroundColor = MeongTheme.colors.red,
-                onClick = {
-                    isWithdrawDialogVisible = false
-                    viewModel.onWithdrawClick()
                 }
             )
         )

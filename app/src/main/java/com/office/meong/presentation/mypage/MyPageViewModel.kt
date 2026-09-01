@@ -105,23 +105,4 @@ class MyPageViewModel @Inject constructor(
                 }
         }
     }
-
-    fun onWithdrawClick() {
-        if (_state.value.isWithdrawing) return
-
-        viewModelScope.launch {
-            _state.update { it.copy(isWithdrawing = true) }
-
-            userRepository.deleteUser()
-                .onSuccess {
-                    tokenManager.clearTokens()
-                    _state.update { it.copy(isWithdrawing = false) }
-                    _sideEffect.send(MyPageSideEffect.NavigateToLogin)
-                }
-                .onFailure {
-                    _state.update { it.copy(isWithdrawing = false) }
-                    _sideEffect.send(MyPageSideEffect.ShowSnackBar("회원 탈퇴에 실패했어요"))
-                }
-        }
-    }
 }
