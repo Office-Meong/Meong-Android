@@ -31,7 +31,7 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun PetProfileCard(
     petName: String,
-    imageUrl: String,
+    imageUrl: String?,
     tags: ImmutableList<String>,
     modifier: Modifier = Modifier,
     isBordered: Boolean = false,
@@ -50,7 +50,7 @@ fun PetProfileCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(28.dp)
     ) {
-        if (imageUrl.isNotEmpty()) {
+        if (!imageUrl.isNullOrEmpty()) {
             UrlImage(
                 url = imageUrl,
                 modifier = Modifier

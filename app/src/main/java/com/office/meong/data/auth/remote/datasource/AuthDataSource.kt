@@ -2,6 +2,7 @@ package com.office.meong.data.auth.remote.datasource
 
 import com.office.meong.core.network.di.AuthNetwork
 import com.office.meong.core.network.di.NoAuthNetwork
+import com.office.meong.core.network.model.ApiException
 import com.office.meong.core.network.model.getOrThrow
 import com.office.meong.data.auth.remote.api.AuthService
 import com.office.meong.data.auth.remote.dto.request.KakaoLoginRequest
@@ -22,7 +23,8 @@ class AuthDataSource @Inject constructor(
     ).getOrThrow()
 
     suspend fun logout() {
-        authService.logout().getOrThrow()
+        val response = authService.logout()
+        if (!response.success) throw ApiException(response.message)
     }
 
     suspend fun refreshToken(refreshToken: String): TokenResponse =

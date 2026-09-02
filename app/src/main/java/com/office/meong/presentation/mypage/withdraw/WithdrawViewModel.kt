@@ -2,6 +2,7 @@ package com.office.meong.presentation.mypage.withdraw
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.office.meong.core.app.AppRestarter
 import com.office.meong.core.localstorage.token.TokenManager
 import com.office.meong.data.user.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class WithdrawViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val tokenManager: TokenManager,
+    private val appRestarter: AppRestarter,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WithdrawState())
     val state: StateFlow<WithdrawState> = _state.asStateFlow()
@@ -39,7 +41,10 @@ class WithdrawViewModel @Inject constructor(
                 .onSuccess {
                     tokenManager.clearTokens()
                     _state.update { it.copy(isWithdrawing = false) }
+                    // 프로세스를 재시작해 이전 계정의 InMemoryCache(강아지·코스 등)를 모두 초기화한다.
+                    // 재시작이 불가능한 경우를 대비해 로그인 화면 이동도 함께 요청한다.
                     _sideEffect.send(WithdrawSideEffect.NavigateToLogin)
+                    appRestarter.restartApp()
                 }
                 .onFailure {
                     _state.update { it.copy(isWithdrawing = false) }

@@ -2,6 +2,7 @@ package com.office.meong.presentation.mypage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.office.meong.core.app.AppRestarter
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.localstorage.token.TokenManager
@@ -27,6 +28,7 @@ class MyPageViewModel @Inject constructor(
     private val petRepository: PetRepository,
     private val authRepository: AuthRepository,
     private val tokenManager: TokenManager,
+    private val appRestarter: AppRestarter,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MyPageState())
     val state: StateFlow<MyPageState> = _state.asStateFlow()
@@ -98,7 +100,10 @@ class MyPageViewModel @Inject constructor(
             authRepository.logout()
                 .onSuccess {
                     tokenManager.clearTokens()
+                    // 프로세스를 재시작해 이전 계정의 InMemoryCache(강아지·코스 등)를 모두 초기화한다.
+                    // 재시작이 불가능한 경우를 대비해 로그인 화면 이동도 함께 요청한다.
                     _sideEffect.send(MyPageSideEffect.NavigateToLogin)
+                    appRestarter.restartApp()
                 }
                 .onFailure {
                     _sideEffect.send(MyPageSideEffect.ShowSnackBar("로그아웃에 실패했어요"))

@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!--
-        pettravel.kr(GWTO)이 TLS 핸드셰이크 시 중간 인증서(Sectigo Public Server
-        Authentication CA DV R36)를 보내지 않아 AIA 보충을 하지 않는 클라이언트(OkHttp/Coil)에서는
-        인증서 체인 검증이 실패한다(Trust anchor for certification path not found).
-        백엔드가 자체 JVM cacerts에 등록한 것과 동일한 중간 인증서를 여기에도 신뢰 앵커로 추가한다.
-    -->
     <domain-config>
         <domain includeSubdomains="true">pettravel.kr</domain>
         <trust-anchors>
@@ -13,10 +7,4 @@
             <certificates src="system" />
         </trust-anchors>
     </domain-config>
-
-    <base-config cleartextTrafficPermitted="true">
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
 </network-security-config>

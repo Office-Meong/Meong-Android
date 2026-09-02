@@ -16,12 +16,12 @@ val BirthDateOutputTransformation = OutputTransformation {
     if (rawLength > 4) insert(4, "-")
 }
 
-/** YYYYMMDD 8자리가 다 채워졌을 때만 "YYYY-MM-DD"로 변환하고, 아니면 선택 입력이므로 빈 값으로 취급한다 */
-fun String.toIsoBirthDateOrEmpty(): String {
+/** YYYYMMDD 8자리가 다 채워졌을 때만 "YYYY-MM-DD"로 변환하고, 아니면 선택 입력이므로 null로 취급한다 */
+fun String.toIsoBirthDateOrNull(): String? {
     val digits = filter { it.isDigit() }
     return if (digits.length == 8) {
         "${digits.substring(0, 4)}-${digits.substring(4, 6)}-${digits.substring(6, 8)}"
     } else {
-        ""
+        null
     }
 }
