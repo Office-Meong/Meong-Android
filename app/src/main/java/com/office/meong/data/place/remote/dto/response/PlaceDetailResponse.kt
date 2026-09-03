@@ -9,29 +9,29 @@ data class PlaceDetailResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("name")
-    val name: String,
+    val name: String = "",
     @SerialName("region")
     val region: Region = Region.UNKNOWN,
     @SerialName("placeType")
-    val placeType: String,
+    val placeType: String = "",
     @SerialName("address")
-    val address: String,
+    val address: String = "",
     @SerialName("tel")
-    val tel: String?,
+    val tel: String? = null,
     @SerialName("homepage")
-    val homepage: String?,
+    val homepage: String? = null,
     @SerialName("overview")
-    val overview: String?,
+    val overview: String? = null,
     @SerialName("imageUrls")
-    val imageUrls: List<String>,
+    val imageUrls: List<String> = emptyList(),
     @SerialName("score")
-    val score: PlaceScoreResponse,
+    val score: PlaceScoreResponse = PlaceScoreResponse(),
     @SerialName("petCondition")
-    val petCondition: PlacePetConditionResponse,
+    val petCondition: PlacePetConditionResponse = PlacePetConditionResponse(),
     @SerialName("operation")
-    val operation: PlaceOperationResponse,
+    val operation: PlaceOperationResponse = PlaceOperationResponse(),
     @SerialName("accessibility")
-    val accessibility: PlaceAccessibilityResponse,
+    val accessibility: PlaceAccessibilityResponse = PlaceAccessibilityResponse(),
     @SerialName("favorite")
-    val favorite: Boolean,
+    val favorite: Boolean = false,
 )

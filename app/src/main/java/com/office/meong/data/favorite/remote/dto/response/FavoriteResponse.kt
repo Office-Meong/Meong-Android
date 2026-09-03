@@ -9,17 +9,17 @@ data class FavoriteResponse(
     @SerialName("placeId")
     val placeId: Long,
     @SerialName("placeName")
-    val placeName: String,
+    val placeName: String = "",
     @SerialName("placeType")
-    val placeType: String,
+    val placeType: String = "",
     @SerialName("region")
     val region: Region = Region.UNKNOWN,
     @SerialName("address")
-    val address: String,
+    val address: String = "",
     @SerialName("thumbnailUrl")
-    val thumbnailUrl: String?,
+    val thumbnailUrl: String? = null,
     @SerialName("grade")
-    val grade: String,
+    val grade: String = "",
     @SerialName("favoritedAt")
-    val favoritedAt: String,
+    val favoritedAt: String = "",
 )

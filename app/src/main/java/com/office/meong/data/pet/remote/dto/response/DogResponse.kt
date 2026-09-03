@@ -8,7 +8,7 @@ data class DogResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("name")
-    val name: String,
+    val name: String = "",
     @SerialName("breed")
     val breed: String? = null,
     @SerialName("weightKg")
@@ -20,11 +20,11 @@ data class DogResponse(
     @SerialName("imageUrl")
     val imageUrl: String? = null,
     @SerialName("sizeCategory")
-    val sizeCategory: String,
+    val sizeCategory: String = "",
     @SerialName("activityLevel")
-    val activityLevel: String,
+    val activityLevel: String = "",
     @SerialName("sociability")
-    val sociability: String,
+    val sociability: String = "",
     @SerialName("healthStatus")
-    val healthStatus: String,
+    val healthStatus: String = "",
 )

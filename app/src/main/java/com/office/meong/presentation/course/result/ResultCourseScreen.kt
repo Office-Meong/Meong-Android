@@ -572,6 +572,8 @@ private fun ResultCourseScreen(
             item {
                 ResultCourseScheduleSection(
                     dayNumber = dayNumber.toString(),
+                    isFirstDay = dayNumber == 1,
+                    isLastDay = dayNumber == course.totalDays,
                     tripDay = dayDate,
                     routeLength = formatDistanceKm(scheduleUiModels.firstOrNull()?.distanceFromPrevKm ?: 0.0),
                     accommodation = accommodation,

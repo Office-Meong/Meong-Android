@@ -9,15 +9,15 @@ data class WalkCourseResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("courseName")
-    val courseName: String,
+    val courseName: String = "",
     @SerialName("region")
     val region: Region = Region.UNKNOWN,
     @SerialName("distanceKm")
-    val distanceKm: Double,
+    val distanceKm: Double = 0.0,
     @SerialName("startLatitude")
-    val startLatitude: Double,
+    val startLatitude: Double = 0.0,
     @SerialName("startLongitude")
-    val startLongitude: Double,
+    val startLongitude: Double = 0.0,
     @SerialName("distanceFromUserKm")
-    val distanceFromUserKm: Double
+    val distanceFromUserKm: Double = 0.0
 )

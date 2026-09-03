@@ -8,11 +8,11 @@ data class UserResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("nickname")
-    val nickname: String,
+    val nickname: String = "",
     @SerialName("profileImageUrl")
-    val profileImageUrl: String?,
+    val profileImageUrl: String? = null,
     @SerialName("email")
-    val email: String?,
+    val email: String? = null,
     @SerialName("createdAt")
-    val createdAt: String
+    val createdAt: String = ""
 )

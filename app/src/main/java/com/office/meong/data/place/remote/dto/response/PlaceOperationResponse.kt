@@ -6,15 +6,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlaceOperationResponse(
     @SerialName("operatingHours")
-    val operatingHours: String?,
+    val operatingHours: String? = null,
     @SerialName("closedDays")
-    val closedDays: String?,
+    val closedDays: String? = null,
     @SerialName("usageFee")
-    val usageFee: String?,
+    val usageFee: String? = null,
     @SerialName("parkingAvailable")
-    val parkingAvailable: Boolean?,
+    val parkingAvailable: Boolean? = null,
     @SerialName("indoorOutdoorType")
-    val indoorOutdoorType: String?,
+    val indoorOutdoorType: String? = null,
     @SerialName("lodgingType")
-    val lodgingType: String?,
+    val lodgingType: String? = null,
 )

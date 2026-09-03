@@ -6,21 +6,21 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlacePetConditionResponse(
     @SerialName("acmpyType")
-    val acmpyType: String,
+    val acmpyType: String = "",
     @SerialName("isCageRequired")
-    val isCageRequired: Boolean,
+    val isCageRequired: Boolean = false,
     @SerialName("isLeashRequired")
-    val isLeashRequired: Boolean,
+    val isLeashRequired: Boolean = false,
     @SerialName("petWeightLimitKg")
-    val petWeightLimitKg: Double?,
+    val petWeightLimitKg: Double? = null,
     @SerialName("catAllowed")
-    val catAllowed: Boolean,
+    val catAllowed: Boolean = false,
     @SerialName("bathAvailable")
-    val bathAvailable: Boolean,
+    val bathAvailable: Boolean = false,
     @SerialName("companionConditions")
-    val companionConditions: String?,
+    val companionConditions: String? = null,
     @SerialName("availableFacilities")
-    val availableFacilities: String?,
+    val availableFacilities: String? = null,
     @SerialName("cautions")
-    val cautions: String?,
+    val cautions: String? = null,
 )

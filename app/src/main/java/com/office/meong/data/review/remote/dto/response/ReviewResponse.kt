@@ -8,13 +8,13 @@ data class ReviewResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("userId")
-    val userId: Long,
+    val userId: Long = 0L,
     @SerialName("userNickname")
-    val userNickname: String,
+    val userNickname: String = "",
     @SerialName("score")
-    val score: Int,
+    val score: Int = 0,
     @SerialName("content")
-    val content: String,
+    val content: String = "",
     @SerialName("createdAt")
-    val createdAt: String,
+    val createdAt: String = "",
 )

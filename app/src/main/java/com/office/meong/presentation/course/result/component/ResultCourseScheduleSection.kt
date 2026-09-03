@@ -31,6 +31,8 @@ import com.office.meong.presentation.course.model.ScheduleUiModel
 @Composable
 fun ResultCourseScheduleSection(
     dayNumber: String,
+    isFirstDay: Boolean,
+    isLastDay: Boolean,
     tripDay: String,
     routeLength: String,
     accommodation: ScheduleUiModel?,
@@ -42,6 +44,8 @@ fun ResultCourseScheduleSection(
     Column(modifier = modifier) {
         DateNavigator(
             dayNumber = dayNumber,
+            isFirstDay = isFirstDay,
+            isLastDay = isLastDay,
             tripDay = tripDay,
             onPreviousClick = onPreviousClick,
             onNextClick = onNextClick
@@ -71,6 +75,8 @@ fun ResultCourseScheduleSection(
 @Composable
 private fun DateNavigator(
     dayNumber: String,
+    isFirstDay: Boolean,
+    isLastDay: Boolean,
     tripDay: String,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -88,8 +94,8 @@ private fun DateNavigator(
             contentDescription = "이전",
             modifier = Modifier
                 .size(16.dp)
-                .noRippleClickable(onClick = onPreviousClick),
-            tint = MeongTheme.colors.gray900,
+                .let { if (isFirstDay) it else it.noRippleClickable(onClick = onPreviousClick) },
+            tint = if (isFirstDay) MeongTheme.colors.gray400 else MeongTheme.colors.gray900,
         )
 
         Spacer(modifier = Modifier.width(10.dp))
@@ -128,8 +134,8 @@ private fun DateNavigator(
             contentDescription = "이후",
             modifier = Modifier
                 .size(16.dp)
-                .noRippleClickable(onClick = onNextClick),
-            tint = MeongTheme.colors.gray900,
+                .let { if (isLastDay) it else it.noRippleClickable(onClick = onNextClick) },
+            tint = if (isLastDay) MeongTheme.colors.gray400 else MeongTheme.colors.gray900,
         )
     }
 }
@@ -141,6 +147,8 @@ private fun ResultCourseScheduleSectionPreview() {
     MeongTheme {
         ResultCourseScheduleSection(
             dayNumber = "2",
+            isFirstDay = false,
+            isLastDay = false,
             tripDay = "8.11",
             routeLength = "1.2",
             accommodation = ScheduleUiModel(id = "0", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
