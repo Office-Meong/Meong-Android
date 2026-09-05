@@ -29,14 +29,35 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "BASE_URL", properties["base.url"].toString())
-
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${properties["kakao.native.app.key"]}\"")
+        manifestPlaceholders["kakaonativeappkey"] = properties["kakao.native.app.key"].toString()
+    }
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = File("${project.rootDir.absolutePath}/keystore/debug.keystore")
+            storePassword = "android"
+        }
+        create("release") {
+            // Credentials come from local.properties (git-ignored):
+            //   release.store.password / release.key.alias / release.key.password
+            storeFile = File("${project.rootDir.absolutePath}/keystore/office_meong_releaseKey.jks")
+            storePassword = properties["release.store.password"].toString()
+            keyAlias = properties["release.key.alias"].toString()
+            keyPassword = properties["release.key.password"].toString()
+        }
     }
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // Android platform default rules. Project/library rules live in
+            // src/main/keepRules/*.keep (auto-combined by AGP).
+            // Switch to `optimization { enable = true }` after upgrading to AGP 9.3+.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -53,8 +74,17 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll(
             "-opt-in=androidx.compose.foundation.style.ExperimentalFoundationStyleApi",
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
         )
     }
+}
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler/reports")
+    metricsDestination = layout.buildDirectory.dir("compose_compiler/metrics")
+    stabilityConfigurationFiles.add(
+        project.layout.projectDirectory.file("compose_compiler_config.conf")
+    )
 }
 
 dependencies {
@@ -76,6 +106,7 @@ dependencies {
     implementation(libs.aboutlibraries.compose.m3)
     implementation(libs.lottie.compose)
     implementation(libs.tink.android)
+    implementation(libs.kakao.auth)
 
     testImplementation(libs.bundles.unitTest)
     androidTestImplementation(libs.bundles.test)

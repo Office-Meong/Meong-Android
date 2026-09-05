@@ -22,19 +22,24 @@ data class PetEditState(
     val selectedSociability: PetSociability? = null,
     val selectedHealth: PetHealthStatus? = null,
     val isSaving: Boolean = false,
+    val hasAttemptedSave: Boolean = false,
 ) {
     val isSaveEnabled: Boolean
         get() = pet is UiState.Success &&
             !isSaving &&
             !isImageUploading &&
             nameTextFieldState.text.isNotBlank() &&
-            breedTextFieldState.text.isNotBlank() &&
-            weightTextFieldState.text.toString().toDoubleOrNull() != null &&
-            birthDateTextFieldState.text.isNotBlank() &&
             selectedSize != null &&
             selectedActivity != null &&
             selectedSociability != null &&
             selectedHealth != null
+
+    val nameErrorMessage: String?
+        get() = if (hasAttemptedSave && nameTextFieldState.text.isBlank()) {
+            "반려견 이름을 입력해주세요"
+        } else {
+            null
+        }
 }
 
 sealed interface PetEditSideEffect {

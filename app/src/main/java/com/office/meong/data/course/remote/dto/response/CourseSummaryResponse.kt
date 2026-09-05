@@ -9,25 +9,25 @@ data class CourseSummaryResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("name")
-    val name: String,
+    val name: String = "",
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("startDate")
-    val startDate: String,
+    val startDate: String = "",
     @SerialName("endDate")
-    val endDate: String,
+    val endDate: String = "",
     @SerialName("totalDays")
-    val totalDays: Int,
+    val totalDays: Int = 0,
     @SerialName("averageGrade")
-    val averageGrade: String,
+    val averageGrade: String = "",
     @SerialName("workPlaceCount")
-    val workPlaceCount: Int,
+    val workPlaceCount: Int = 0,
     @SerialName("foodCount")
-    val foodCount: Int,
+    val foodCount: Int = 0,
     @SerialName("tourWalkCount")
-    val tourWalkCount: Int,
+    val tourWalkCount: Int = 0,
     @SerialName("otherCount")
-    val otherCount: Int,
+    val otherCount: Int = 0,
     @SerialName("totalPlaceCount")
-    val totalPlaceCount: Int,
+    val totalPlaceCount: Int = 0,
 )

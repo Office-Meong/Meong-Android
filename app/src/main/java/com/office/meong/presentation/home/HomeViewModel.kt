@@ -30,10 +30,7 @@ class HomeViewModel @Inject constructor(
     private val _sideEffect = Channel<HomeSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
 
-    init {
-        fetchPetInfo()
-        fetchHomeCourses()
-    }
+    // 최초 로드는 화면의 onResume 에서 refresh() 로 트리거한다(init + onResume 로 두 번 조회하는 것을 방지).
 
     fun retryLoad() {
         fetchHomeCourses()
@@ -43,9 +40,17 @@ class HomeViewModel @Inject constructor(
         fetchPetInfo()
     }
 
+    /** 화면 진입·복귀 시 호출. 결과가 이미 있으면 조용히, 없으면 로딩을 노출하며 다시 불러온다. */
+    fun refresh() {
+        fetchHomeCourses()
+        fetchPetInfo()
+    }
+
     private fun fetchPetInfo() {
         viewModelScope.launch {
-            _state.update { it.copy(petInfo = UiState.Loading) }
+            val current = _state.value.petInfo
+            val isBackgroundRefresh = current !is UiState.Loading && current !is UiState.Failure
+            if (!isBackgroundRefresh) _state.update { it.copy(petInfo = UiState.Loading) }
 
             petRepository.getDogs()
                 .onSuccess { petInfo ->
@@ -58,10 +63,8 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 .onFailure {
-                    _state.update { currentState ->
-                        currentState.copy(
-                            petInfo = UiState.Failure(LoadErrorHandleAction.Retry)
-                        )
+                    if (!isBackgroundRefresh) {
+                        _state.update { it.copy(petInfo = UiState.Failure(LoadErrorHandleAction.Retry)) }
                     }
                 }
         }
@@ -69,7 +72,9 @@ class HomeViewModel @Inject constructor(
 
     private fun fetchHomeCourses() {
         viewModelScope.launch {
-            _state.update { it.copy(homeCourseSummaries = UiState.Loading) }
+            val current = _state.value.homeCourseSummaries
+            val isBackgroundRefresh = current !is UiState.Loading && current !is UiState.Failure
+            if (!isBackgroundRefresh) _state.update { it.copy(homeCourseSummaries = UiState.Loading) }
 
             courseRepository.getCourses()
                 .onSuccess { courseResult ->
@@ -82,10 +87,8 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 .onFailure {
-                    _state.update { currentState ->
-                        currentState.copy(
-                            homeCourseSummaries = UiState.Failure(LoadErrorHandleAction.Retry)
-                        )
+                    if (!isBackgroundRefresh) {
+                        _state.update { it.copy(homeCourseSummaries = UiState.Failure(LoadErrorHandleAction.Retry)) }
                     }
                 }
         }

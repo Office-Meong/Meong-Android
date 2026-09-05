@@ -49,6 +49,9 @@ class CourseDataSource @Inject constructor(
     ): List<AlternativePlaceResponse> =
         courseService.getCourseItemAlternatives(courseId, itemId).getOrThrow()
 
+    suspend fun deleteCourseItem(courseId: Long, itemId: Long): CourseResponse =
+        courseService.deleteCourseItem(courseId, itemId).getOrThrow()
+
     suspend fun patchCourseName(courseId: Long, name: String): CourseResponse =
         courseService.patchCourseName(
             courseId = courseId,

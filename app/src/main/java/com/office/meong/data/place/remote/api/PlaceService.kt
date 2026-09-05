@@ -13,7 +13,7 @@ interface PlaceService {
     suspend fun getPlaces(
         @Query("region") region: String?,
         @Query("type") type: String?,
-        @Query("sort") sort: String?,
+        @Query("sort") sort: String? = "SCORE",
         @Query("congestion") congestion: String?,
         @Query("keyword") keyword: String?,
         @Query("page") page: Int,

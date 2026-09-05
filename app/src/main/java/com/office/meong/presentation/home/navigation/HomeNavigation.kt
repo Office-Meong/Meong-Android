@@ -17,11 +17,15 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) =
 
 
 fun NavGraphBuilder.homeNavGraph(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    navigateToCreateCourse: () -> Unit,
+    navigateToDetailCourse: (Long) -> Unit
 ) {
     composable<Home> {
         HomeRoute(
-            paddingValues = paddingValues
+            paddingValues = paddingValues,
+            navigateToCreateCourse = navigateToCreateCourse,
+            navigateToDetailCourse = navigateToDetailCourse
         )
     }
 }

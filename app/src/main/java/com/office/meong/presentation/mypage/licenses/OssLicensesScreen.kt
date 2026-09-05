@@ -27,7 +27,7 @@ fun OssLicensesScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                color = MeongTheme.colors.gray50
+                color = MeongTheme.colors.white
             )
             .padding(paddingValues)
     ) {
@@ -44,7 +44,11 @@ fun OssLicensesScreen(
                 dialogContentColor = MeongTheme.colors.black,
                 dialogConfirmButtonColor = MeongTheme.colors.black
             ),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = MeongTheme.colors.gray50
+                )
         )
     }
 }

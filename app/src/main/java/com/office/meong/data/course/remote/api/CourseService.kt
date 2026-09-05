@@ -56,6 +56,12 @@ interface CourseService {
         @Path("itemId") itemId: Long
     ): BaseResponse<List<AlternativePlaceResponse>>
 
+    @DELETE("courses/{courseId}/items/{itemId}")
+    suspend fun deleteCourseItem(
+        @Path("courseId") courseId: Long,
+        @Path("itemId") itemId: Long
+    ): BaseResponse<CourseResponse>
+
     @PATCH("courses/{courseId}/name")
     suspend fun patchCourseName(
         @Path("courseId") courseId: Long,

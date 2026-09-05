@@ -11,23 +11,23 @@ data class PlaceSummaryResponse(
     @SerialName("name")
     val name: String,
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("placeType")
-    val placeType: String,
+    val placeType: String = "",
     @SerialName("address")
-    val address: String,
+    val address: String = "",
     @SerialName("thumbnailUrl")
-    val thumbnailUrl: String?,
+    val thumbnailUrl: String? = null,
     @SerialName("grade")
-    val grade: String,
+    val grade: String = "",
     @SerialName("totalScore")
-    val totalScore: Int,
+    val totalScore: Int = 0,
     @SerialName("acmpyType")
-    val acmpyType: String,
+    val acmpyType: String = "",
     @SerialName("congestionScore")
-    val congestionScore: Int,
+    val congestionScore: Int = 0,
     @SerialName("congestionLevel")
-    val congestionLevel: String,
+    val congestionLevel: String = "",
     @SerialName("favorite")
-    val favorite: Boolean,
+    val favorite: Boolean = false,
 )

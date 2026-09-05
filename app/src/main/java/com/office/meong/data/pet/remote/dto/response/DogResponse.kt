@@ -8,23 +8,23 @@ data class DogResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("name")
-    val name: String,
+    val name: String = "",
     @SerialName("breed")
-    val breed: String,
+    val breed: String? = null,
     @SerialName("weightKg")
-    val weightKg: Double,
+    val weightKg: Double? = null,
     @SerialName("birthDate")
-    val birthDate: String,
+    val birthDate: String? = null,
     @SerialName("isNeutered")
-    val isNeutered: Boolean,
+    val isNeutered: Boolean? = null,
     @SerialName("imageUrl")
-    val imageUrl: String,
+    val imageUrl: String? = null,
     @SerialName("sizeCategory")
-    val sizeCategory: String,
+    val sizeCategory: String = "",
     @SerialName("activityLevel")
-    val activityLevel: String,
+    val activityLevel: String = "",
     @SerialName("sociability")
-    val sociability: String,
+    val sociability: String = "",
     @SerialName("healthStatus")
-    val healthStatus: String,
+    val healthStatus: String = "",
 )

@@ -36,7 +36,10 @@ fun DetailCourseInfoHolder(
         modifier = modifier
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
         ) {
             Text(
                 text = title,
@@ -58,7 +61,7 @@ fun DetailCourseInfoHolder(
         Spacer(Modifier.height(4.dp))
 
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(4.dp),

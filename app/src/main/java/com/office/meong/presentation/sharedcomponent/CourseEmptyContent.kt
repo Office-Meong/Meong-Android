@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.designsystem.component.button.MeongPillButton
+import com.office.meong.core.designsystem.component.button.MeongPillButtonStyle
 import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
@@ -51,7 +52,7 @@ fun CourseEmptyContent(
 
         MeongPillButton(
             text = "맞춤 코스 만들기",
-            isPrimary = true,
+            style = MeongPillButtonStyle.Primary,
             onClick = onClickPillButton,
             suffixIcon = R.drawable.ic_chevron_right
         )

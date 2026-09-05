@@ -15,6 +15,7 @@ import com.office.meong.data.pet.remote.dto.response.DogResponse
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 private class FakeDogService : PetService {
@@ -67,7 +68,7 @@ class PetRepositoryImplCacheTest {
     }
 
     @Test
-    fun `반려견을 등록하면 캐시가 무효화되어 다음 조회는 다시 네트워크를 탄다`() = runBlocking {
+    fun `반려견을 등록하면 재조회 없이 캐시에 새 반려견이 반영된다`() = runBlocking {
         val fakeService = FakeDogService()
         val repository = buildRepository(fakeService)
 
@@ -86,9 +87,12 @@ class PetRepositoryImplCacheTest {
                 healthStatus = PetHealthStatus.HEALTHY,
             )
         )
-        repository.getDogs()
+        val dogsAfterCreate = repository.getDogs().getOrThrow()
 
-        assertEquals(2, fakeService.getDogsCallCount)
+        // 등록 응답으로 캐시를 낙관적으로 갱신하므로 목록 재조회는 나가지 않는다.
+        assertEquals(1, fakeService.getDogsCallCount)
+        assertEquals(2, dogsAfterCreate.size)
+        assertTrue(dogsAfterCreate.any { it.name == "새 강아지" })
     }
 
     @Test

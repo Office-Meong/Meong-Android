@@ -16,6 +16,7 @@ import com.office.meong.core.designsystem.theme.MeongTheme
 
 @Composable
 fun ResultCourseTopSection(
+    petName: String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -34,7 +35,7 @@ fun ResultCourseTopSection(
                         color = MeongTheme.colors.primary
                     ).toSpanStyle()
                 ) {
-                    append("몽몽이")
+                    append(petName)
                 }
 
                 append("와 함께할\n" +
@@ -61,6 +62,6 @@ fun ResultCourseTopSection(
 @Composable
 private fun ResultCourseTopSectionPreview() {
     MeongTheme {
-        ResultCourseTopSection()
+        ResultCourseTopSection(petName = "몽몽이")
     }
 }

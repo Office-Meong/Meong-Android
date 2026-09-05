@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.component.button.MeongPillButton
+import com.office.meong.core.designsystem.component.button.MeongPillButtonStyle
 import com.office.meong.core.designsystem.component.image.StableImage
 import com.office.meong.core.designsystem.theme.MeongTheme
 
@@ -53,7 +54,7 @@ fun ResultCourseSuccessScreen(
 
         MeongPillButton(
             text = "저장한 코스 보러가기",
-            isPrimary = true,
+            style = MeongPillButtonStyle.Primary,
             onClick = navigateToDetailCourse
         )
 

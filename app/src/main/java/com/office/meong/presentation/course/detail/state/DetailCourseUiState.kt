@@ -26,10 +26,16 @@ class DetailCourseUiState private constructor() {
     var isAddPlaceVisible by mutableStateOf(false)
         private set
 
+    var isEditScheduleItemVisible by mutableStateOf(false)
+        private set
+
     var isEditSchedule by mutableStateOf(false)
         private set
 
     var isDeleteDialogVisible by mutableStateOf(false)
+        private set
+
+    var scheduleItemIdPendingDelete by mutableStateOf<Long?>(null)
         private set
 
     var editPlaceChipType by mutableStateOf(PlaceEditChipType.SEARCH)
@@ -69,6 +75,15 @@ class DetailCourseUiState private constructor() {
         editPlaceChipType = PlaceEditChipType.SEARCH
     }
 
+    fun showEditScheduleItem() {
+        isEditScheduleItemVisible = true
+    }
+
+    fun hideEditScheduleItem() {
+        isEditScheduleItemVisible = false
+        editPlaceChipType = PlaceEditChipType.SEARCH
+    }
+
     fun selectPlaceEditChip(chipType: PlaceEditChipType) {
         editPlaceChipType = chipType
     }
@@ -87,6 +102,14 @@ class DetailCourseUiState private constructor() {
 
     fun hideDeleteDialog() {
         isDeleteDialogVisible = false
+    }
+
+    fun showDeleteScheduleItemDialog(itemId: Long) {
+        scheduleItemIdPendingDelete = itemId
+    }
+
+    fun hideDeleteScheduleItemDialog() {
+        scheduleItemIdPendingDelete = null
     }
 
     companion object {

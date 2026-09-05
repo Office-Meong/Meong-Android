@@ -5,7 +5,10 @@ import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.data.course.model.AlternativePlace
 import com.office.meong.data.course.model.CourseItem
-import kotlinx.collections.immutable.persistentListOf
+import com.office.meong.data.favorite.model.FavoriteModel
+import com.office.meong.data.place.model.PlaceSummary
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 
 @Immutable
 data class ScheduleUiModel(
@@ -20,25 +23,18 @@ data class ScheduleUiModel(
     val thumbnailUrl: String? = null,
     val lodgingType: LodgingType? = null,
     val placeId: Long? = null
-) {
-    companion object {
-        val DUMMY_SEARCHABLE_PLACES = persistentListOf(
-            ScheduleUiModel(id = "search-1", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
-            ScheduleUiModel(id = "search-2", placeType = PlaceType.RESTAURANT, placeName = "댕댕이 맛집", grade = "A"),
-            ScheduleUiModel(id = "search-3", placeType = PlaceType.SIGHTSEEING, placeName = "산책하기 좋은 공원", grade = "A"),
-        )
-    }
-}
+)
 
+/** id가 아직 서버에서 채워지지 않은 경우(방금 추가된 아이템) 다음 조회 전까지 임시 id를 사용한다. */
 fun CourseItem.toUiModel(): ScheduleUiModel = ScheduleUiModel(
-    id = id.toString(),
+    id = id?.toString() ?: "pending-$placeId-$visitOrder",
     placeType = PlaceType.from(placeType),
     placeName = placeName,
-    grade = "",
-    location = address,
+    grade = grade.orEmpty(),
+    location = address.orEmpty(),
     latitude = latitude,
     longitude = longitude,
-    distanceFromPrevKm = distanceFromPrevKm,
+    distanceFromPrevKm = distanceFromPrevKm ?: 0.0,
     thumbnailUrl = thumbnailUrl,
     lodgingType = LodgingType.from(lodgingType),
     placeId = placeId,
@@ -54,3 +50,28 @@ fun AlternativePlace.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
     longitude = longitude,
     placeId = placeId,
 )
+
+fun FavoriteModel.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
+    id = placeId.toString(),
+    placeType = PlaceType.from(placeType),
+    placeName = placeName,
+    grade = grade,
+    location = address,
+    thumbnailUrl = thumbnailUrl,
+    placeId = placeId,
+)
+
+fun PlaceSummary.toScheduleUiModel(): ScheduleUiModel = ScheduleUiModel(
+    id = id.toString(),
+    placeType = PlaceType.from(placeType),
+    placeName = name,
+    grade = grade,
+    location = address,
+    thumbnailUrl = thumbnailUrl,
+    placeId = id,
+)
+
+/** 해당 날짜에 숙소 항목이 없는 코스(예: 1일차에만 숙소가 들어있는 경우)를 대비해, 없으면 코스 전체에서 찾은 숙소로 대체한다. */
+fun ImmutableMap<Int, ImmutableList<ScheduleUiModel>>.accommodationForDay(dayNumber: Int): ScheduleUiModel? =
+    this[dayNumber]?.firstOrNull { it.placeType == PlaceType.ACCOMMODATION }
+        ?: values.flatten().firstOrNull { it.placeType == PlaceType.ACCOMMODATION }

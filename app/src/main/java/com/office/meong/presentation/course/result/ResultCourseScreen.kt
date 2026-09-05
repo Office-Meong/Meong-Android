@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +22,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -29,30 +32,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.dragdrop.rememberDragDropState
 import com.office.meong.core.common.extension.collectSideEffect
 import com.office.meong.core.common.extension.disableNestedScroll
 import com.office.meong.core.common.extension.noRippleClickable
+import com.office.meong.core.common.extension.openKakaoMapRoute
+import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.common.util.UiState
 import com.office.meong.core.common.util.formatDayDate
-import com.office.meong.core.common.extension.statusBarColor
 import com.office.meong.core.common.util.formatDistanceKm
+import com.office.meong.core.common.util.successData
 import com.office.meong.core.designsystem.component.bottomsheet.MeongBottomSheet
 import com.office.meong.core.designsystem.component.button.MeongButton
+import com.office.meong.core.designsystem.component.button.MeongPillButton
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.component.dialog.MeongDialog
@@ -65,9 +76,18 @@ import com.office.meong.core.designsystem.component.topbar.TopbarAction
 import com.office.meong.core.designsystem.component.view.LoadErrorViewAction
 import com.office.meong.core.designsystem.component.view.MeongLoadErrorView
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.course.WorkFocusLevel
+import com.office.meong.core.model.pet.PetActivityLevel
+import com.office.meong.core.model.pet.PetHealthStatus
+import com.office.meong.core.model.pet.PetInfo
+import com.office.meong.core.model.pet.PetSizeCategory
+import com.office.meong.core.model.pet.PetSociability
 import com.office.meong.core.model.place.PlaceType
+import com.office.meong.core.model.region.Region
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
+import com.office.meong.presentation.course.model.ScheduleUiModel
+import com.office.meong.presentation.course.model.accommodationForDay
 import com.office.meong.presentation.course.result.action.AccommodationEditActions
 import com.office.meong.presentation.course.result.action.ResultCourseEditActions
 import com.office.meong.presentation.course.result.action.ScheduleEditActions
@@ -80,12 +100,11 @@ import com.office.meong.presentation.course.result.component.ResultCourseSchedul
 import com.office.meong.presentation.course.result.component.ResultCourseScheduleSection
 import com.office.meong.presentation.course.result.component.ResultCourseTopSection
 import com.office.meong.presentation.course.result.component.RouteIndicator
+import com.office.meong.presentation.course.result.component.screen.ResultCourseSuccessScreen
 import com.office.meong.presentation.course.result.model.CurrentDialogType
 import com.office.meong.presentation.course.result.model.PlaceEditChipType
 import com.office.meong.presentation.course.result.model.ResultCourseUiModel
 import com.office.meong.presentation.course.result.model.RouteIndicatorType
-import com.office.meong.presentation.course.model.ScheduleUiModel
-import com.office.meong.presentation.course.model.ScheduleUiModel.Companion.DUMMY_SEARCHABLE_PLACES
 import com.office.meong.presentation.course.result.state.ResultCourseUiState
 import com.office.meong.presentation.course.result.state.rememberResultCourseUiState
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
@@ -95,26 +114,42 @@ import com.valentinilk.shimmer.Shimmer
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultCourseRoute(
     paddingValues: PaddingValues,
     navigateUp: () -> Unit,
+    navigateToEntryScreen: () -> Unit,
+    navigateToDetailCourse: (Long) -> Unit,
+    navigateToHome: () -> Unit,
+    navigateToExploreDetail: (Long) -> Unit,
     viewModel: ResultCourseViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    // ExploreDetail 등 다른 화면에서 즐겨찾기를 바꾸고 돌아온 경우를 반영하기 위해 복귀 시 다시 조회한다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.fetchFavoritePlaces()
+    }
 
     viewModel.sideEffect.collectSideEffect {
         when (it) {
             is ResultCourseSideEffect.ShowToast -> {
                 globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
             }
+
+            is ResultCourseSideEffect.NavigateBackToCreate -> navigateUp()
+            is ResultCourseSideEffect.NavigateToEntryScreen -> navigateToEntryScreen()
         }
     }
 
@@ -142,14 +177,29 @@ fun ResultCourseRoute(
             ResultCourseContent(
                 paddingValues = paddingValues,
                 course = course.data,
+                petInfo = state.petInfo,
                 selectedDayNumber = state.selectedDayNumber,
                 accommodationAlternatives = state.accommodationAlternatives,
+                favoritePlaces = state.favoritePlaces,
+                favoritePlaceIds = state.favoritePlaceIds,
+                scheduleItemAlternatives = state.scheduleItemAlternatives,
+                placeSearchResults = state.placeSearchResults,
                 onPreviousDayClick = viewModel::selectPreviousDay,
                 onNextDayClick = viewModel::selectNextDay,
-                onReorderComplete = viewModel::reorderCourseItems,
+                onCompleteScheduleEdit = viewModel::completeScheduleEdit,
+                onUpdateCourseName = viewModel::updateCourseName,
                 onEditAccommodationClick = viewModel::fetchAccommodationAlternatives,
                 onSelectAccommodationAlternative = viewModel::selectAccommodationAlternative,
-                navigateUp = navigateUp
+                onFavoriteToggle = viewModel::onFavoriteToggle,
+                onDiscardAndGoBack = viewModel::discardCourseAndGoBack,
+                onDiscardAndExit = viewModel::discardCourseAndExit,
+                onEditScheduleItemClick = viewModel::fetchScheduleItemAlternatives,
+                onSelectScheduleItemAlternative = viewModel::selectScheduleItemAlternative,
+                onPlaceSearchQueryChanged = viewModel::onPlaceSearchQueryChanged,
+                onAddCourseItem = viewModel::addCourseItem,
+                navigateToDetailCourse = { navigateToDetailCourse(state.courseId) },
+                navigateToHome = navigateToHome,
+                navigateToExploreDetail = navigateToExploreDetail
             )
         }
     }
@@ -159,20 +209,62 @@ fun ResultCourseRoute(
 private fun ResultCourseContent(
     paddingValues: PaddingValues,
     course: ResultCourseUiModel,
+    petInfo: UiState<PetInfo>,
     selectedDayNumber: Int,
     accommodationAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
+    favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
+    favoritePlaceIds: ImmutableSet<Long>,
+    scheduleItemAlternatives: UiState<ImmutableList<ScheduleUiModel>>,
+    placeSearchResults: UiState<ImmutableList<ScheduleUiModel>>,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
-    onReorderComplete: (dayNumber: Int, itemIds: List<Long>) -> Unit,
+    onCompleteScheduleEdit: (dayNumber: Int, deletedItemIds: List<Long>, itemIds: List<Long>, reorderNeeded: Boolean) -> Unit,
+    onUpdateCourseName: (String) -> Unit,
     onEditAccommodationClick: () -> Unit,
     onSelectAccommodationAlternative: (ScheduleUiModel) -> Unit,
-    navigateUp: () -> Unit
+    onFavoriteToggle: (ScheduleUiModel) -> Unit,
+    onDiscardAndGoBack: () -> Unit,
+    onDiscardAndExit: () -> Unit,
+    onEditScheduleItemClick: (itemId: Long) -> Unit,
+    onSelectScheduleItemAlternative: (ScheduleUiModel) -> Unit,
+    onPlaceSearchQueryChanged: (String) -> Unit,
+    onAddCourseItem: (dayNumber: Int, placeId: Long) -> Unit,
+    navigateToDetailCourse: () -> Unit,
+    navigateToHome: () -> Unit,
+    navigateToExploreDetail: (Long) -> Unit
 ) {
     val uiState = rememberResultCourseUiState()
 
-    val scheduleUiModels = remember(course, selectedDayNumber) {
-        mutableStateListOf(*course.dayItems[selectedDayNumber].orEmpty().toTypedArray())
+    if (uiState.isSaved) {
+        ResultCourseSuccessScreen(
+            navigateToDetailCourse = navigateToDetailCourse,
+            navigateToHome = navigateToHome,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        )
+        return
     }
+
+    val scheduleUiModels = remember(course, selectedDayNumber) {
+        mutableStateListOf(
+            *course.dayItems[selectedDayNumber].orEmpty()
+                .filterNot { it.placeType == PlaceType.ACCOMMODATION }
+                .toTypedArray()
+        )
+    }
+
+    // 편집 진입 시점(= 서버가 확정한 순서)의 스냅샷. 완료 시 이 목록과 비교해 실제로
+    // 드래그로 순서를 바꾼 경우에만 순서 변경 API를 호출한다. 추가/삭제는 각 API가
+    // 서버에서 이미 재정렬까지 마치므로, 순서를 안 건드렸다면 재호출이 불필요하다.
+    val originalScheduleItemIds = remember(course, selectedDayNumber) {
+        scheduleUiModels.mapNotNull { it.id.toLongOrNull() }
+    }
+
+    // 편집 중 삭제한 아이템 ID. 삭제는 즉시 서버로 보내지 않고 로컬에서만 반영해두었다가
+    // "편집 완료" 시점에 순서 변경과 함께 한 번에 처리한다(비동기 삭제와 순서 변경 요청이
+    // 동시에 날아가면 서버가 보는 아이템 구성과 어긋나 실패할 수 있어서).
+    val deletedItemIds = remember(course, selectedDayNumber) { mutableStateListOf<Long>() }
 
     val editActions = remember(uiState, scheduleUiModels, selectedDayNumber) {
         object : ResultCourseEditActions {
@@ -202,7 +294,13 @@ private fun ResultCourseContent(
 
                 override fun onClickComplete() {
                     uiState.hideEditSchedule()
-                    onReorderComplete(selectedDayNumber, scheduleUiModels.map { it.id.toLong() })
+                    val accommodationId = course.dayItems[selectedDayNumber].orEmpty()
+                        .firstOrNull { it.placeType == PlaceType.ACCOMMODATION }?.id?.toLongOrNull()
+                    val currentScheduleItemIds = scheduleUiModels.mapNotNull { it.id.toLongOrNull() }
+                    val expectedIdsWithoutReorder = originalScheduleItemIds.filterNot { it in deletedItemIds }
+                    val reorderNeeded = currentScheduleItemIds != expectedIdsWithoutReorder
+                    val itemIds = listOfNotNull(accommodationId) + currentScheduleItemIds
+                    onCompleteScheduleEdit(selectedDayNumber, deletedItemIds.toList(), itemIds, reorderNeeded)
                 }
             }
         }
@@ -217,13 +315,20 @@ private fun ResultCourseContent(
         uiState = uiState,
         editActions = editActions,
         scheduleUiModels = scheduleUiModels,
-        title = course.name,
+        deletedItemIds = deletedItemIds,
+        course = course,
+        petInfo = petInfo,
         dayNumber = selectedDayNumber,
-        dayDate = formatDayDate(course.startDate, selectedDayNumber),
-        accommodation = course.accommodation,
+        favoritePlaceIds = favoritePlaceIds,
+        onFavoriteToggle = onFavoriteToggle,
         onPreviousDayClick = onPreviousDayClick,
         onNextDayClick = onNextDayClick,
-        onSaveClick = {}
+        onSaveClick = uiState::markSaved,
+        onChangeScheduleItemClick = { itemId ->
+            uiState.showEditScheduleItem()
+            onEditScheduleItemClick(itemId)
+        },
+        navigateToExploreDetail = navigateToExploreDetail
     )
 
     if (uiState.currentDialogType != null) {
@@ -233,8 +338,11 @@ private fun ResultCourseContent(
             confirmAction = MeongConfirmAction(
                 text = "확인",
                 onClick = {
-                    uiState.hideExitDialog()
-                    navigateUp()
+                    when (uiState.currentDialogType) {
+                        CurrentDialogType.BACK_PRESS_EXIT -> onDiscardAndGoBack()
+                        CurrentDialogType.COURSE_DELETE -> onDiscardAndExit()
+                        null -> Unit
+                    }
                 }
             ),
             cancelAction = MeongCancelAction(
@@ -247,7 +355,12 @@ private fun ResultCourseContent(
 
     if (uiState.isEditTitleVisible) {
         EditTitleBottomSheet(
-            onDismiss = editActions.title::onClickComplete
+            initialTitle = course.name,
+            onDismiss = editActions.title::onClickComplete,
+            onSave = { name ->
+                onUpdateCourseName(name)
+                editActions.title.onClickComplete()
+            }
         )
     }
 
@@ -257,9 +370,49 @@ private fun ResultCourseContent(
             onChipClick = uiState::selectPlaceEditChip,
             onDismiss = editActions.accommodation::onClickComplete,
             alternatives = accommodationAlternatives,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
+            allowAccommodationSelection = true,
             onPlaceSelected = { place ->
                 onSelectAccommodationAlternative(place)
                 editActions.accommodation.onClickComplete()
+            }
+        )
+    }
+
+    if (uiState.isEditScheduleItemVisible) {
+        EditPlaceBottomSheet(
+            title = "다른 장소로 변경",
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideEditScheduleItem,
+            alternatives = scheduleItemAlternatives,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
+            onPlaceSelected = { place ->
+                onSelectScheduleItemAlternative(place)
+                uiState.hideEditScheduleItem()
+            }
+        )
+    }
+
+    if (uiState.isAddPlaceVisible) {
+        EditPlaceBottomSheet(
+            selectedChipType = uiState.editPlaceChipType,
+            onChipClick = uiState::selectPlaceEditChip,
+            onDismiss = uiState::hideAddPlace,
+            favoritePlaces = favoritePlaces,
+            favoritePlaceIds = favoritePlaceIds,
+            onFavoriteToggle = onFavoriteToggle,
+            placeSearchResults = placeSearchResults,
+            onPlaceSearchQueryChanged = onPlaceSearchQueryChanged,
+            onPlaceSelected = { place ->
+                place.placeId?.let { placeId ->
+                    onAddCourseItem(selectedDayNumber, placeId)
+                    uiState.hideAddPlace()
+                }
             }
         )
     }
@@ -271,16 +424,28 @@ private fun ResultCourseScreen(
     uiState: ResultCourseUiState,
     editActions: ResultCourseEditActions,
     scheduleUiModels: SnapshotStateList<ScheduleUiModel>,
-    title: String,
+    deletedItemIds: SnapshotStateList<Long>,
+    course: ResultCourseUiModel,
+    petInfo: UiState<PetInfo>,
     dayNumber: Int,
-    dayDate: String,
-    accommodation: ScheduleUiModel?,
+    favoritePlaceIds: ImmutableSet<Long>,
+    onFavoriteToggle: (ScheduleUiModel) -> Unit,
     onPreviousDayClick: () -> Unit,
     onNextDayClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    onChangeScheduleItemClick: (itemId: Long) -> Unit,
+    navigateToExploreDetail: (Long) -> Unit
 ) {
+    val title = course.name
+    val dayDate = formatDayDate(course.startDate, dayNumber)
+    val accommodation = course.dayItems.accommodationForDay(dayNumber)
+    val pet = petInfo.successData
+    val petName = pet?.name ?: "반려견"
+    val petSummary = pet?.let { "${it.name}·${it.sizeCategory.label}" } ?: "반려견"
+
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     val scheduleShimmer = rememberShimmer(
         shimmerBounds = ShimmerBounds.View,
         theme = meongShimmerTheme()
@@ -329,6 +494,7 @@ private fun ResultCourseScreen(
         )
 
         ResultCourseTopSection(
+            petName = petName,
             modifier = Modifier
                 .fillMaxWidth()
         )
@@ -342,6 +508,15 @@ private fun ResultCourseScreen(
 
                 ResultCourseInfoHolder(
                     title = title,
+                    tripSummaryInfo = persistentListOf(
+                        course.region.label,
+                        course.tripPeriod,
+                        petSummary
+                    ),
+                    workStyleInfo = persistentListOf(
+                        course.workTimeRange,
+                        course.workFocusLevel.shortLabel
+                    ),
                     onEditTitleClick = editActions.title::onClickEdit,
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
@@ -351,15 +526,16 @@ private fun ResultCourseScreen(
             }
 
             item {
-                if (accommodation != null) {
+                if (accommodation != null && !uiState.isEditSchedule) {
                     ResultCourseAccommodationSection(
                         placeName = accommodation.placeName,
                         location = accommodation.location,
                         grade = accommodation.grade.ifBlank { null },
                         thumbnailUrl = accommodation.thumbnailUrl,
-                        lodgingType = accommodation.lodgingType,
+                        isFavorite = accommodation.placeId in favoritePlaceIds,
                         onEditAccommodationClick = editActions.accommodation::onClickEdit,
-                        onFavoriteClick = {},
+                        onFavoriteClick = { onFavoriteToggle(accommodation) },
+                        onClick = { accommodation.placeId?.let(navigateToExploreDetail) },
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                     )
@@ -396,11 +572,27 @@ private fun ResultCourseScreen(
             item {
                 ResultCourseScheduleSection(
                     dayNumber = dayNumber.toString(),
+                    isFirstDay = dayNumber == 1,
+                    isLastDay = dayNumber == course.totalDays,
                     tripDay = dayDate,
+                    routeLength = formatDistanceKm(scheduleUiModels.firstOrNull()?.distanceFromPrevKm ?: 0.0),
                     accommodation = accommodation,
                     onPreviousClick = onPreviousDayClick,
                     onNextClick = onNextDayClick,
-                    onRouteClick = {},
+                    onRouteClick = {
+                        val firstItem = scheduleUiModels.firstOrNull()
+                        if (accommodation != null && firstItem != null) {
+                            context.openKakaoMapRoute(
+                                originName = accommodation.location.ifBlank { accommodation.placeName },
+                                originLatitude = accommodation.latitude,
+                                originLongitude = accommodation.longitude,
+                                destinationName = firstItem.location.ifBlank { firstItem.placeName },
+                                destinationLatitude = firstItem.latitude,
+                                destinationLongitude = firstItem.longitude,
+                                type = "car"
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
                 )
@@ -422,8 +614,9 @@ private fun ResultCourseScreen(
                         },
                         onDrag = { dragDropState.onDrag(it) },
                         onDragEnd = { dragDropState.onDragEnd() },
+                        onChangePlaceClick = { item.id.toLongOrNull()?.let(onChangeScheduleItemClick) },
+                        onDeleteClick = { item.id.toLongOrNull()?.let(uiState::showDeleteScheduleItemDialog) },
                         modifier = Modifier
-                            .padding(horizontal = 20.dp)
                             .let { if (isDragging) it else it.animateItem() }
                             .zIndex(if (isDragging) 1f else 0f)
                             .graphicsLayer {
@@ -437,7 +630,7 @@ private fun ResultCourseScreen(
                     ResultCourseScheduleItem(
                         count = index + 1,
                         placeName = item.placeName,
-                        grade = item.grade,
+                        grade = item.grade.ifBlank { null },
                         location = item.location,
                         placeType = item.placeType,
                         isLastItem = index == scheduleUiModels.lastIndex,
@@ -446,8 +639,22 @@ private fun ResultCourseScreen(
                         thumbnailUrl = item.thumbnailUrl,
                         lodgingType = item.lodgingType,
                         routeLength = formatDistanceKm(nextItem?.distanceFromPrevKm ?: 0.0),
-                        onFavoriteClick = {},
-                        onRouteClick = {},
+                        isFavorite = item.placeId in favoritePlaceIds,
+                        onFavoriteClick = { onFavoriteToggle(item) },
+                        onRouteClick = {
+                            nextItem?.let {
+                                context.openKakaoMapRoute(
+                                    originName = item.location.ifBlank { item.placeName },
+                                    originLatitude = item.latitude,
+                                    originLongitude = item.longitude,
+                                    destinationName = it.location.ifBlank { it.placeName },
+                                    destinationLatitude = it.latitude,
+                                    destinationLongitude = it.longitude,
+                                    type = "car"
+                                )
+                            }
+                        },
+                        onClick = { item.placeId?.let(navigateToExploreDetail) },
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                             .animateItem()
@@ -456,12 +663,11 @@ private fun ResultCourseScreen(
             }
 
             item {
-                if (accommodation != null) {
+                if (accommodation != null && !uiState.isEditSchedule) {
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // TODO: 숙소 API 추가되면 마지막 장소 -> 숙소 실제 거리/좌표로 교체하고 카카오맵 경로 보기 연결
                     RouteIndicator(
-                        routeLength = "1.2",
+                        routeLength = formatDistanceKm(course.dayReturnToAccommKm[dayNumber] ?: 0.0),
                         onRouteClick = {},
                         routeIndicatorType = RouteIndicatorType.END,
                         modifier = Modifier
@@ -477,9 +683,30 @@ private fun ResultCourseScreen(
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                     )
-                }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
+            }
+
+            item {
+                if (uiState.isEditSchedule) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MeongPillButton(
+                            text = "장소 추가",
+                            onClick = uiState::showAddPlace,
+                            prefixIcon = R.drawable.ic_plus
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(50.dp))
+                }
             }
         }
 
@@ -501,14 +728,39 @@ private fun ResultCourseScreen(
             )
         }
     }
+
+    val scheduleItemIdPendingDelete = uiState.scheduleItemIdPendingDelete
+    if (scheduleItemIdPendingDelete != null) {
+        MeongDialog(
+            title = "이 장소를 삭제할까요?",
+            onDismiss = uiState::hideDeleteScheduleItemDialog,
+            cancelAction = MeongCancelAction(
+                text = "취소",
+                onClick = uiState::hideDeleteScheduleItemDialog
+            ),
+            confirmAction = MeongConfirmAction(
+                text = "삭제",
+                backgroundColor = MeongTheme.colors.red,
+                onClick = {
+                    scheduleUiModels.removeAll { it.id.toLongOrNull() == scheduleItemIdPendingDelete }
+                    deletedItemIds.add(scheduleItemIdPendingDelete)
+                    uiState.hideDeleteScheduleItemDialog()
+                }
+            )
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTitleBottomSheet(
+    initialTitle: String,
     onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val titleFieldState = rememberTextFieldState(initialText = initialTitle)
+
     MeongBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier
@@ -535,14 +787,14 @@ private fun EditTitleBottomSheet(
         Spacer(modifier = Modifier.height(8.dp))
 
         MeongTextField(
-            state = rememberTextFieldState(),
+            state = titleFieldState,
             placeholder = "코스 이름을 입력해주세요",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
-            trailingIcon = if (rememberTextFieldState().text.toString().isEmpty()) null else R.drawable.ic_close_filled,
+            trailingIcon = if (titleFieldState.text.isEmpty()) null else R.drawable.ic_close_filled,
             onTrailingIconClick = {
-                // Todo: text 제거
+                titleFieldState.edit { replace(0, length, "") }
             }
         )
 
@@ -550,10 +802,8 @@ private fun EditTitleBottomSheet(
 
         MeongButton(
             text = "저장하기",
-            isEnabled = true,
-            onClick = {
-                onDismiss()
-            },
+            isEnabled = titleFieldState.text.isNotBlank(),
+            onClick = { onSave(titleFieldState.text.toString()) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
@@ -566,12 +816,9 @@ private fun EditTitleBottomSheet(
 private const val PLACE_SKELETON_ITEM_COUNT = 3
 
 /**
- * 숙소 변경과 장소 추가를 위한 BottomSheet
- *
- * 검색 칩 선택 시 검색창이, 관심 장소 칩 선택 시 바텀시트가 화면의 70%까지 늘어나며 리스트가 노출된다.
  * `alternatives`가 주어지면(숙소 변경 플로우) 코스 아이템의 실제 대안 장소를 검색어로 필터링해 보여준다.
- * `alternatives`가 없으면 아직 서버에 전체 장소 검색 API가 없어 더미 데이터를 사용한다.
- * TODO: 장소 추가용 전체 장소 검색 API 확정 후 더미 데이터 교체
+ * `alternatives`가 없으면(장소 추가 플로우) `placeSearchResults`를 통해 실제 장소 검색 API 결과를 보여준다.
+ * 두 플로우 모두 카드를 선택하면 테두리로 표시만 되고, 하단 버튼을 눌러야 실제로 반영된다.
  * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -579,8 +826,15 @@ private fun EditPlaceBottomSheet(
     selectedChipType: PlaceEditChipType,
     onChipClick: (PlaceEditChipType) -> Unit,
     onDismiss: () -> Unit,
+    favoritePlaces: UiState<ImmutableList<ScheduleUiModel>>,
+    favoritePlaceIds: ImmutableSet<Long>,
+    onFavoriteToggle: (ScheduleUiModel) -> Unit,
     modifier: Modifier = Modifier,
+    title: String = "장소 추가",
     alternatives: UiState<ImmutableList<ScheduleUiModel>>? = null,
+    placeSearchResults: UiState<ImmutableList<ScheduleUiModel>> = UiState.Empty,
+    allowAccommodationSelection: Boolean = false,
+    onPlaceSearchQueryChanged: (String) -> Unit = {},
     onPlaceSelected: (ScheduleUiModel) -> Unit = {}
 ) {
     val placeShimmer = rememberShimmer(
@@ -588,154 +842,177 @@ private fun EditPlaceBottomSheet(
         theme = meongShimmerTheme()
     )
     var selectedPlace by remember(selectedChipType) { mutableStateOf<ScheduleUiModel?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    var footerHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val isAddPlaceFlow = alternatives == null
+
+    // 숙소 변경 플로우(allowAccommodationSelection = true)만 숙소 선택을 허용한다.
+    // 장소 추가/일정 아이템 변경 플로우는 관심 탭 등에서 숙소가 노출될 수 있으므로 항상 막는다.
+    val onConfirmClick: () -> Unit = {
+        val place = selectedPlace
+        if (!allowAccommodationSelection && place?.placeType == PlaceType.ACCOMMODATION) {
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+
+                val job = launch {
+                    snackbarHostState.showSnackbar("숙소는 일정에 추가할 수 없어요")
+                }
+                delay(2000L.milliseconds)
+                job.cancel()
+            }
+        } else {
+            place?.let(onPlaceSelected)
+        }
+    }
 
     MeongBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier
             .imePadding()
-            .disableNestedScroll()
     ) {
-        MeongTopbar(
-            title = "장소 추가",
-            isBackVisible = false,
-            actionType = TopbarAction.CLOSE,
-            onActionClick = { onDismiss() },
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier.fillMaxHeight(0.7f)
         ) {
-            PlaceEditChipType.entries.forEach { chipType ->
-                MeongChip(
-                    chipText = chipType.label,
-                    chipType = ChipType.LARGE,
-                    isSelected = chipType == selectedChipType,
-                    modifier = Modifier
-                        .noRippleClickable {
-                            onChipClick(chipType)
-                        }
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                MeongTopbar(
+                    title = title,
+                    isBackVisible = false,
+                    actionType = TopbarAction.CLOSE,
+                    onActionClick = { onDismiss() },
                 )
-            }
-        }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(),
-        ) {
-            when (selectedChipType) {
-                PlaceEditChipType.SEARCH -> {
-                    val searchFieldState = rememberTextFieldState()
-                    val query = searchFieldState.text.toString()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PlaceEditChipType.entries.forEach { chipType ->
+                        MeongChip(
+                            chipText = chipType.label,
+                            chipType = ChipType.LARGE,
+                            isSelected = chipType == selectedChipType,
+                            modifier = Modifier
+                                .noRippleClickable {
+                                    onChipClick(chipType)
+                                }
+                        )
+                    }
+                }
 
-                    MeongTextField(
-                        state = searchFieldState,
-                        placeholder = "장소를 검색해주세요",
-                        leadingIcon = R.drawable.ic_search,
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                ) {
+                    when (selectedChipType) {
+                        PlaceEditChipType.SEARCH -> {
+                            val searchFieldState = rememberTextFieldState()
+                            val query = searchFieldState.text.toString()
+
+                            MeongTextField(
+                                state = searchFieldState,
+                                placeholder = "장소를 검색해주세요",
+                                leadingIcon = R.drawable.ic_search,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            if (alternatives != null) {
+                                val allPlaces = (alternatives as? UiState.Success)?.data ?: persistentListOf()
+                                val filteredPlaces = remember(query, allPlaces) {
+                                    if (query.isBlank()) {
+                                        allPlaces
+                                    } else {
+                                        allPlaces.filter { it.placeName.contains(query, ignoreCase = true) }.toPersistentList()
+                                    }
+                                }
+
+                                PlaceEditResultList(
+                                    isLoading = alternatives is UiState.Loading,
+                                    places = filteredPlaces,
+                                    shimmer = placeShimmer,
+                                    emptyTitle = "변경 가능한 숙소가 없어요",
+                                    emptyDescription = "다른 검색어를 입력해보세요",
+                                    favoritePlaceIds = favoritePlaceIds,
+                                    onFavoriteClick = onFavoriteToggle,
+                                    selectedPlaceId = selectedPlace?.id,
+                                    onPlaceClick = { selectedPlace = it },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                LaunchedEffect(query) {
+                                    onPlaceSearchQueryChanged(query)
+                                }
+
+                                if (query.isNotBlank()) {
+                                    PlaceEditResultList(
+                                        isLoading = placeSearchResults is UiState.Loading,
+                                        places = placeSearchResults.successData ?: persistentListOf(),
+                                        shimmer = placeShimmer,
+                                        emptyTitle = "검색 결과가 없어요",
+                                        emptyDescription = "다른 검색어를 입력해주세요",
+                                        onFavoriteClick = {},
+                                        selectedPlaceId = selectedPlace?.id,
+                                        onPlaceClick = { selectedPlace = it },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+
+                        PlaceEditChipType.FAVORITE -> {
+                            PlaceEditResultList(
+                                isLoading = favoritePlaces is UiState.Loading,
+                                places = favoritePlaces.successData ?: persistentListOf(),
+                                shimmer = placeShimmer,
+                                emptyTitle = "저장된 관심 장소가 없어요",
+                                emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
+                                favoritePlaceIds = favoritePlaceIds,
+                                onFavoriteClick = onFavoriteToggle,
+                                selectedPlaceId = selectedPlace?.id,
+                                onPlaceClick = { selectedPlace = it },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        footerHeight = with(density) { coordinates.size.height.toDp() }
+                    }
+                ) {
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    MeongButton(
+                        text = if (isAddPlaceFlow) "코스에 추가" else "이 장소로 변경",
+                        isEnabled = selectedPlace != null,
+                        onClick = onConfirmClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
-
-                    if (alternatives != null) {
-                        val allPlaces = (alternatives as? UiState.Success)?.data ?: persistentListOf()
-                        val filteredPlaces = remember(query, allPlaces) {
-                            if (query.isBlank()) {
-                                allPlaces
-                            } else {
-                                allPlaces.filter { it.placeName.contains(query, ignoreCase = true) }.toPersistentList()
-                            }
-                        }
-
-                        PlaceEditResultList(
-                            isLoading = alternatives is UiState.Loading,
-                            places = filteredPlaces,
-                            shimmer = placeShimmer,
-                            emptyTitle = "변경 가능한 숙소가 없어요",
-                            emptyDescription = "다른 검색어를 입력해보세요",
-                            onFavoriteClick = {},
-                            selectedPlaceId = selectedPlace?.id,
-                            onPlaceClick = { selectedPlace = it }
-                        )
-                    } else {
-                        var isSearchLoading by remember { mutableStateOf(false) }
-                        var searchResults by remember { mutableStateOf(persistentListOf<ScheduleUiModel>()) }
-
-                        LaunchedEffect(query) {
-                            if (query.isBlank()) {
-                                isSearchLoading = false
-                                searchResults = persistentListOf()
-                                return@LaunchedEffect
-                            }
-
-                            isSearchLoading = true
-                            delay(3.seconds)
-                            searchResults = DUMMY_SEARCHABLE_PLACES.filter { it.placeName.contains(query) }.toPersistentList()
-                            isSearchLoading = false
-                        }
-
-                        if (query.isNotBlank()) {
-                            PlaceEditResultList(
-                                isLoading = isSearchLoading,
-                                places = searchResults,
-                                shimmer = placeShimmer,
-                                emptyTitle = "검색 결과가 없어요",
-                                emptyDescription = "다른 검색어를 입력해주세요",
-                                onFavoriteClick = {},
-                                onPlaceClick = onPlaceSelected
-                            )
-                        }
-                    }
-                }
-
-                PlaceEditChipType.FAVORITE -> {
-                    val favoritePlaces = remember {
-                        persistentListOf(
-                            ScheduleUiModel(id = "favorite-1", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A"),
-                            ScheduleUiModel(id = "favorite-2", placeType = PlaceType.RESTAURANT, placeName = "댕댕이 맛집", grade = "A"),
-                            ScheduleUiModel(id = "favorite-3", placeType = PlaceType.SIGHTSEEING, placeName = "산책하기 좋은 공원", grade = "A"),
-                        )
-                    }
-                    var isFavoriteLoading by remember { mutableStateOf(true) }
-
-                    LaunchedEffect(Unit) {
-                        delay(3.seconds)
-                        isFavoriteLoading = false
-                    }
-
-                    PlaceEditResultList(
-                        isLoading = isFavoriteLoading,
-                        places = favoritePlaces,
-                        shimmer = placeShimmer,
-                        emptyTitle = "저장된 관심 장소가 없어요",
-                        emptyDescription = "마음에 드는 워케이션 장소를 탐색해 보세요! ",
-                        onFavoriteClick = {},
-                        selectedPlaceId = selectedPlace?.id,
-                        onPlaceClick = { selectedPlace = it }
-                    )
                 }
             }
-        }
 
-        if (alternatives != null) {
-            Spacer(modifier = Modifier.height(20.dp))
-
-            MeongButton(
-                text = "이 장소로 변경",
-                isEnabled = selectedPlace != null,
-                onClick = { selectedPlace?.let(onPlaceSelected) },
+            SnackbarHost(
+                hostState = snackbarHostState,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = footerHeight)
             )
-
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -749,20 +1026,20 @@ private fun PlaceEditResultList(
     places: ImmutableList<ScheduleUiModel>,
     shimmer: Shimmer,
     emptyTitle: String,
-    onFavoriteClick: (String) -> Unit,
+    onFavoriteClick: (ScheduleUiModel) -> Unit,
     modifier: Modifier = Modifier,
     emptyDescription: String? = null,
+    favoritePlaceIds: ImmutableSet<Long> = persistentSetOf(),
     selectedPlaceId: String? = null,
     onPlaceClick: (ScheduleUiModel) -> Unit = {},
 ) {
-    val maxListHeight = with(LocalConfiguration.current) { (screenHeightDp * 0.7f).dp }
-
     when {
         isLoading -> {
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .height(maxListHeight),
+                    .fillMaxHeight()
+                    .disableNestedScroll(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -780,7 +1057,7 @@ private fun PlaceEditResultList(
                 description = emptyDescription,
                 modifier = modifier
                     .fillMaxWidth()
-                    .height(maxListHeight)
+                    .fillMaxHeight()
                     .padding(horizontal = 54.dp)
             )
         }
@@ -789,7 +1066,8 @@ private fun PlaceEditResultList(
             LazyColumn(
                 modifier = modifier
                     .fillMaxWidth()
-                    .height(maxListHeight),
+                    .fillMaxHeight()
+                    .disableNestedScroll(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -801,8 +1079,8 @@ private fun PlaceEditResultList(
                         placeName = place.placeName,
                         location = place.location,
                         grade = place.grade,
-                        isFavorite = true,
-                        onFavoriteClick = { onFavoriteClick(place.id) },
+                        isFavorite = place.placeId in favoritePlaceIds,
+                        onFavoriteClick = { onFavoriteClick(place) },
                         placeType = place.placeType,
                         isBordered = true,
                         isSelected = place.id == selectedPlaceId,
@@ -873,13 +1151,46 @@ private fun ResultCourseScreenPreview() {
                     ScheduleUiModel(id = "3", placeType = PlaceType.OTHER, placeName = "프렌즈애견펜션", grade = "A"),
                 )
             },
-            title = "강릉 2박 3일 워케이션",
+            deletedItemIds = remember { mutableStateListOf() },
+            course = ResultCourseUiModel(
+                name = "강릉 2박 3일 워케이션",
+                region = Region.GANGNEUNG,
+                startDate = "2026-08-10",
+                endDate = "2026-08-12",
+                totalDays = 3,
+                workStartTime = "11:00",
+                workEndTime = "18:00",
+                workFocusLevel = WorkFocusLevel.HIGH,
+                dayItems = persistentMapOf(
+                    2 to persistentListOf(
+                        ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "서울시 강남구")
+                    )
+                ),
+                dayReturnToAccommKm = persistentMapOf(2 to 1.2)
+            ),
+            petInfo = UiState.Success(
+                PetInfo(
+                    id = 1,
+                    name = "몽몽이",
+                    breed = "푸들",
+                    weightKg = 5.0,
+                    birthDate = "2020-01-01",
+                    isNeutered = true,
+                    imageUrl = "",
+                    sizeCategory = PetSizeCategory.SMALL,
+                    activityLevel = PetActivityLevel.MEDIUM,
+                    sociability = PetSociability.NORMAL,
+                    healthStatus = PetHealthStatus.RECENT_TREATMENT
+                )
+            ),
             dayNumber = 2,
-            dayDate = "8.11",
-            accommodation = ScheduleUiModel(id = "4", placeType = PlaceType.ACCOMMODATION, placeName = "프렌즈애견펜션", grade = "A", location = "서울시 강남구"),
+            favoritePlaceIds = persistentSetOf(),
+            onFavoriteToggle = {},
             onPreviousDayClick = {},
             onNextDayClick = {},
-            onSaveClick = {}
+            onSaveClick = {},
+            onChangeScheduleItemClick = {},
+            navigateToExploreDetail = {}
         )
     }
 }

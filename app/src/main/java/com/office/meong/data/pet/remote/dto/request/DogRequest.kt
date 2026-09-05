@@ -8,15 +8,15 @@ data class DogRequest(
     @SerialName("name")
     val name: String,
     @SerialName("breed")
-    val breed: String,
+    val breed: String? = null,
     @SerialName("weightKg")
-    val weightKg: Double,
+    val weightKg: Double? = null,
     @SerialName("birthDate")
-    val birthDate: String,
+    val birthDate: String? = null,
     @SerialName("isNeutered")
-    val isNeutered: Boolean,
+    val isNeutered: Boolean? = null,
     @SerialName("imageUrl")
-    val imageUrl: String,
+    val imageUrl: String? = null,
     @SerialName("sizeCategory")
     val sizeCategory: String,
     @SerialName("activityLevel")

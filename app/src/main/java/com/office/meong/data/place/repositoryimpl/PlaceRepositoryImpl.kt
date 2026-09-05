@@ -22,7 +22,8 @@ class PlaceRepositoryImpl @Inject constructor(
         page: Int,
         size: Int,
     ): Result<PlacePage> = suspendRunCatching {
-        placeDataSource.getPlaces(region?.name, type, sort, congestion, keyword, page, size).toModel()
+        val regionParam = region?.takeIf { it != Region.UNKNOWN }?.name
+        placeDataSource.getPlaces(regionParam, type, sort, congestion, keyword, page, size).toModel()
     }
 
     override suspend fun getPlaceDetail(placeId: Long): Result<PlaceDetail> = suspendRunCatching {

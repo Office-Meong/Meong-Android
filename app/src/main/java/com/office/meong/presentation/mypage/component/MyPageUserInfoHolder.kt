@@ -32,11 +32,19 @@ import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.component.image.UrlImage
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.presentation.mypage.model.MyPageInfoType
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun MyPageUserInfoHolder(
+    userNickname: String,
+    userEmail: String,
+    petName: String,
+    petTags: ImmutableList<String>,
     modifier: Modifier = Modifier,
+    userProfileImageUrl: String? = null,
+    petProfileImageUrl: String? = null,
+    onUserInfoClick: () -> Unit = {},
     onPetInfoClick: () -> Unit = {}
 ) {
     Column(
@@ -50,9 +58,11 @@ fun MyPageUserInfoHolder(
     ) {
         MyPageUserInfoItem(
             infoType = MyPageInfoType.USER,
-            infoTitle = "홍길동",
-            infoContent = "길동@gmail.com",
-            imageUrl = null
+            infoTitle = userNickname,
+            infoContent = userEmail,
+            tags = persistentListOf(),
+            imageUrl = userProfileImageUrl,
+            onClick = onUserInfoClick
         )
 
         HorizontalDivider(
@@ -64,8 +74,10 @@ fun MyPageUserInfoHolder(
 
         MyPageUserInfoItem(
             infoType = MyPageInfoType.PET,
-            infoTitle = "몽몽이",
+            infoTitle = petName,
             infoContent = "",
+            tags = petTags,
+            imageUrl = petProfileImageUrl,
             onClick = onPetInfoClick
         )
     }
@@ -76,6 +88,7 @@ private fun MyPageUserInfoItem(
     infoType: MyPageInfoType,
     infoTitle: String,
     infoContent: String,
+    tags: ImmutableList<String>,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     onClick: () -> Unit = {}
@@ -126,7 +139,7 @@ private fun MyPageUserInfoItem(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                if (infoType == MyPageInfoType.USER) {
+                if (infoType == MyPageInfoType.USER && infoContent.isNotBlank()) {
                     Text(
                         text = infoContent,
                         style = MeongTheme.typography.body.body12M,
@@ -139,14 +152,14 @@ private fun MyPageUserInfoItem(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        persistentListOf("소형견", "활동량 보통", "사회성").forEachIndexed { index, item ->
+                        tags.forEachIndexed { index, item ->
                             Text(
                                 text = item,
                                 style = MeongTheme.typography.body.body12M,
                                 color = MeongTheme.colors.gray500,
                             )
 
-                            if (index < item.lastIndex) {
+                            if (index < tags.lastIndex) {
                                 VerticalDivider(
                                     thickness = 1.dp,
                                     color = MeongTheme.colors.gray200,
@@ -160,17 +173,15 @@ private fun MyPageUserInfoItem(
                 }
             }
 
-            if (infoType == MyPageInfoType.PET) {
-                Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
 
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    tint = MeongTheme.colors.gray500,
-                    modifier = Modifier
-                        .size(20.dp)
-                )
-            }
+            Icon(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
+                contentDescription = null,
+                tint = MeongTheme.colors.gray500,
+                modifier = Modifier
+                    .size(20.dp)
+            )
         }
     }
 }
@@ -179,6 +190,11 @@ private fun MyPageUserInfoItem(
 @Composable
 private fun MyPageUserInfoHolderPreview() {
     MeongTheme {
-        MyPageUserInfoHolder()
+        MyPageUserInfoHolder(
+            userNickname = "홍길동",
+            userEmail = "",
+            petName = "몽몽이",
+            petTags = persistentListOf("소형견", "활동량 보통", "사회성")
+        )
     }
 }

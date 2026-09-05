@@ -112,7 +112,7 @@ private fun MainNavigationBarItem(
         Text(
             text = tab.contentDescription,
             style = MeongTheme.typography.label.label10Sb,
-            color = MeongTheme.colors.gray500,
+            color = if (selected) MeongTheme.colors.gray900 else selectedColor,
             textAlign = TextAlign.Center
         )
     }

@@ -39,7 +39,10 @@ tink = "1.21.0"
 timber = "5.0.1"
 
 # Open Source
-aboutLibraries = "13.2.1"
+aboutLibraries = "14.1.0"
+
+# Kakao SDK
+kakao = "2.20.6"
 
 # Test
 junit = "4.13.2"
@@ -105,6 +108,9 @@ tink-android = { group = "com.google.crypto.tink", name = "tink-android", versio
 
 # AboutLibraries
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
+
+# Kakao SDK
+kakao-auth = { group = "com.kakao.sdk", name = "v2-auth", version.ref = "kakao" }
 
 [plugins]
 # Android & Kotlin

@@ -44,6 +44,7 @@ fun HomeCourseItem(
     title: String,
     grade: String,
     places: ImmutableList<HomePlaceCategory>,
+    totalPlaceCount: Int,
     onClickCourseItem: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -94,7 +95,7 @@ fun HomeCourseItem(
         Spacer(modifier = Modifier.height(14.dp))
 
         HomeCourseBottomSection(
-            totalCount = places.size,
+            totalCount = totalPlaceCount,
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -324,6 +325,7 @@ private fun HomeCourseItemPreview() {
                     count = 1
                 )
             ),
+            totalPlaceCount = 12,
             onClickCourseItem = {}
         )
     }

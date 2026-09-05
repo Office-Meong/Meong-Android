@@ -15,7 +15,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 
@@ -23,12 +22,13 @@ import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 fun DetailCourseAccommodationSection(
     placeName: String,
     location: String,
+    isFavorite: Boolean,
     onChangeAccommodationClick: () -> Unit,
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier,
     grade: String? = null,
     thumbnailUrl: String? = null,
-    lodgingType: LodgingType? = null
+    onClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
@@ -60,11 +60,11 @@ fun DetailCourseAccommodationSection(
             placeName = placeName,
             location = location,
             grade = grade,
-            isFavorite = false,
+            isFavorite = isFavorite,
             onFavoriteClick = onFavoriteClick,
             placeType = PlaceType.ACCOMMODATION,
             thumbnailUrl = thumbnailUrl,
-            lodgingType = lodgingType
+            modifier = Modifier.noRippleClickable(onClick = onClick)
         )
     }
 }
@@ -77,6 +77,7 @@ private fun DetailCourseAccommodationSectionPreview() {
             placeName = "프렌즈애견펜션",
             location = "강원 강릉시 하남길 117-4",
             grade = "A",
+            isFavorite = true,
             onChangeAccommodationClick = {},
             onFavoriteClick = {}
         )

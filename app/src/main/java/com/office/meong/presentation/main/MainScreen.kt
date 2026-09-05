@@ -3,6 +3,9 @@ package com.office.meong.presentation.main
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -19,14 +22,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.core.designsystem.component.dialog.MeongDialog
 import com.office.meong.core.designsystem.component.dialog.action.MeongConfirmAction
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.trigger.DialogTrigger
 import com.office.meong.core.model.trigger.GlobalUiEventHolder
-import com.office.meong.core.model.trigger.RefreshState
 import com.office.meong.core.model.trigger.SnackbarState
 import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.core.trigger.LocalRefreshState
@@ -57,11 +63,14 @@ fun MainScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+
+    var bottomBarHeight by remember { mutableStateOf(0.dp) }
 
     var currentSnackbarState by remember { mutableStateOf<SnackbarState?>(null) }
 
     val dialogState = rememberDialogStateHolder()
-    val refreshState = remember { RefreshState() }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val onShowToast: (String) -> Unit = remember {
@@ -121,7 +130,7 @@ fun MainScreen(
 
     CompositionLocalProvider(
         LocalGlobalUiEventTrigger provides eventHolder,
-        LocalRefreshState provides refreshState
+        LocalRefreshState provides appState.refreshState
     ) {
         Scaffold(
             containerColor = MeongTheme.colors.white,
@@ -133,15 +142,27 @@ fun MainScreen(
                     isVisible = isBottomBarVisible,
                     tabs = MainTab.entries.toImmutableList(),
                     currentTab = currentTab,
-                    onTabSelected = appState::navigateToTab
+                    onTabSelected = appState::navigateToTab,
+                    modifier = Modifier.onSizeChanged {
+                        if (isBottomBarVisible) {
+                            bottomBarHeight = with(density) { it.height.toDp() }
+                        }
+                    }
                 )
             },
             modifier = Modifier
                 .fillMaxSize()
                 .navigationBarsPadding()
         ) { innerPadding ->
+            val contentPadding = PaddingValues(
+                start = innerPadding.calculateStartPadding(layoutDirection),
+                top = innerPadding.calculateTopPadding(),
+                end = innerPadding.calculateEndPadding(layoutDirection),
+                bottom = if (isBottomBarVisible) bottomBarHeight else 0.dp
+            )
+
             MeongNavHost(
-                paddingValues = innerPadding,
+                paddingValues = contentPadding,
                 appState = appState
             )
         }

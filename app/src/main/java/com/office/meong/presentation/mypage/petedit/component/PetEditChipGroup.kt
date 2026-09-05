@@ -1,6 +1,5 @@
 package com.office.meong.presentation.mypage.petedit.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -12,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.component.chip.ChipType
 import com.office.meong.core.designsystem.component.chip.MeongChip
 import com.office.meong.core.designsystem.theme.MeongTheme
@@ -46,7 +46,7 @@ fun <T> PetEditChipGroup(
                     chipText = item.label,
                     chipType = ChipType.LARGE,
                     isSelected = item == selectedItem,
-                    modifier = Modifier.clickable { onItemSelected(item) }
+                    modifier = Modifier.noRippleClickable { onItemSelected(item) }
                 )
             }
         }

@@ -4,10 +4,8 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Icon
@@ -23,19 +21,32 @@ import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
 
+enum class MeongPillButtonStyle {
+    Default,
+    Primary,
+    PrimaryStrong,
+}
+
 @Composable
 fun MeongPillButton(
     text: String,
     modifier: Modifier = Modifier,
-    isPrimary: Boolean = false,
+    style: MeongPillButtonStyle = MeongPillButtonStyle.Default,
     horizontalPadding: Int = 16,
     verticalPadding: Int = 10,
     onClick: () -> Unit = {},
     @DrawableRes prefixIcon: Int? = null,
     @DrawableRes suffixIcon: Int? = null,
 ) {
-    val backgroundColor = if (isPrimary) MeongTheme.colors.primaryBg else MeongTheme.colors.white
-    val contentColor = if (isPrimary) MeongTheme.colors.primary else MeongTheme.colors.gray900
+    val backgroundColor = when (style) {
+        MeongPillButtonStyle.Default -> MeongTheme.colors.white
+        MeongPillButtonStyle.Primary -> MeongTheme.colors.primaryBg
+        MeongPillButtonStyle.PrimaryStrong -> MeongTheme.colors.primaryLight
+    }
+    val contentColor = when (style) {
+        MeongPillButtonStyle.Default -> MeongTheme.colors.gray900
+        MeongPillButtonStyle.Primary, MeongPillButtonStyle.PrimaryStrong -> MeongTheme.colors.primary
+    }
 
     Row(
         modifier = modifier
@@ -88,7 +99,7 @@ private fun MeongPillButtonPreview() {
     MeongTheme {
         MeongPillButton(
             text = "text",
-            isPrimary = true,
+            style = MeongPillButtonStyle.Primary,
             prefixIcon = R.drawable.ic_plus,
             suffixIcon = R.drawable.ic_chevron_right
         )

@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.office.meong.core.navigation.MainTabRoute
+import com.office.meong.presentation.favorite.FavoriteRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -16,11 +17,15 @@ fun NavController.navigateToFavorite(navOptions: NavOptions? = null) =
 
 
 fun NavGraphBuilder.favoriteNavGraph(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    navigateToExplore: () -> Unit,
+    navigateToDetail: (Long) -> Unit
 ) {
     composable<Favorite> {
         FavoriteRoute(
-            paddingValues = paddingValues
+            paddingValues = paddingValues,
+            navigateToExplore = navigateToExplore,
+            navigateToDetail = navigateToDetail
         )
     }
 }

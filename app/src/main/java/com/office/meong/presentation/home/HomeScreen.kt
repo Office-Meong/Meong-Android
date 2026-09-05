@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +25,8 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
 import com.office.meong.core.common.extension.collectSideEffect
@@ -53,10 +55,16 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun HomeRoute(
     paddingValues: PaddingValues,
+    navigateToCreateCourse: () -> Unit = {},
+    navigateToDetailCourse: (Long) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refresh()
+    }
 
     viewModel.sideEffect.collectSideEffect {
         when (it) {
@@ -76,6 +84,8 @@ fun HomeRoute(
         homeCourseSummaries = state.homeCourseSummaries,
         onRetryCourses = viewModel::retryLoad,
         onRetryPetInfo = viewModel::retryPetInfo,
+        navigateToCreateCourse = navigateToCreateCourse,
+        navigateToDetailCourse = navigateToDetailCourse
     )
 }
 
@@ -86,11 +96,14 @@ private fun HomeScreen(
     homeCourseSummaries: UiState<ImmutableList<HomeCourseSummaryUiModel>>,
     onRetryCourses: () -> Unit,
     onRetryPetInfo: () -> Unit,
+    navigateToCreateCourse: () -> Unit,
+    navigateToDetailCourse: (Long) -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MeongTheme.colors.gray50)
+            .verticalScroll(rememberScrollState())
             .padding(paddingValues = paddingValues)
     ) {
         Image(
@@ -99,8 +112,6 @@ private fun HomeScreen(
             modifier = Modifier
                 .padding(vertical = 12.dp, horizontal = 20.dp)
         )
-
-        Spacer(modifier = Modifier.height(10.dp))
 
         when (petInfo) {
             is UiState.Loading -> {
@@ -211,7 +222,7 @@ private fun HomeScreen(
 
             is UiState.Empty -> {
                 CourseEmptyContent(
-                    onClickPillButton = {},
+                    onClickPillButton = navigateToCreateCourse,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
@@ -219,46 +230,41 @@ private fun HomeScreen(
             }
 
             is UiState.Success -> {
-                if (homeCourseSummaries.data.isEmpty()) {
+                val latestCourse = homeCourseSummaries.data.firstOrNull()
+
+                if (latestCourse == null) {
                     CourseEmptyContent(
-                        onClickPillButton = {},
+                        onClickPillButton = navigateToCreateCourse,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                     )
                 } else {
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
-                            .weight(1f)
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        items(
-                            items = homeCourseSummaries.data,
-                            key = { item -> item.id }
-                        ) { item ->
-                            HomeCourseItem(
-                                region = item.region.label,
-                                tripPeriod = item.tripPeriod,
-                                title = item.name,
-                                grade = item.averageGrade,
-                                places = item.places,
-                                onClickCourseItem = {}
-                            )
-                        }
+                        HomeCourseItem(
+                            region = latestCourse.region.label,
+                            tripPeriod = latestCourse.tripPeriod,
+                            title = latestCourse.name,
+                            grade = latestCourse.averageGrade,
+                            places = latestCourse.places,
+                            totalPlaceCount = latestCourse.totalPlaceCount,
+                            onClickCourseItem = { navigateToDetailCourse(latestCourse.id) }
+                        )
 
-                        item {
-                            MeongPillButton(
-                                text = "새 코스 만들기",
-                                isPrimary = false,
-                                prefixIcon = R.drawable.ic_plus,
-                                onClick = {}
-                            )
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                            Spacer(modifier = Modifier.height(15.dp))
-                        }
+                        MeongPillButton(
+                            text = "새 코스 만들기",
+                            prefixIcon = R.drawable.ic_plus,
+                            onClick = navigateToCreateCourse
+                        )
+
+                        Spacer(modifier = Modifier.height(15.dp))
                     }
                 }
             }
@@ -289,7 +295,9 @@ private fun HomeScreenPreview() {
                     sociability = PetSociability.NORMAL,
                     healthStatus = PetHealthStatus.HEALTHY
                 )
-            )
+            ),
+            navigateToCreateCourse = {},
+            navigateToDetailCourse = {}
         )
     }
 }

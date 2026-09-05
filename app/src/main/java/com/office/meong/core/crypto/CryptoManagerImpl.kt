@@ -13,9 +13,10 @@ import timber.log.Timber
 import java.nio.charset.StandardCharsets
 import java.security.GeneralSecurityException
 import javax.inject.Inject
+import androidx.core.content.edit
 
 class CryptoManagerImpl @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
 ) : CryptoManager {
 
     private val aead: Aead?
@@ -59,6 +60,8 @@ class CryptoManagerImpl @Inject constructor(
                 return manager to CryptoAvailability.SOFTWARE_FALLBACK
             } catch (e: Exception) {
                 Timber.e("buildKeysetManager Fail ${e.message}")
+
+                clearCorruptedKeyset()
                 if (attempt == MAX_KEYSTORE_ATTEMPTS - 1) {
                     // 마지막 시도까지 예외로 실패 → masterKeyUri 없이 소프트웨어 키로 폴백 시도
                     return try {
@@ -75,6 +78,10 @@ class CryptoManagerImpl @Inject constructor(
             }
         }
         return null to CryptoAvailability.UNAVAILABLE
+    }
+
+    private fun clearCorruptedKeyset() {
+        context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE).edit { clear() }
     }
 
     override fun encrypt(plaintext: String, aadContext: AadContext): String {

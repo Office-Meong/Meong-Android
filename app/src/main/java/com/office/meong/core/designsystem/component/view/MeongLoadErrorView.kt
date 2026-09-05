@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import com.office.meong.core.common.model.LoadErrorHandleAction
 import com.office.meong.core.designsystem.component.button.MeongPillButton
+import com.office.meong.core.designsystem.component.button.MeongPillButtonStyle
 import com.office.meong.core.designsystem.component.topbar.MeongTopbar
 import com.office.meong.core.designsystem.theme.MeongTheme
 
@@ -69,7 +70,7 @@ fun MeongLoadErrorView(
 
                 MeongPillButton(
                     text = content.buttonText,
-                    isPrimary = true,
+                    style = MeongPillButtonStyle.Primary,
                     onClick = action.onActionButtonClick,
                 )
             }

@@ -15,7 +15,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
-import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
 import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 
@@ -23,12 +22,13 @@ import com.office.meong.presentation.sharedcomponent.MeongPlaceCard
 fun ResultCourseAccommodationSection(
     placeName: String,
     location: String,
+    isFavorite: Boolean,
     onEditAccommodationClick: () -> Unit,
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier,
     grade: String? = null,
     thumbnailUrl: String? = null,
-    lodgingType: LodgingType? = null
+    onClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -64,11 +64,11 @@ fun ResultCourseAccommodationSection(
             placeName = placeName,
             location = location,
             grade = grade,
-            isFavorite = true,
+            isFavorite = isFavorite,
             onFavoriteClick = onFavoriteClick,
             placeType = PlaceType.ACCOMMODATION,
             thumbnailUrl = thumbnailUrl,
-            lodgingType = lodgingType
+            modifier = Modifier.noRippleClickable(onClick = onClick)
         )
     }
 }
@@ -81,6 +81,7 @@ private fun ResultCourseAccommodationSectionPreview() {
             placeName = "프렌즈애견펜션",
             location = "서울시 강남구",
             grade = "A",
+            isFavorite = true,
             onEditAccommodationClick = {},
             onFavoriteClick = {}
         )

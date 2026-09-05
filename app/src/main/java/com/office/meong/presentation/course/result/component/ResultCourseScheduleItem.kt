@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
@@ -41,14 +42,16 @@ import com.valentinilk.shimmer.rememberShimmer
 fun ResultCourseScheduleItem(
     count: Int,
     placeName: String,
-    grade: String,
+    grade: String?,
     isLastItem: Boolean,
     placeType: PlaceType,
+    isFavorite: Boolean,
     isLoading: Boolean,
     shimmer: Shimmer,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
     location: String = "",
     thumbnailUrl: String? = null,
     lodgingType: LodgingType? = null,
@@ -93,11 +96,12 @@ fun ResultCourseScheduleItem(
                     placeName = placeName,
                     location = location,
                     grade = grade,
-                    isFavorite = false,
+                    isFavorite = isFavorite,
                     onFavoriteClick = onFavoriteClick,
                     placeType = placeType,
                     thumbnailUrl = thumbnailUrl,
                     lodgingType = lodgingType,
+                    modifier = Modifier.noRippleClickable(onClick = onClick)
                 )
             }
 
@@ -153,6 +157,7 @@ private fun ResultCourseScheduleItemPreview() {
             grade = "A",
             isLastItem = false,
             placeType = PlaceType.WORKSPACE,
+            isFavorite = false,
             isLoading = false,
             shimmer = rememberShimmer(shimmerBounds = ShimmerBounds.View, theme = meongShimmerTheme()),
             onFavoriteClick = {},
@@ -171,6 +176,7 @@ private fun ResultCourseScheduleItemLoadingPreview() {
             grade = "A",
             isLastItem = false,
             placeType = PlaceType.WORKSPACE,
+            isFavorite = false,
             isLoading = true,
             shimmer = rememberShimmer(shimmerBounds = ShimmerBounds.View, theme = meongShimmerTheme()),
             onFavoriteClick = {},

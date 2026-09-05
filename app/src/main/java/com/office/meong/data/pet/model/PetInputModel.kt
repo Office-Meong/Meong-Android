@@ -8,11 +8,11 @@ import com.office.meong.data.pet.remote.dto.request.DogRequest
 
 data class PetInputModel(
     val name: String,
-    val breed: String,
-    val weightKg: Double,
-    val birthDate: String,
-    val isNeutered: Boolean,
-    val imageUrl: String,
+    val breed: String? = null,
+    val weightKg: Double? = null,
+    val birthDate: String? = null,
+    val isNeutered: Boolean? = null,
+    val imageUrl: String? = null,
     val sizeCategory: PetSizeCategory,
     val activityLevel: PetActivityLevel,
     val sociability: PetSociability,
@@ -21,11 +21,11 @@ data class PetInputModel(
 
 fun PetInputModel.toDto() = DogRequest(
     name = name,
-    breed = breed,
+    breed = breed?.takeIf { it.isNotBlank() },
     weightKg = weightKg,
-    birthDate = birthDate,
+    birthDate = birthDate?.takeIf { it.isNotBlank() },
     isNeutered = isNeutered,
-    imageUrl = imageUrl,
+    imageUrl = imageUrl?.takeIf { it.isNotBlank() },
     sizeCategory = sizeCategory.name,
     activityLevel = activityLevel.name,
     sociability = sociability.name,

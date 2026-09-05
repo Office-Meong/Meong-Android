@@ -6,21 +6,21 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlaceScoreResponse(
     @SerialName("petCompanionScore")
-    val petCompanionScore: Int,
+    val petCompanionScore: Int = 0,
     @SerialName("workcationScore")
-    val workcationScore: Int,
+    val workcationScore: Int = 0,
     @SerialName("walkAccessibilityScore")
-    val walkAccessibilityScore: Int,
+    val walkAccessibilityScore: Int = 0,
     @SerialName("congestionScore")
-    val congestionScore: Int,
+    val congestionScore: Int = 0,
     @SerialName("emergencyScore")
-    val emergencyScore: Int,
+    val emergencyScore: Int = 0,
     @SerialName("accessibilityScore")
-    val accessibilityScore: Int,
+    val accessibilityScore: Int = 0,
     @SerialName("totalScore")
-    val totalScore: Int,
+    val totalScore: Int = 0,
     @SerialName("grade")
-    val grade: String,
+    val grade: String = "",
     @SerialName("congestionLevel")
-    val congestionLevel: String,
+    val congestionLevel: String = "",
 )

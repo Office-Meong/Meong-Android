@@ -6,15 +6,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlacePageResponse(
     @SerialName("content")
-    val content: List<PlaceSummaryResponse>,
+    val content: List<PlaceSummaryResponse> = emptyList(),
     @SerialName("page")
-    val page: Int,
+    val page: Int = 0,
     @SerialName("size")
-    val size: Int,
+    val size: Int = 0,
     @SerialName("totalElements")
-    val totalElements: Int,
+    val totalElements: Int = 0,
     @SerialName("totalPages")
-    val totalPages: Int,
+    val totalPages: Int = 0,
     @SerialName("hasNext")
-    val hasNext: Boolean,
+    val hasNext: Boolean = false,
 )

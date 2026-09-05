@@ -40,6 +40,10 @@ class PetEditViewModel @Inject constructor(
         fetchDog()
     }
 
+    fun retryFetchDog() {
+        fetchDog()
+    }
+
     private fun fetchDog() {
         viewModelScope.launch {
             _state.update { it.copy(pet = UiState.Loading) }
@@ -66,14 +70,16 @@ class PetEditViewModel @Inject constructor(
     private fun applyPet(pet: PetInfo) {
         val current = _state.value
         current.nameTextFieldState.setTextAndPlaceCursorAtEnd(pet.name)
-        current.breedTextFieldState.setTextAndPlaceCursorAtEnd(pet.breed)
-        current.weightTextFieldState.setTextAndPlaceCursorAtEnd(pet.weightKg.toString())
-        current.birthDateTextFieldState.setTextAndPlaceCursorAtEnd(pet.birthDate)
+        current.breedTextFieldState.setTextAndPlaceCursorAtEnd(pet.breed.orEmpty())
+        current.weightTextFieldState.setTextAndPlaceCursorAtEnd(pet.weightKg?.toString().orEmpty())
+        current.birthDateTextFieldState.setTextAndPlaceCursorAtEnd(
+            pet.birthDate.orEmpty().filter { it.isDigit() }
+        )
 
         _state.update {
             it.copy(
                 imageUrl = pet.imageUrl,
-                isNeutered = pet.isNeutered,
+                isNeutered = pet.isNeutered ?: false,
                 selectedSize = pet.sizeCategory,
                 selectedActivity = pet.activityLevel,
                 selectedSociability = pet.sociability,
@@ -121,6 +127,11 @@ class PetEditViewModel @Inject constructor(
     fun onSaveClick() {
         val currentState = _state.value
         val dogId = (currentState.pet as? UiState.Success)?.data?.id ?: return
+
+        if (currentState.nameTextFieldState.text.isBlank()) {
+            _state.update { it.copy(hasAttemptedSave = true) }
+            return
+        }
         if (!currentState.isSaveEnabled) return
 
         viewModelScope.launch {

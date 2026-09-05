@@ -9,17 +9,17 @@ data class PlaceRecommendationResponse(
     @SerialName("placeId")
     val placeId: Long,
     @SerialName("placeName")
-    val placeName: String,
+    val placeName: String = "",
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("placeType")
-    val placeType: String,
+    val placeType: String = "",
     @SerialName("address")
-    val address: String,
+    val address: String = "",
     @SerialName("totalScore")
-    val totalScore: Int,
+    val totalScore: Int = 0,
     @SerialName("grade")
-    val grade: String,
+    val grade: String = "",
     @SerialName("reason")
-    val reason: String
+    val reason: String = ""
 )

@@ -9,23 +9,25 @@ data class CourseResponse(
     @SerialName("id")
     val id: Long,
     @SerialName("name")
-    val name: String,
+    val name: String = "",
     @SerialName("region")
-    val region: Region,
+    val region: Region = Region.UNKNOWN,
     @SerialName("startDate")
-    val startDate: String,
+    val startDate: String = "",
     @SerialName("endDate")
-    val endDate: String,
+    val endDate: String = "",
     @SerialName("workStartTime")
-    val workStartTime: String,
+    val workStartTime: String = "",
     @SerialName("workEndTime")
-    val workEndTime: String,
+    val workEndTime: String = "",
     @SerialName("workFocusLevel")
-    val workFocusLevel: String,
+    val workFocusLevel: String = "",
     @SerialName("totalDays")
-    val totalDays: Int,
+    val totalDays: Int = 0,
     @SerialName("dayItems")
-    val dayItems: Map<String, List<CourseItemResponse>>,
+    val dayItems: Map<String, List<CourseItemResponse>> = emptyMap(),
+    @SerialName("dayReturnToAccommKm")
+    val dayReturnToAccommKm: Map<String, Double> = emptyMap(),
     @SerialName("createdAt")
-    val createdAt: String,
+    val createdAt: String = "",
 )

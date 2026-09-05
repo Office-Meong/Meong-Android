@@ -6,11 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlaceAccessibilityResponse(
     @SerialName("hasParking")
-    val hasParking: Boolean,
+    val hasParking: Boolean = false,
     @SerialName("strollerAccessible")
-    val strollerAccessible: Boolean,
+    val strollerAccessible: Boolean = false,
     @SerialName("hasRamp")
-    val hasRamp: Boolean,
+    val hasRamp: Boolean = false,
     @SerialName("dataAvailable")
-    val dataAvailable: Boolean,
+    val dataAvailable: Boolean = false,
 )

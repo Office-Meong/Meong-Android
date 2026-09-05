@@ -1,12 +1,18 @@
 package com.office.meong.core.common.extension
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
+import timber.log.Timber
 
 fun Context.openUrl(url: String) {
-    startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    try {
+        startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    } catch (e: ActivityNotFoundException) {
+        Timber.w(e, "URL을 열 수 없습니다: $url")
+    }
 }
 
 fun Context.openKakaoMap(placeName: String) {
@@ -17,6 +23,14 @@ fun Context.openKakaoMap(placeName: String) {
     )
 }
 
+fun Context.openKakaoMap(placeName: String, latitude: Double, longitude: Double) {
+    val encodedName = Uri.encode(placeName)
+    openKakaoMapUri(
+        appUri = "kakaomap://look?p=$latitude,$longitude",
+        webUri = "https://map.kakao.com/link/map/$encodedName,$latitude,$longitude"
+    )
+}
+
 fun Context.openKakaoMapRoute(
     originName: String,
     originLatitude: Double,
@@ -24,7 +38,7 @@ fun Context.openKakaoMapRoute(
     destinationName: String,
     destinationLatitude: Double,
     destinationLongitude: Double,
-    type: String? = "CAR"
+    type: String? = "car"
 ) {
     val encodedOrigin = Uri.encode(originName)
     val encodedDestination = Uri.encode(destinationName)

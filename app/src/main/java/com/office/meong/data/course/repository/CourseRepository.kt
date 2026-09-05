@@ -6,7 +6,8 @@ import com.office.meong.data.course.model.CourseDetail
 import com.office.meong.data.course.model.CourseSummary
 
 interface CourseRepository {
-    suspend fun getCourses(): Result<List<CourseSummary>>
+    /** @param forceRefresh true 면 메모리 캐시를 버리고 서버에서 다시 받아온다. */
+    suspend fun getCourses(forceRefresh: Boolean = false): Result<List<CourseSummary>>
     suspend fun getDetailCourse(courseId: Long): Result<CourseDetail>
     suspend fun createCourse(request: CourseCreateInput): Result<CourseDetail>
     suspend fun deleteCourse(courseId: Long): Result<Unit>
@@ -27,6 +28,7 @@ interface CourseRepository {
         newPlaceId: Long?
     ): Result<CourseDetail>
     suspend fun getCourseItemAlternatives(courseId: Long, itemId: Long): Result<List<AlternativePlace>>
+    suspend fun deleteCourseItem(courseId: Long, itemId: Long): Result<CourseDetail>
     suspend fun updateCourseName(courseId: Long, name: String): Result<CourseDetail>
     suspend fun reorderCourseItems(courseId: Long, dayNumber: Int, itemIds: List<Long>): Result<CourseDetail>
 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.theme.MeongTheme
 import com.office.meong.core.model.place.LodgingType
 import com.office.meong.core.model.place.PlaceType
@@ -41,9 +42,11 @@ fun DetailCourseScheduleItem(
     grade: String?,
     routeLength: String,
     isLastItem: Boolean,
+    isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
     onRouteClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
     thumbnailUrl: String? = null,
     lodgingType: LodgingType? = null
 ) {
@@ -88,11 +91,12 @@ fun DetailCourseScheduleItem(
                 placeName = placeName,
                 location = location,
                 grade = grade,
-                isFavorite = false,
+                isFavorite = isFavorite,
                 onFavoriteClick = onFavoriteClick,
                 placeType = placeType,
                 thumbnailUrl = thumbnailUrl,
-                lodgingType = lodgingType
+                lodgingType = lodgingType,
+                modifier = Modifier.noRippleClickable(onClick = onClick)
             )
 
             if (!isLastItem) {
@@ -114,6 +118,7 @@ private fun DetailCourseScheduleItemPreview() {
             grade = "A",
             routeLength = "1.2",
             isLastItem = false,
+            isFavorite = false,
             onFavoriteClick = {},
             onRouteClick = {}
         )

@@ -2,10 +2,12 @@ package com.office.meong.core.common.util
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.daysUntil
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 
-private fun LocalDate.toTripDisplayFormat(): String = "$year.$monthNumber.$dayOfMonth"
+private fun LocalDate.toTripDisplayFormat(): String = "$year.${month.number}.$day"
 
 // startDate/endDate("yyyy-MM-dd")를 "N박 M일 (yyyy.M.d - yyyy.M.d)" 형태로 변환
 fun formatTripPeriod(startDate: String, endDate: String): String {
@@ -34,7 +36,14 @@ fun formatShortTripDate(date: String): String = LocalDate.parse(date).toTripDisp
 fun formatDayDate(startDate: String, dayNumber: Int): String =
     LocalDate.parse(startDate).plus(dayNumber - 1, DateTimeUnit.DAY).toTripDisplayShortFormat()
 
-private fun LocalDate.toTripDisplayShortFormat(): String = "$monthNumber.$dayOfMonth"
+private fun LocalDate.toTripDisplayShortFormat(): String = "${month.number}.$day"
 
 // 거리(km)를 소수점 1자리 문자열로 변환
 fun formatDistanceKm(distanceKm: Double): String = "%.1f".format(distanceKm)
+
+// startTime/endTime("HH:mm" 또는 "HH:mm:ss")을 "업무 HH:mm-HH:mm" 형태로 변환
+fun formatWorkTimeRange(startTime: String, endTime: String): String {
+    val start = LocalTime.parse(startTime)
+    val end = LocalTime.parse(endTime)
+    return "업무 %02d:%02d-%02d:%02d".format(start.hour, start.minute, end.hour, end.minute)
+}

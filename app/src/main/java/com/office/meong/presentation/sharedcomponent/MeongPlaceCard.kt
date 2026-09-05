@@ -22,9 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.office.meong.R
 import com.office.meong.core.common.extension.noRippleClickable
 import com.office.meong.core.designsystem.component.chip.MeongChip
@@ -65,7 +68,8 @@ fun MeongPlaceCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(bottom = 20.dp),
+                .weight(1f)
+                .padding(bottom = 20.dp, end = 12.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Row(
@@ -97,7 +101,9 @@ fun MeongPlaceCard(
             Text(
                 text = placeName,
                 style = MeongTheme.typography.title.title16Sb,
-                color = MeongTheme.colors.gray900
+                color = MeongTheme.colors.gray900,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -116,14 +122,17 @@ fun MeongPlaceCard(
                 Text(
                     text = location,
                     style = MeongTheme.typography.body.body12M,
-                    color = MeongTheme.colors.gray600
+                    color = MeongTheme.colors.gray600,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
             }
         }
 
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(84.dp)
                 .styleable {
                     background(iconBackgroundColor)
                     shape(RoundedCornerShape(12.dp))
@@ -131,20 +140,22 @@ fun MeongPlaceCard(
             contentAlignment = Alignment.Center
         ) {
             if (thumbnailUrl.isNullOrBlank()) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(placeType.iconRes),
-                    contentDescription = null,
-                    tint = MeongTheme.colors.gray300
-                )
+                PlaceThumbnailFallback(placeType = placeType)
             } else {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = thumbnailUrl,
                     contentDescription = "장소 썸네일 이미지",
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop
-                )
+                ) {
+                    if (painter.state is AsyncImagePainter.State.Error) {
+                        PlaceThumbnailFallback(placeType = placeType)
+                    } else {
+                        SubcomposeAsyncImageContent()
+                    }
+                }
             }
 
             Box(
@@ -166,6 +177,16 @@ fun MeongPlaceCard(
     }
 }
 
+@Composable
+private fun PlaceThumbnailFallback(placeType: PlaceType) {
+    Icon(
+        imageVector = ImageVector.vectorResource(placeType.iconRes),
+        contentDescription = null,
+        modifier = Modifier.size(32.dp),
+        tint = MeongTheme.colors.gray300
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun MeongPlaceCardPreview() {
@@ -178,7 +199,8 @@ private fun MeongPlaceCardPreview() {
             isFavorite = true,
             isBordered = true,
             isSelected = true,
-            onFavoriteClick = {}
+            onFavoriteClick = {},
+            thumbnailUrl = null
         )
     }
 }

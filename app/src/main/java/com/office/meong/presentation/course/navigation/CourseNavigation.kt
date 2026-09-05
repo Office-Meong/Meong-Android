@@ -5,6 +5,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.office.meong.presentation.course.create.CreateCourseRoute
 import com.office.meong.presentation.course.create.navigation.CreateCourse
@@ -17,6 +18,8 @@ import com.office.meong.presentation.course.my.navigation.MyCourse
 import com.office.meong.presentation.course.result.ResultCourseRoute
 import com.office.meong.presentation.course.result.navigation.ResultCourse
 import com.office.meong.presentation.course.result.navigation.navigateToResultCourse
+import com.office.meong.presentation.explore.detail.navigation.navigateToExploreDetail
+import com.office.meong.presentation.home.navigation.navigateToHome
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -35,6 +38,8 @@ fun NavGraphBuilder.courseNavGraph(
     ) {
         composable<CreateCourse> {
             CreateCourseRoute(
+                paddingValues = paddingValues,
+                navigateUp = navController::navigateUp,
                 navigateToResultCourse = { courseId -> navController.navigateToResultCourse(courseId) }
             )
         }
@@ -50,14 +55,30 @@ fun NavGraphBuilder.courseNavGraph(
         composable<DetailCourse> {
             DetailCourseRoute(
                 paddingValues = paddingValues,
-                navigateUp = navController::navigateUp
+                navigateUp = navController::navigateUp,
+                navigateToExploreDetail = { placeId -> navController.navigateToExploreDetail(placeId) }
             )
         }
 
         composable<ResultCourse> {
             ResultCourseRoute(
                 paddingValues = paddingValues,
-                navigateUp = navController::navigateUp
+                navigateUp = navController::navigateUp,
+                navigateToEntryScreen = {
+                    navController.popBackStack(CreateCourse, inclusive = true)
+                },
+                navigateToDetailCourse = { courseId ->
+                    navController.navigateToDetailCourse(
+                        courseId = courseId,
+                        navOptions = navOptions { popUpTo(0) { inclusive = true } }
+                    )
+                },
+                navigateToHome = {
+                    navController.navigateToHome(
+                        navOptions { popUpTo(0) { inclusive = true } }
+                    )
+                },
+                navigateToExploreDetail = { placeId -> navController.navigateToExploreDetail(placeId) }
             )
         }
     }

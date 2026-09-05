@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -29,23 +30,49 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
+import com.office.meong.core.common.extension.collectSideEffect
+import com.office.meong.core.common.extension.openUrl
 import com.office.meong.core.designsystem.theme.MeongTheme
+import com.office.meong.core.model.trigger.SnackbarState
+import com.office.meong.core.trigger.LocalGlobalUiEventTrigger
 import com.office.meong.presentation.auth.component.TermsBottomSheet
+import com.office.meong.presentation.auth.model.LoginSideEffect
 import com.office.meong.presentation.auth.model.LoginUiState
 
 @Composable
 fun LoginRoute(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    navigateToHome: () -> Unit = {},
+    navigateToSignup: () -> Unit = {},
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val globalUiEventHolder = LocalGlobalUiEventTrigger.current
+    val context = LocalContext.current
+
+    viewModel.sideEffect.collectSideEffect {
+        when (it) {
+            is LoginSideEffect.NavigateToHome -> navigateToHome()
+            is LoginSideEffect.NavigateToSignup -> navigateToSignup()
+            is LoginSideEffect.ShowToast -> globalUiEventHolder.showSnackbar(SnackbarState(message = it.message))
+            is LoginSideEffect.OpenUrl -> context.openUrl(it.url)
+        }
+    }
+
     LoginScreen(
         paddingValues = paddingValues,
-        uiState = LoginUiState(isTermsBottomSheetVisible = true, isServiceTermAgreed = true),
-        onKakaoLoginClick = {},
-        onServiceTermClick = {},
-        onPrivacyTermClick = {},
-        onBottomSheetDismiss = {},
-        onSignUpComplete = {}
+        uiState = uiState,
+        onKakaoLoginClick = { viewModel.onKakaoLoginClick(context) },
+        onServiceTermClick = viewModel::onServiceTermClick,
+        onPrivacyTermClick = viewModel::onPrivacyTermClick,
+        onViewServiceTermClick = viewModel::onViewServiceTermClick,
+        onViewPrivacyTermClick = viewModel::onViewPrivacyTermClick,
+        onBottomSheetDismiss = viewModel::onBottomSheetDismiss,
+        onSignUpComplete = viewModel::onSignUpClick
     )
 }
 
@@ -56,10 +83,11 @@ private fun LoginScreen(
     onKakaoLoginClick: () -> Unit,
     onServiceTermClick: () -> Unit,
     onPrivacyTermClick: () -> Unit,
+    onViewServiceTermClick: () -> Unit,
+    onViewPrivacyTermClick: () -> Unit,
     onBottomSheetDismiss: () -> Unit,
     onSignUpComplete: () -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -116,7 +144,7 @@ private fun LoginScreen(
                     .fillMaxWidth()
                     .height(52.dp)
                     .background(color = Color(0xFFFAE100), shape = RoundedCornerShape(8.dp))
-                    .clickable { onKakaoLoginClick() },
+                    .clickable(onClick = onKakaoLoginClick),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -143,6 +171,8 @@ private fun LoginScreen(
             isSignUpEnabled = uiState.isSignUpEnabled,
             onServiceTermClick = onServiceTermClick,
             onPrivacyTermClick = onPrivacyTermClick,
+            onViewServiceTermClick = onViewServiceTermClick,
+            onViewPrivacyTermClick = onViewPrivacyTermClick,
             onDismiss = onBottomSheetDismiss,
             onSignUpClick = onSignUpComplete
         )
@@ -153,8 +183,16 @@ private fun LoginScreen(
 @Composable
 private fun LoginScreenPreview() {
     MeongTheme {
-        LoginRoute(
-            paddingValues = PaddingValues()
+        LoginScreen(
+            paddingValues = PaddingValues(),
+            uiState = LoginUiState(isTermsBottomSheetVisible = true, isServiceTermAgreed = true),
+            onKakaoLoginClick = {},
+            onServiceTermClick = {},
+            onPrivacyTermClick = {},
+            onViewServiceTermClick = {},
+            onViewPrivacyTermClick = {},
+            onBottomSheetDismiss = {},
+            onSignUpComplete = {}
         )
     }
 }

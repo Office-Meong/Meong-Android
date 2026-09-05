@@ -7,6 +7,6 @@ import kotlinx.serialization.Serializable
 data class PresignedUrlResponse(
     @SerialName("presignedUrl")
     val presignedUrl: String,
-    @SerialName("fileName")
-    val fileName: String,
+    @SerialName("imageUrl")
+    val imageUrl: String,
 )

@@ -30,9 +30,8 @@ class PresignedRepositoryImpl @Inject constructor(
                 error("S3 업로드 실패: ${response.code()} - ${response.errorBody()?.string()}")
             }
 
-            imageLocalDataSource.deleteOriginalUri(uriString)
-            Timber.d("S3 업로드 성공: ${presignedResponse.fileName}")
-            presignedResponse.presignedUrl.substringBefore("?")
+            Timber.d("S3 업로드 성공: ${presignedResponse.imageUrl}")
+            presignedResponse.imageUrl
         } finally {
             optimizedFile.delete()
         }

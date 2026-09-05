@@ -8,10 +8,10 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.office.meong.core.model.trigger.RefreshState
 import com.office.meong.core.network.monitor.NetworkMonitor
-import com.office.meong.presentation.explore.navigation.navigation.navigateToExplore
+import com.office.meong.presentation.explore.navigation.navigateToExplore
 import com.office.meong.presentation.course.my.navigation.navigateToMyCourse
-import com.office.meong.presentation.course.navigation.CourseGraph
 import com.office.meong.presentation.favorite.navigation.navigateToFavorite
 import com.office.meong.presentation.home.navigation.navigateToHome
 import com.office.meong.presentation.main.MainTab
@@ -30,6 +30,10 @@ class MainAppState(
     networkMonitor: NetworkMonitor,
 ) {
     val startDestination = Splash
+
+    /** 현재 탭을 다시 눌렀을 때 화면에 알리는 신호. */
+    val refreshState = RefreshState()
+
     val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
         .map(Boolean::not)
         .stateIn(
@@ -69,6 +73,13 @@ class MainAppState(
         )
 
     fun navigateToTab(tab: MainTab) {
+        // 이미 그 탭에 있으면 이동하지 않고 신호만 보낸다(화면 재생성·재조회 없이 맨 위로/새로고침).
+        if (tab == currentTab.value) {
+            refreshState.trigger()
+            return
+        }
+
+        // 탭을 떠날 때 그 탭의 상태(스크롤·필터·페이징)를 저장하고, 돌아올 때 복원한다.
         val navOptions = navOptions {
             navController.currentDestination?.route?.let {
                 popUpTo(it) {
@@ -80,28 +91,13 @@ class MainAppState(
             }
         }
 
-        // 매번 새로 생성 - Screen의 내용이 매번 갱신되어야 할 때
-        val refreshNavOptions = navOptions {
-            popUpTo(0) {
-                inclusive = true
-            }
-            launchSingleTop = true
-        }
-
         when (tab) {
             MainTab.HOME -> navController.navigateToHome(navOptions = navOptions)
-            MainTab.EXPLORE -> navController.navigateToExplore(navOptions = refreshNavOptions)
+            MainTab.EXPLORE -> navController.navigateToExplore(navOptions = navOptions)
             MainTab.MY_COURSE -> navController.navigateToMyCourse(navOptions = navOptions)
             MainTab.FAVORITE -> navController.navigateToFavorite(navOptions = navOptions)
             MainTab.MY_PAGE -> navController.navigateToMyPage(navOptions = navOptions)
         }
-    }
-
-    private val clearStackNavOptions = navOptions {
-        popUpTo(0) {
-            inclusive = true
-        }
-        launchSingleTop = true
     }
 
     fun navigateUp() {
@@ -118,12 +114,10 @@ fun rememberMainAppState(
     networkMonitor: NetworkMonitor,
     navController: NavHostController = rememberNavController(),
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-): MainAppState {
-    return remember(networkMonitor, navController, coroutineScope) {
-        MainAppState(
-            networkMonitor = networkMonitor,
-            navController = navController,
-            coroutineScope = coroutineScope
-        )
-    }
+): MainAppState = remember(networkMonitor, navController, coroutineScope) {
+    MainAppState(
+        networkMonitor = networkMonitor,
+        navController = navController,
+        coroutineScope = coroutineScope
+    )
 }

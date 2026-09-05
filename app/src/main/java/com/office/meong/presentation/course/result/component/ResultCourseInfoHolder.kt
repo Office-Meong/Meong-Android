@@ -29,6 +29,8 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun ResultCourseInfoHolder(
     title: String,
+    tripSummaryInfo: ImmutableList<String>,
+    workStyleInfo: ImmutableList<String>,
     onEditTitleClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -68,8 +70,8 @@ fun ResultCourseInfoHolder(
         Spacer(modifier = Modifier.height(4.dp))
 
         InfoSection(
-            tripSummaryInfo = persistentListOf("강릉", "2박 3일 (2026.8.10 - 2026.8.12)", "몽몽이·소형견"),
-            workStyleInfo = persistentListOf("업무 11:00-18:00", "펜션 선호", "업무 집중형")
+            tripSummaryInfo = tripSummaryInfo,
+            workStyleInfo = workStyleInfo
         )
     }
 }
@@ -132,6 +134,8 @@ private fun ResultCourseInfoHolderPreview() {
     MeongTheme {
         ResultCourseInfoHolder(
             title = "강릉 2박 3일 워케이션",
+            tripSummaryInfo = persistentListOf("강릉", "2박 3일 (2026.8.10 - 2026.8.12)", "몽몽이·소형견"),
+            workStyleInfo = persistentListOf("업무 11:00-18:00", "집중형"),
             onEditTitleClick = {},
         )
     }
