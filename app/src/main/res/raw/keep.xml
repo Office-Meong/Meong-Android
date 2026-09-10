@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AboutLibraries generates res/raw/aboutlibraries.json at build time and loads it
+  by name at runtime (produceLibraries -> getIdentifier), so isShrinkResources
+  can't see the reference and strips it from release APKs. Keep it explicitly.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/aboutlibraries" />

@@ -18,8 +18,6 @@
 # =============================================================================
 # kotlinx.serialization  (Retrofit converter + type-safe Navigation routes)
 # =============================================================================
--keepattributes RuntimeVisibleAnnotations,AnnotationDefault
-
 # Canonical kotlinx.serialization rules (R8 full-mode safe)
 -if @kotlinx.serialization.Serializable class **
 -keepclassmembers class <1> {
@@ -62,20 +60,11 @@
 
 # =============================================================================
 # Retrofit / OkHttp / Okio
-#   (both ship their own consumer rules; these only cover project surface + warns)
+#   retrofit 3.0.0 bundles retrofit2.pro (Call / Response / Continuation +
+#   `-if interface * { @retrofit2.http.* }` service-interface keeps). okhttp/okio
+#   bundle their own -dontwarn for conscrypt/bouncycastle/openjsse. All removed as
+#   redundant - verified subsumed by the R8 config analyzer.
 # =============================================================================
--keep,allowobfuscation,allowshrinking interface retrofit2.Call
--keep,allowobfuscation,allowshrinking class retrofit2.Response
--keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
-
-# Our Retrofit service interfaces (annotations must survive)
--keep,allowobfuscation interface com.office.meong.**.remote.api.**
--keepclassmembers,allowobfuscation interface com.office.meong.**.remote.api.** {
-    @retrofit2.http.* <methods>;
-}
-
--dontwarn okhttp3.**
--dontwarn okio.**
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
@@ -83,9 +72,12 @@
 
 # =============================================================================
 # Google Tink (com.google.crypto.tink) - keyset / AEAD crypto
+#   tink-android ships META-INF/proguard/protobuf.pro with the GeneratedMessageLite
+#   <fields> rule below (kept here explicitly). The old blanket
+#   `-keep class com.google.crypto.tink.** { *; }` /
+#   `-keep class com.google.crypto.tink.shaded.protobuf.** { *; }` disabled all R8
+#   optimization for ~22% of the app and are not needed - removed.
 # =============================================================================
--keep class com.google.crypto.tink.** { *; }
--keep class com.google.crypto.tink.shaded.protobuf.** { *; }
 -keepclassmembers class * extends com.google.crypto.tink.shaded.protobuf.GeneratedMessageLite {
     <fields>;
 }
@@ -98,12 +90,11 @@
 
 # =============================================================================
 # Kakao SDK (com.kakao.sdk) - Gson-backed models
-#   (SDK ships consumer rules; keep @SerializedName fields + silence warnings)
+#   Kakao ships consumer-rules.pro and gson 2.13.2 bundles the `@SerializedName
+#   <fields>` keep (subsumes the rule that used to live here). The blanket
+#   `model.** { *; }` + enum keep are held pending a login smoke test.
 # =============================================================================
 -keep class com.kakao.sdk.**.model.** { *; }
--keepclassmembers,allowobfuscation class com.kakao.sdk.** {
-    @com.google.gson.annotations.SerializedName <fields>;
-}
 -keepclassmembers enum com.kakao.sdk.** { *; }
 -dontwarn com.kakao.sdk.**
 
