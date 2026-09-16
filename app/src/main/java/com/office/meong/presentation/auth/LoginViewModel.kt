@@ -2,6 +2,7 @@ package com.office.meong.presentation.auth
 
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
+import com.office.meong.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -108,6 +109,38 @@ class LoginViewModel @Inject constructor(
                 termsAgreed = currentState.isServiceTermAgreed,
                 privacyAgreed = currentState.isPrivacyTermAgreed,
             )
+        }
+    }
+
+    fun onReviewerBypassButtonLongClick() {
+        _state.update { it.copy(isReviewerBypassDialogVisible = true) }
+    }
+
+    fun onReviewerBypassDialogDismiss() {
+        _state.update { it.copy(isReviewerBypassDialogVisible = false) }
+    }
+
+    fun onReviewerBypassPinSubmit(pin: String) {
+        if (pin != BuildConfig.REVIEWER_BYPASS_PIN) {
+            viewModelScope.launch { _sideEffect.send(LoginSideEffect.ShowToast("비밀번호가 올바르지 않아요")) }
+            return
+        }
+
+        _state.update { it.copy(isReviewerBypassDialogVisible = false) }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+
+            authRepository.loginAsReviewer(BuildConfig.GOOGLE_REVIEW_DEMO_KEY)
+                .onSuccess { token ->
+                    tokenManager.saveTokens(token.accessToken, token.refreshToken)
+                    _state.update { it.copy(isLoading = false) }
+                    _sideEffect.send(LoginSideEffect.NavigateToHome)
+                }
+                .onFailure {
+                    _state.update { it.copy(isLoading = false) }
+                    _sideEffect.send(LoginSideEffect.ShowToast("리뷰어 로그인에 실패했어요"))
+                }
         }
     }
 
