@@ -1,8 +1,11 @@
 package com.office.meong.presentation.auth
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,21 +19,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.office.meong.R
@@ -72,10 +82,14 @@ fun LoginRoute(
         onViewServiceTermClick = viewModel::onViewServiceTermClick,
         onViewPrivacyTermClick = viewModel::onViewPrivacyTermClick,
         onBottomSheetDismiss = viewModel::onBottomSheetDismiss,
-        onSignUpComplete = viewModel::onSignUpClick
+        onSignUpComplete = viewModel::onSignUpClick,
+        onReviewerBypassButtonLongClick = viewModel::onReviewerBypassButtonLongClick,
+        onReviewerBypassDialogDismiss = viewModel::onReviewerBypassDialogDismiss,
+        onReviewerBypassPinSubmit = viewModel::onReviewerBypassPinSubmit
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LoginScreen(
     paddingValues: PaddingValues,
@@ -86,7 +100,10 @@ private fun LoginScreen(
     onViewServiceTermClick: () -> Unit,
     onViewPrivacyTermClick: () -> Unit,
     onBottomSheetDismiss: () -> Unit,
-    onSignUpComplete: () -> Unit
+    onSignUpComplete: () -> Unit,
+    onReviewerBypassButtonLongClick: () -> Unit = {},
+    onReviewerBypassDialogDismiss: () -> Unit = {},
+    onReviewerBypassPinSubmit: (String) -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -162,6 +179,20 @@ private fun LoginScreen(
                 )
             }
         }
+
+        // 구글 플레이 리뷰어용 우회 로그인 진입점. 화면에는 아무것도 보이지 않으며 롱클릭으로만 동작한다.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 24.dp, end = 20.dp)
+                .size(48.dp)
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = onReviewerBypassButtonLongClick,
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                )
+        )
     }
 
     if (uiState.isTermsBottomSheetVisible) {
@@ -177,6 +208,42 @@ private fun LoginScreen(
             onSignUpClick = onSignUpComplete
         )
     }
+
+    if (uiState.isReviewerBypassDialogVisible) {
+        ReviewerBypassDialog(
+            onDismiss = onReviewerBypassDialogDismiss,
+            onSubmit = onReviewerBypassPinSubmit
+        )
+    }
+}
+
+@Composable
+private fun ReviewerBypassDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
+    val pin = rememberTextFieldState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reviewer Login") },
+        text = {
+            OutlinedTextField(
+                state = pin,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSubmit(pin.text.toString()) }) {
+                Text("확인")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)

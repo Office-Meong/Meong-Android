@@ -6,6 +6,7 @@ import com.office.meong.core.network.model.ApiException
 import com.office.meong.core.network.model.getOrThrow
 import com.office.meong.data.auth.remote.api.AuthService
 import com.office.meong.data.auth.remote.dto.request.KakaoLoginRequest
+import com.office.meong.data.auth.remote.dto.request.ReviewerLoginRequest
 import com.office.meong.data.auth.remote.dto.request.TokenRefreshRequest
 import com.office.meong.data.auth.remote.dto.response.TokenResponse
 import javax.inject.Inject
@@ -21,6 +22,9 @@ class AuthDataSource @Inject constructor(
     ): TokenResponse = noAuthAuthService.loginWithKakao(
         KakaoLoginRequest(code = code, termsAgreed = termsAgreed, privacyAgreed = privacyAgreed)
     ).getOrThrow()
+
+    suspend fun loginAsReviewer(demoKey: String): TokenResponse =
+        noAuthAuthService.loginAsReviewer(ReviewerLoginRequest(demoKey = demoKey)).getOrThrow()
 
     suspend fun logout() {
         val response = authService.logout()
