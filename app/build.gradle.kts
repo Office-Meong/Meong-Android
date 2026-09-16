@@ -30,6 +30,8 @@ android {
 
         buildConfigField("String", "BASE_URL", properties["base.url"].toString())
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${properties["kakao.native.app.key"]}\"")
+        buildConfigField("String", "REVIEWER_BYPASS_PIN", properties["reviewer.bypass.pin"].toString())
+        buildConfigField("String", "GOOGLE_REVIEW_DEMO_KEY", "\"${properties["google.review.demo.key"]}\"")
         manifestPlaceholders["kakaonativeappkey"] = properties["kakao.native.app.key"].toString()
     }
     signingConfigs {

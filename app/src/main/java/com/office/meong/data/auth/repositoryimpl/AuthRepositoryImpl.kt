@@ -24,6 +24,10 @@ class AuthRepositoryImpl @Inject constructor(
         authDataSource.loginWithKakao(code, termsAgreed, privacyAgreed).toModel()
     }
 
+    override suspend fun loginAsReviewer(demoKey: String): Result<TokenModel> = suspendRunCatching {
+        authDataSource.loginAsReviewer(demoKey).toModel()
+    }
+
     override suspend fun logout(): Result<Unit> = suspendRunCatching {
         authDataSource.logout()
     }
