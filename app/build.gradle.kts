@@ -23,7 +23,8 @@ android {
         applicationId = "com.office.meong"
         minSdk = 24
         targetSdk = 36
-        versionCode = 10000
+        // TODO: 다음 기능 릴리즈 때 1.1.0(versionCode 10100)으로 올리기
+        versionCode = 10001
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
